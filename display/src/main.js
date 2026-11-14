@@ -5,6 +5,8 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "./style.css";
 import { loadFrame } from "./frame.js";
+import { drawRoute, checkRoute, routeKind } from "./route.js";
+import { renderNoRoute, renderRouteSummary, renderReadout, renderWindow, renderStops, highlightStop } from "./panel.js";
 
 const DATA = "data/";
 const OVERLAY_OPACITY = 0.6;
@@ -105,7 +107,36 @@ async function main() {
     overlays["Perseverance path (real, NASA/JPL-Caltech)"] = roverLayer;
   }
 
-  // ROUTE: planned route (data/route.json) is drawn here in the next task. Do not draw it before then.
+  // Planned route (route.json): drawn only if it belongs to this grid. Numbers come from route.json only.
+  const route = await getJson("route.json");
+  const routeError = route ? checkRoute(route, f) : null;
+  if (!route) {
+    renderNoRoute("No planned route yet. Showing the terrain and Perseverance's real path until the planner's route.json arrives.");
+    renderStops([], () => {});
+  } else if (routeError) {
+    renderNoRoute("Route not drawn: " + routeError);
+    renderStops([], () => {});
+  } else {
+    const kind = routeKind(route);
+    if (kind === "sample") document.getElementById("sample-badge").hidden = false;
+    let view;
+    const slider = document.getElementById("point-slider");
+    const showPoint = (i) => {
+      slider.value = i;
+      view.setPoint(i);
+      const next = view.stops.find((s) => s.vertex >= i) || null;
+      renderReadout(route, i, next);
+    };
+    const onStop = (id) => { highlightStop(id); view.focusStop(id); };
+    view = drawRoute(map, f, route, { onPoint: showPoint, onStop });
+    overlays["Planned route"] = view.layer;
+    slider.max = route.geometry.coordinates.length - 1;
+    slider.addEventListener("input", () => showPoint(Number(slider.value)));
+    renderRouteSummary(route, kind, view.maxMargin);
+    renderStops(view.stops, onStop);
+    showPoint(0);
+  }
+  renderWindow(await getJson("window.json"));
 
   L.control.layers(null, overlays, { collapsed: false, position: "topright" }).addTo(map);
   addScaleBar(map, f.cell);
