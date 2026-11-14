@@ -1,0 +1,133 @@
+<!-- Written with AI assistance (Claude). -->
+<!--
+  Visor design v1 (static mock, 1600x900) for the Quest 3 headset. Ramish rebuilds it in xr/.
+  ALL VALUES ARE SAMPLE, copied verbatim from samples/out/ at ONE route point:
+    route point = index 150 (0-based) of 463 points in samples/out/route.json geometry.coordinates
+    - Walk-back margin  224.51  <- route.json properties.per_vertex.margin_min[150]
+    - Time out            5.263 <- route.json properties.per_vertex.t_min[150]
+    - Slope here          6.03  <- route.json properties.per_vertex.slope_deg[150]
+    - AI hazard here      0.21  <- route.json properties.per_vertex.hazard[150]
+    - Next stop   S1 "Sample rim outcrop" <- route.json properties.stops[0].id / .name
+        (S1 chosen because its x,y = (320,-232) equals geometry.coordinates[198], i.e. later on the
+         route than point 150; how the headset decides "next" is an open question, see README.md)
+    - Sun elevation      72.4   <- window.json sun_elev_deg[11] (ltst_hours[11] = 11)
+        (LTST hour 11 is an assumed mock time inside window.json eva_window 10.0-15.0)
+    - Route length 1063.2 m is NOT shown (not a visor field).
+  No colour thresholds exist yet (docs/cost-model.md is empty) -> values are neutral white.
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Visor design v1</title>
+<style>
+  :root {
+    --bg: #0b0f14;
+    --panel: rgba(16, 24, 34, 0.78);
+    --edge: #5b7186;           /* same edge colour as xr/src/main.js labelTex() */
+    --label: #b9c6d3;
+    --value: #ffffff;
+    --unit: #b9c6d3;
+    --muted: #8796a5;
+    --badge: #ffb000;          /* matches the stop-pin head colour in the headset */
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1600px; height: 900px; overflow: hidden; }
+  body {
+    background:
+      radial-gradient(ellipse 760px 470px at 50% 46%, rgba(120, 82, 58, 0.30), rgba(0,0,0,0) 70%),
+      linear-gradient(180deg, #151a20 0%, #1d1712 60%, #241a12 100%);
+    background-color: var(--bg);
+    color: var(--value);
+    font-family: "DejaVu Sans", "Liberation Sans", system-ui, sans-serif;
+    position: relative;
+  }
+  .panel {
+    position: absolute;
+    background: var(--panel);
+    border: 3px solid var(--edge);
+    border-radius: 18px;
+    padding: 18px 26px 20px;
+  }
+  .label { font-size: 30px; color: var(--label); font-weight: 600; letter-spacing: 0.3px; }
+  .sub   { font-size: 22px; color: var(--muted); margin-top: 4px; }
+  .value { font-size: 72px; font-weight: 700; line-height: 1.05; margin-top: 6px; white-space: nowrap; }
+  .unit  { font-size: 30px; color: var(--unit); font-weight: 600; margin-left: 10px; }
+  .big   { font-size: 140px; line-height: 1.0; letter-spacing: -2px; }
+  .big .unit { font-size: 40px; }
+
+  /* positions: centre band x 470..1130 stays clear (astronaut looks through it) */
+  #margin  { left: 28px;   top: 28px;  width: 680px; }
+  #timeout { left: 28px;   top: 330px; width: 520px; }
+  #slope   { right: 28px;  top: 28px;  width: 470px; }
+  #hazard  { right: 28px;  top: 222px; width: 470px; }
+  #stop    { left: 28px;   bottom: 66px; width: 800px; }
+  #sun     { right: 28px;  bottom: 66px; width: 470px; }
+
+  .badge {
+    position: absolute; left: 905px; top: 26px; transform: translateX(-50%);
+    background: var(--badge); color: #111; font-weight: 800; font-size: 30px;
+    padding: 6px 22px; border-radius: 10px; letter-spacing: 3px;
+  }
+  .legend {
+    position: absolute; left: 905px; top: 90px; transform: translateX(-50%);
+    font-size: 20px; color: var(--muted); white-space: nowrap;
+  }
+  .reticle {
+    position: absolute; left: 788px; top: 438px; width: 24px; height: 24px;
+    border: 2px solid rgba(255,255,255,0.45); border-radius: 50%;
+  }
+  .footer {
+    position: absolute; left: 0; right: 0; bottom: 18px; text-align: center;
+    font-size: 20px; color: var(--muted);
+  }
+</style>
+</head>
+<body>
+  <div class="badge">SAMPLE</div>
+  <div class="legend">colour bands pending</div>
+  <div class="reticle"></div>
+
+  <!-- per_vertex.margin_min[150] = 224.51 -->
+  <div class="panel" id="margin">
+    <div class="label">Walk-back margin</div>
+    <div class="value big">224.51<span class="unit">min</span></div>
+    <div class="sub">spare time if you turn back here</div>
+  </div>
+
+  <!-- per_vertex.t_min[150] = 5.263 -->
+  <div class="panel" id="timeout">
+    <div class="label">Time out</div>
+    <div class="value">5.263<span class="unit">min</span></div>
+    <div class="sub">walking time from start</div>
+  </div>
+
+  <!-- per_vertex.slope_deg[150] = 6.03 -->
+  <div class="panel" id="slope">
+    <div class="label">Slope here</div>
+    <div class="value">6.03<span class="unit">degrees</span></div>
+  </div>
+
+  <!-- per_vertex.hazard[150] = 0.21 -->
+  <div class="panel" id="hazard">
+    <div class="label">AI hazard here</div>
+    <div class="value">0.21<span class="unit">of 1</span></div>
+    <div class="sub">AI hazard estimate (model, not validated)</div>
+  </div>
+
+  <!-- properties.stops[0].id = "S1", .name = "Sample rim outcrop" -->
+  <div class="panel" id="stop">
+    <div class="label">Next stop</div>
+    <div class="value">S1 <span style="font-size:52px">Sample rim outcrop</span></div>
+  </div>
+
+  <!-- window.json sun_elev_deg[11] = 72.4 (ltst_hours[11] = 11) -->
+  <div class="panel" id="sun">
+    <div class="label">Sun height</div>
+    <div class="value">72.4<span class="unit">degrees</span></div>
+    <div class="sub">at 11:00 LTST · typical sol (climatology), not a forecast</div>
+  </div>
+
+  <div class="footer">Values from route.json per_vertex at point 150 of 463 (0-based index) · sun from window.json at LTST hour 11 · SAMPLE</div>
+</body>
+</html>

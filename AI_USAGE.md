@@ -14,3 +14,5 @@ AI-generated images or video must carry a visible watermark and must not use or 
 | 2026-11-14 | Ramish | Claude (Anthropic) | Headset hologram app (Vite + Three.js WebXR): placement, hands, snap-rotate, layers, route ribbon | xr/ |
 | 2026-11-14 | Mahida | Claude (Anthropic) | Wrote the mineral, stops, weather and conditions scripts, then I ran and checked them | science/code/check_minerals.py, build_minerals.py, make_stops.py, meda_pressure.py, make_conditions.py |
 | 2026-11-14 | Mahida | Claude (Anthropic) | Planning, explaining the data, drafting science-goal.md and the source rows | science/science-goal.md, science/sources.md, SOURCES.md |
+| 2026-11-14 | Kashif | Claude (Anthropic, Claude Code) | Web map foundation (Vite + Leaflet, frame.js copy, data copy script, real photo map) and visor design mock + field list for the headset | display/ |
+| 2026-11-14 | Kashif | Claude (Anthropic, Claude Code) | Web map route view: route coloured by walk-back margin, stops, hazard pins, side panel, point-by-point readout, time window | display/src/, display/index.html, display/screens/ |

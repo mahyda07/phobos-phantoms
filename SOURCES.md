@@ -26,3 +26,5 @@ Rule: nothing gets used until it has a row here with its licence. Non-NASA sourc
 | Mars 2020 MEDA derived pressure and calibrated air temperature, sols 500 and 501 | conditions.csv temperature and pressure | https://pds-atmospheres.nmsu.edu/PDS/data/PDS4/Mars2020/mars2020_meda/ | NASA PDS, public | Mahida |
 | Savijarvi et al. 2024, Wintertime column modeling in Jezero crater, Mars: Period of near-fog and a dust event, Icarus 421 (check article number) | Dust opacity about 0.5 on sols 566 to 571 | https://doi.org/10.17189/1522849 is the MEDA dataset they used | Published paper, one value cited | Mahida |
 | Hassler et al. 2014, Mars surface radiation environment measured with Curiosity, Science (check volume) | Radiation 0.210 mGy/day, measured at Gale, not Jezero | (journal) | Published paper, one value cited | Mahida |
+| Leaflet 1.9.4 | Web map (display/) | https://leafletjs.com | BSD-2-Clause | Kashif |
+| Vite 8 | Build tool for display/ | https://vitejs.dev | MIT | Kashif |
