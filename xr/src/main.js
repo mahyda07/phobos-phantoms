@@ -19,6 +19,8 @@ const EXAGS = [1, 2, 4];          // height exaggeration options; default x2
 const PINCH_ON = 0.02, PINCH_OFF = 0.035;
 const statusEl = document.getElementById("status");
 const setStatus = (t) => { statusEl.textContent = t; };
+const emit = (name, detail = {}) => window.dispatchEvent(new CustomEvent("phobos:" + name, { detail }));
+
 
 // ---------- renderer / scene ----------
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -112,6 +114,10 @@ async function init() {
   applyScale(1);
   setStatus(info());
   enableButtons();
+  const pr = routeData?.properties;
+  emit("ready", { routeInfo, standin: String(pr?.plan_id || "").startsWith("standin-"),
+    length_km: pr ? pr.length_m / 1000 : null, margin_min: pr?.margin_min ?? null, stops: pr?.stops?.length ?? 0,
+    eva: winData?.eva_window ?? null });
 }
 
 // ---------- route ribbon ----------
@@ -260,6 +266,7 @@ async function enterXR(mode) {
   await renderer.xr.setSession(session);
   scene.background = mode === "immersive-ar" ? null : desktopBg;
   placed = false; anchor.visible = false; sessionStart = performance.now();
+  emit("session", { mode }); showHint("place");
   if (mode === "immersive-ar") {
     const viewer = await session.requestReferenceSpace("viewer");
     hitSource = await session.requestHitTestSource({ space: viewer });
@@ -267,14 +274,15 @@ async function enterXR(mode) {
   session.addEventListener("end", () => {
     if (walking) stopWalk();
     hitSource = null; scene.background = desktopBg; placed = true; anchor.visible = true;
-    anchor.position.set(0, 0, 0); reticle.visible = false;
+    anchor.position.set(0, 0, 0); reticle.visible = false; hint.visible = false;
+    emit("session-end");
   });
 }
 function enableButtons() {
   const ar = document.getElementById("btn-ar"), vr = document.getElementById("btn-vr");
-  if (!navigator.xr) { setStatus(info() + "\n(WebXR not available here — desktop preview only)"); return; }
-  navigator.xr.isSessionSupported("immersive-ar").then((ok) => { ar.disabled = !ok; });
-  navigator.xr.isSessionSupported("immersive-vr").then((ok) => { vr.disabled = !ok; });
+  if (!navigator.xr) { setStatus(info() + "\n(WebXR not available here — desktop preview only)"); emit("xr", { ar: false, vr: false }); return; }
+  Promise.all([navigator.xr.isSessionSupported("immersive-ar").catch(() => false), navigator.xr.isSessionSupported("immersive-vr").catch(() => false)])
+    .then(([a, v]) => { ar.disabled = !a; vr.disabled = !v; emit("xr", { ar: a, vr: v }); });
   ar.onclick = () => enterXR("immersive-ar").catch((e) => setStatus("AR failed: " + e.message));
   vr.onclick = () => enterXR("immersive-vr").catch((e) => setStatus("VR failed: " + e.message));
 }
@@ -284,6 +292,7 @@ function placeAt(pos) {   // put the hologram at pos, turned so the button panel
   anchor.position.copy(pos);
   anchor.rotation.set(0, Math.atan2(cam.position.x - pos.x, cam.position.z - pos.z), 0);
   anchor.visible = true; placed = true; reticle.visible = false;
+  showHint("explore");
 }
 function placeInFront() {
   const cam = renderer.xr.getCamera();
@@ -447,6 +456,8 @@ function startWalk() {
   walkYaw = Math.atan2(f.x, f.z) - Math.atan2(v.x, v.z);
   model.rotation.set(0, walkYaw, 0);
   updateWalk(performance.now());
+  emit("walk", { on: true });
+  if (renderer.xr.isPresenting) showHint("walk", 8000);
 }
 
 function stopWalk() {
@@ -461,6 +472,7 @@ function stopWalk() {
     applyScale(walkSaved.mult);
   }
   lastVisorKey = "";
+  emit("walk", { on: false });
 }
 
 const tmpV = new THREE.Vector3(), tmpQ = new THREE.Quaternion();
@@ -503,6 +515,41 @@ const walkInfo = () => walkNow
 // desktop: HTML Step in / Step out
 document.getElementById("btn-walk").onclick = () => (walking ? stopWalk() : startWalk());
 
+// ---------- in-headset guidance (a small card that floats below your line of sight) ----------
+const hintCanvas = document.createElement("canvas"); hintCanvas.width = 1024; hintCanvas.height = 256;
+const hintTex = new THREE.CanvasTexture(hintCanvas); hintTex.colorSpace = THREE.SRGBColorSpace;
+const hint = new THREE.Mesh(new THREE.PlaneGeometry(0.36, 0.09),
+  new THREE.MeshBasicMaterial({ map: hintTex, transparent: true, depthTest: false, depthWrite: false, fog: false }));
+hint.renderOrder = 11; hint.visible = false; scene.add(hint);
+const HINTS = {
+  place: ["STEP 1 · PLACE", "Look at a table until a white ring appears, then pinch (or pull the trigger)."],
+  explore: ["STEP 2 · EXPLORE", "Pinch & drag to move · two hands to scale · use the panel to rotate, change height or layer."],
+  walk: ["STEP 3 · WALK", "You are on Mars at full size. The visor shows your margin. Pause, speed or Step out at waist height."],
+};
+let hintUntil = 0;
+function showHint(key, ms = 9000) {
+  const [title, body] = HINTS[key]; const g = hintCanvas.getContext("2d");
+  g.clearRect(0, 0, 1024, 256);
+  g.fillStyle = "rgba(10,16,24,0.82)"; g.strokeStyle = "#ff8a4c"; g.lineWidth = 4;
+  g.beginPath(); g.roundRect(6, 6, 1012, 244, 28); g.fill(); g.stroke();
+  g.fillStyle = "#ff8a4c"; g.font = "700 40px system-ui, sans-serif"; g.fillText(title, 40, 70);
+  g.fillStyle = "#ffffff"; g.font = "36px system-ui, sans-serif";
+  const words = body.split(" "); let line = "", y = 135;
+  for (const w of words) { if (g.measureText(line + w).width > 940) { g.fillText(line, 40, y); line = ""; y += 48; } line += w + " "; }
+  g.fillText(line, 40, y);
+  hintTex.needsUpdate = true; hint.visible = renderer.xr.isPresenting; hint.userData.init = false;
+  hintUntil = key === "place" ? Infinity : performance.now() + ms;
+}
+function updateHint(now) {
+  if (!hint.visible) return;
+  if (now > hintUntil || (placed && hintUntil === Infinity)) { hint.visible = false; return; }
+  const cam = renderer.xr.getCamera(); const pos = new THREE.Vector3(), q = new THREE.Quaternion();
+  cam.getWorldPosition(pos); cam.getWorldQuaternion(q);
+  hint.quaternion.slerp(q, hint.userData.init ? 0.08 : 1);
+  hint.position.copy(pos).add(new THREE.Vector3(0, -0.16, -0.7).applyQuaternion(hint.quaternion));
+  hint.userData.init = true;
+}
+
 // ---------- loop ----------
 let frames = 0, t0 = performance.now();
 renderer.setAnimationLoop((time, frame) => {
@@ -519,8 +566,10 @@ renderer.setAnimationLoop((time, frame) => {
       if (!reticle.visible && now - sessionStart > 5000) placeInFront();   // fallback: 0.6 m in front
     } else if (!placed && !hitSource) placeInFront();
     updateHands();
+    updateHint(now);
   } else orbit.update();
   if (walking) updateWalk(now);
+  panel.visible = renderer.xr.isPresenting && !walking;   // in-world panel is for the headset; the page has its own toolbar
   renderer.render(scene, camera);
 });
 
