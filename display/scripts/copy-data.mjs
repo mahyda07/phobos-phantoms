@@ -52,6 +52,7 @@ if (set === "samples") {
   firstOf("results.md", ["model/out/results.md", "model/results.md", "results.md"]);
   // Stops: Ramish's grid copy (with row/col) wins; until it exists use Mahida's science/stops.csv (lat/lon only).
   if (!copied.includes("stops.csv")) firstOf("stops.csv", ["science/stops.csv"]);
+  firstOf("conditions.csv", ["terrain/out/conditions.csv", "science/conditions.csv"]);
   console.log(`data set: REAL from terrain/out/`);
 }
 

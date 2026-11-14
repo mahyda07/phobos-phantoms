@@ -6,12 +6,19 @@ import "leaflet/dist/leaflet.css";
 import "./style.css";
 import { loadFrame } from "./frame.js";
 import { drawRoute, checkRoute, routeKind } from "./route.js";
-import { renderNoRoute, renderRouteSummary, renderReadout, renderWindow } from "./panel.js";
-import { renderStopCards, highlightStopCard, stopsFromCsv } from "./stop-cards.js";
+import { renderNoRoute, renderRouteSummary, renderReadout, renderWindow, renderHud, renderConditions } from "./panel.js";
+import { renderStopCards, highlightStopCard, stopsFromCsv, parseCsv } from "./stop-cards.js";
 import stopPhotos from "./stop-photos.json";
 import "./stop-cards.css";
 import { renderProofPanel, initProofToggle, parseWaypointsCsv } from "./proof.js";
 import { initPlannerControl } from "./planner.js";
+import { initMovingMap } from "./moving-map.js";
+import "./moving-map.css";
+import { renderSources, initLegendControl } from "./sources.js";
+import "./sources.css";
+import { renderProfile } from "./profile.js";
+import "./profile.css";
+import "./responsive.css"; // keep last: phone/tablet overrides
 
 const DATA = "data/";
 const OVERLAY_OPACITY = 0.6;
@@ -96,6 +103,7 @@ async function main() {
 
   // Overlays: off by default, pixelated, only listed if the file is really there.
   const overlays = {};
+  const rasterInfo = {}; // { [displayName]: { id, layer } } for the legend control
   const rasterOverlays = [
     ["slope", "Slope"], ["rough", "Roughness"], ["dem", "Elevation"],
     ["hazard", "Hazard"], ["science", "Science"],
@@ -107,6 +115,7 @@ async function main() {
     overlays[name] = L.imageOverlay(DATA + id + ".png", bounds, {
       opacity: OVERLAY_OPACITY, className: "data-layer", attribution: attributionFor(manifest, id),
     });
+    rasterInfo[name] = { id, layer: overlays[name] };
   });
 
   // Perseverance's real path (local metres [x, y] -> Leaflet [lat, lng]).
@@ -156,11 +165,18 @@ async function main() {
   const slider = document.getElementById("point-slider");
   let view = null;
   let current = null;
+  let routeLL = [];   // current route in Leaflet coordinates (for the moving-map control)
+  let mm = null;      // moving-map control: play along the route, follow, distance rings
+  let profile = null; // elevation profile chart in the side panel
   const showPoint = (i) => {
     if (!view) return;
     slider.value = i;
     view.setPoint(i);
-    renderReadout(current, i, view.stops.find((s) => s.vertex >= i) || null);
+    mm?.setIndex(i);
+    profile?.setPoint(i);
+    const next = view.stops.find((s) => s.vertex >= i) || null;
+    renderReadout(current, i, next);
+    renderHud(current, i, next);
   };
   slider.addEventListener("input", () => showPoint(Number(slider.value)));
   const showStops = (stops, onSelect) => renderStopCards(stopsEl, stops, photos, { onSelect });
@@ -170,6 +186,8 @@ async function main() {
     current = route;
     const onStop = (id) => { highlightStopCard(stopsEl, id); view?.focusStop(id); };
     view = drawRoute(map, f, route, { onPoint: showPoint, onStop });
+    routeLL = route.geometry.coordinates.map(([x, y]) => f.localToLeaflet(x, y));
+    mm?.setPointCount(routeLL.length);
     layersControl.addOverlay(view.layer, "Planned route");
     if (csvStopLayer) csvStopLayer.remove(); // the route's own stop pins replace the stops.csv pins
     const kind = routeKind(route);
@@ -177,6 +195,9 @@ async function main() {
     slider.max = route.geometry.coordinates.length - 1;
     renderRouteSummary(route, kind, view.maxMargin);
     showStops(view.stops.length ? view.stops : csvStops, onStop);
+    const profileEl = document.getElementById("profile");
+    profile = renderProfile(profileEl, route, { stops: view.stops, onPoint: showPoint });
+    profileEl.hidden = false;
     showPoint(0);
     setupProof(route, view.layer);
   };
@@ -185,6 +206,9 @@ async function main() {
   const savedError = saved ? checkRoute(saved, f) : null;
   const noRoute = (msg) => {
     renderNoRoute(msg);
+    renderHud(null);
+    profile = null;
+    document.getElementById("profile").hidden = true;
     csvStopLayer?.addTo(map);
     showStops(csvStops, (id) => { highlightStopCard(stopsEl, id); const m = csvStopMarkers[id]; if (m) map.panTo(m.getLatLng()); });
     setupProof(null, null);
@@ -209,7 +233,25 @@ async function main() {
     },
   });
 
+  // Moving map (created after the planner so it sits under it): only useful when a route is drawn.
+  mm = initMovingMap(map, f, { L, getPointLatLng: (i) => routeLL[i], pointCount: routeLL.length, onIndex: showPoint });
+  if (routeLL.length) mm.setIndex(0);
+
+  // Legends for the raster overlays that are switched on, and the data sources list.
+  const hazardMeta = await getJson("hazard.meta.json");
+  initLegendControl(map, { manifest: isSample ? null : manifest, hazardMeta, overlays: rasterInfo });
+  renderSources(document.getElementById("sources"), isSample ? null : manifest, {
+    extra: isSample ? [] : [{ name: "Perseverance raw images (stop photos)", source: "NASA/JPL-Caltech",
+      licence: "NASA media guidelines", citation: "https://mars.nasa.gov/mars2020/multimedia/raw-images/" }],
+  });
+
   renderWindow(await getJson("window.json"));
+  // Hourly conditions (Mahida's conditions.csv): temperature, pressure, dust, radiation, exactly as in the file.
+  const condText = await getText("conditions.csv");
+  if (condText) {
+    const [head, ...rows] = parseCsv(condText);
+    renderConditions(document.getElementById("window"), rows.map((r) => Object.fromEntries(head.map((h, k) => [h, r[k]]))));
+  }
   addScaleBar(map, f.cell);
 
   // Re-fit once layout has settled (first-load mis-zoom fix).

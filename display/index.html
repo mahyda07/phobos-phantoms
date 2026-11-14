@@ -13,6 +13,7 @@
       <div class="sub" id="grid-size"></div>
     </header>
     <div id="sample-badge" hidden>SAMPLE DATA — synthetic test files, not NASA data</div>
+    <div id="hud" hidden aria-live="off"></div>
     <div id="error" hidden></div>
     <aside id="panel">
       <p id="route-source" class="route-source" hidden></p>
@@ -22,6 +23,7 @@
         <input id="point-slider" type="range" min="0" max="0" value="0" aria-label="Move along the route" />
         <div id="readout"></div>
       </section>
+      <section id="profile" hidden></section>
       <section id="window"></section>
       <section>
         <h2>Science stops</h2>
@@ -32,6 +34,7 @@
         <h2>Assumptions</h2>
         <ul id="assumptions"></ul>
       </section>
+      <section id="sources"></section>
     </aside>
     <script type="module" src="./src/main.js"></script>
   </body>

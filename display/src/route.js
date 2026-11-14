@@ -70,10 +70,15 @@ export function drawRoute(map, f, route, { onPoint, onStop }) {
     .bindTooltip("Start / return point").addTo(group);
 
   // Hazard markers: the single highest AI-hazard point and the steepest point, read from per_vertex.
-  const markers = [
-    { i: argmax(pv.hazard), text: (i) => `Highest AI hazard estimate on route: ${pv.hazard[i]} (model, not validated)` },
-    { i: argmax(pv.slope_deg), text: (i) => `Steepest point on route: ${pv.slope_deg[i]}°` },
-  ];
+  // A pin only means something if the values differ: an all-zero hazard (e.g. the stand-in planner, AI layer
+  // not ready) would otherwise put a misleading "highest hazard" pin on the first point.
+  const markers = [];
+  if (Math.max(...pv.hazard) > 0) {
+    markers.push({ i: argmax(pv.hazard), text: (i) => `Highest AI hazard estimate on route: ${pv.hazard[i]} (model, not validated)` });
+  }
+  if (Math.max(...pv.slope_deg) > 0) {
+    markers.push({ i: argmax(pv.slope_deg), text: (i) => `Steepest point on route: ${pv.slope_deg[i]}°` });
+  }
   for (const m of markers) {
     L.marker(ll[m.i], { icon: L.divIcon({ className: "hazard-pin", html: "!", iconSize: [20, 20] }), keyboard: false })
       .bindTooltip(m.text(m.i)).on("mouseover click", () => onPoint(m.i)).addTo(group);
@@ -92,16 +97,29 @@ export function drawRoute(map, f, route, { onPoint, onStop }) {
     m.addTo(group);
   }
 
-  // "You are here" marker that the slider / hover moves along the route.
-  const here = L.circleMarker(ll[0], { radius: 9, color: "#fff", weight: 3, fillColor: "#111", fillOpacity: 1, interactive: false });
+  // "You are here" arrow that the slider / hover / Play moves along the route. It points along the route
+  // (direction from this point to the next one; geometry only). Map is north-up: lat grows north, lng east.
+  const here = L.marker(ll[0], {
+    icon: L.divIcon({ className: "here-arrow", iconSize: [34, 34],
+      html: '<svg viewBox="0 0 34 34" width="34" height="34"><circle cx="17" cy="17" r="15" fill="#111" stroke="#fff" stroke-width="2.5"/><path d="M17 6 L25 25 L17 20.5 L9 25 Z" fill="#fff"/></svg>' }),
+    interactive: false, keyboard: false, zIndexOffset: 1000,
+  });
   here.addTo(group);
+  const headingDeg = (i) => {
+    const a = ll[Math.min(i, ll.length - 2)], b = ll[Math.min(i + 1, ll.length - 1)];
+    return (Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI; // 0 = north, 90 = east
+  };
+  const turnArrow = (i) => {
+    const svg = here.getElement()?.querySelector("svg");
+    if (svg && ll.length > 1) svg.style.transform = `rotate(${headingDeg(i)}deg)`;
+  };
 
   group.addTo(map);
   return {
     layer: group,
     stops,
     maxMargin,
-    setPoint(i) { here.setLatLng(ll[i]); here.bringToFront(); },
+    setPoint(i) { here.setLatLng(ll[i]); turnArrow(i); },
     focusStop(id) { const m = stopMarkers[id]; if (m) map.panTo(m.getLatLng()); },
   };
 }
