@@ -7,7 +7,7 @@ Reads:
   --rover  folder with NASA M20_traverse.json and M20_waypoints.json
 Writes to terrain/out/ (all .bin = float32 little-endian, row-major from the NW corner, 750 x 750 cells of 2 m):
   grid.json, terrain.meta.json, layers.manifest.json, dem.bin, dem_lod512.bin, dem_lod256.bin, slope.bin, rough.bin,
-  photo.png, dem.png, slope.png, rough.png, rover_path.json, rover_waypoints.csv
+  photo.png, photo_2k.jpg, dem.png, slope.png, rough.png, rover_path.json, rover_waypoints.csv
 Writes to --big (outside git): photo_25cm.tif (full-resolution photo crop for the AI hazard model), dem_2m.tif.
 
 Method (written down so the numbers are reproducible):
@@ -101,6 +101,10 @@ def build_dtm(dtm_path):
 
 
 def build_photo(ortho_src, big_dir, n):
+    local = big_dir / "photo_25cm.tif"
+    if ortho_src == ORTHO_URL and local.exists():
+        log(f"photo: using the copy already on disk ({local}) instead of downloading again")
+        ortho_src = str(local)
     env = HTTP_ENV if ortho_src.startswith("/vsicurl/") else {}
     with rasterio.Env(**env), rasterio.open(ortho_src) as ds:
         win = from_bounds(BOX["xmin"], BOX["ymin"], BOX["xmax"], BOX["ymax"], ds.transform).round_offsets().round_lengths()
@@ -112,8 +116,15 @@ def build_photo(ortho_src, big_dir, n):
         prof.update(driver="GTiff", width=img.shape[1], height=img.shape[0], transform=ds.window_transform(win),
                     compress="deflate", tiled=True, blockxsize=256, blockysize=256)
     big_dir.mkdir(parents=True, exist_ok=True)
-    with rasterio.open(big_dir / "photo_25cm.tif", "w", **prof) as dst:
-        dst.write(img, 1)
+    if pathlib.Path(ortho_src).resolve() != local.resolve():
+        with rasterio.open(local, "w", **prof) as dst:
+            dst.write(img, 1)
+    # 2048 x 2048 headset texture (sharper than the 750 px map image), same contrast stretch, north at the top
+    valid = img[img > 0]
+    lo2, hi2 = np.percentile(valid, [1, 99]) if valid.size else (0, 255)
+    g = np.clip((img.astype("float32") - lo2) / (hi2 - lo2), 0, 1) * 255
+    Image.fromarray(g.astype(np.uint8)).resize((2048, 2048), Image.LANCZOS).save(
+        ROOT / "terrain/out/photo_2k.jpg", quality=88)
     f = img.shape[0] // n
     small = img[: n * f, : n * f].reshape(n, f, n, f).astype("float32").mean(axis=(1, 3))
     lo, hi = np.percentile(small[small > 0], [1, 99]) if (small > 0).any() else (0, 255)
@@ -221,6 +232,9 @@ def main():
          "source": "Max elevation difference in 3x3 window of the 2 m DEM", "licence": lic, "citation": DTM_DOI},
         {"id": "photo", "name": "HiRISE photo", "file": "photo.png", "kind": "texture", "cell_m": CELL,
          "source": "USGS Mars 2020 TRN HiRISE orthomosaic, 25 cm, averaged to 2 m", "licence": lic, "citation": ORTHO_DOI},
+        {"id": "photo_2k", "name": "HiRISE photo, headset texture", "file": "photo_2k.jpg", "kind": "texture",
+         "cell_m": round(n * CELL / 2048, 4), "source": "USGS Mars 2020 TRN HiRISE orthomosaic, 25 cm, resized to 2048 px",
+         "licence": lic, "citation": ORTHO_DOI},
         {"id": "rover", "name": "Perseverance path", "file": "rover_path.json", "kind": "vector",
          "source": "NASA/JPL-Caltech Where is Perseverance? (M20_traverse.json)", "licence": "NASA data, public",
          "citation": "https://science.nasa.gov/mission/mars-2020-perseverance/location-map/"},
