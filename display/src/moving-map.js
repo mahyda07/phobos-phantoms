@@ -57,10 +57,13 @@ export function initMovingMap(map, f, { L, getPointLatLng, pointCount = 0, onInd
   // --- rings -------------------------------------------------------------
   const radii = ringRadii(RING_MAX_M, RING_STEP_M);
   const ringLayer = L.layerGroup();
-  const rings = radii.map((m) => L.circle([0, 0], {
-    radius: metresToMapUnits(m, f), className: "mm-ring", color: "#fff", weight: 1, opacity: 0.35,
-    dashArray: "4 4", fill: false, interactive: false,
-  }).addTo(ringLayer));
+  // Two strokes per ring so it reads on bright and dark ground: a dark casing, then a light dashed line on top.
+  const rings = radii.flatMap((m) => [
+    L.circle([0, 0], { radius: metresToMapUnits(m, f), className: "mm-ring", color: "#000", weight: 4, opacity: 0.7,
+      fill: false, interactive: false }).addTo(ringLayer),
+    L.circle([0, 0], { radius: metresToMapUnits(m, f), className: "mm-ring", color: "#f4f1ea", weight: 1.5, opacity: 0.95,
+      dashArray: "6 4", fill: false, interactive: false }).addTo(ringLayer),
+  ]);
   const labels = radii.map((m) => L.marker([0, 0], {
     icon: L.divIcon({ className: "mm-ring-label", html: ringLabel(m), iconSize: null }),
     interactive: false, keyboard: false,
@@ -157,6 +160,7 @@ export function initMovingMap(map, f, { L, getPointLatLng, pointCount = 0, onInd
   L.DomEvent.on(ringsBtn, "click", onRings);
   map.on("dragstart", onDragStart);
   map.on("zoomend", updateLabelVisibility);
+  map.on("zoomend", followPoint); // a zoom animation ends around the old centre: re-centre on the marker
 
   const Ctl = L.Control.extend({ options: { position: "topleft" }, onAdd: () => root, onRemove: () => {} });
   const control = new Ctl().addTo(map);
@@ -183,6 +187,7 @@ export function initMovingMap(map, f, { L, getPointLatLng, pointCount = 0, onInd
       stop();
       map.off("dragstart", onDragStart);
       map.off("zoomend", updateLabelVisibility);
+      map.off("zoomend", followPoint);
       map.getContainer().classList.remove("mm-labels-hidden");
       L.DomEvent.off(playBtn, "click", onPlay);
       L.DomEvent.off(speedSel, "change", onSpeed);

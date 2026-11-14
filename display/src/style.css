@@ -92,3 +92,26 @@ table.hours th { color: var(--muted); font-weight: 500; }
 }
 
 .route-source { margin: 0 0 6px; padding: 6px 8px; border-radius: 6px; background: #2a2210; border: 1px solid #6b5313; color: #f3d48a; font-size: 12px; }
+
+/* "You are here" arrow */
+.here-arrow { background: none; border: none; }
+.here-arrow svg { display: block; transition: transform 0.15s linear; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.7)); }
+
+/* Heads-up strip over the map: values at the current route point, big and glanceable */
+#hud {
+  position: fixed; z-index: 1000; bottom: 34px; left: calc((100% - var(--panel-w)) / 2); transform: translateX(-50%);
+  display: flex; gap: 6px; align-items: stretch; pointer-events: none;
+  max-width: calc(100% - var(--panel-w) - 300px);
+}
+#hud .h { background: rgba(10, 12, 15, 0.86); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; min-width: 70px; }
+#hud .h .k { display: block; font-size: 11px; color: var(--muted); white-space: nowrap; }
+#hud .h .v { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#hud .h .v small { font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 2px; }
+#hud .h.main .v { font-size: 26px; color: #fff; }
+#hud .h.stop .v { font-size: 16px; }
+#sample-badge:not([hidden]) ~ #hud { bottom: 76px; }
+@media (max-width: 900px) { #hud { display: none; } }
+
+/* Conditions table (conditions.csv) */
+details.conditions summary { cursor: pointer; color: var(--muted); font-size: 12px; margin-top: 8px; }
+details.conditions .src { font-size: 11px; color: var(--muted); margin-top: 6px; }

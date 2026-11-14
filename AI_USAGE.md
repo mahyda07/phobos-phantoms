@@ -20,3 +20,4 @@ AI-generated images or video must carry a visible watermark and must not use or 
 | 2026-11-14 | Kashif | Claude (Anthropic, Claude Code) | Web map route view: route coloured by walk-back margin, stops, hazard pins, side panel, point-by-point readout, time window | display/src/, display/index.html, display/screens/ |
 | 2026-11-14 | Kashif | Claude (Anthropic, Claude Code) | Web map: live planner client (POST /plan, 3 s fallback, local mock planner), stop cards with Perseverance photos, proof view vs rover path, integration | display/ |
 | 2026-11-14 | Kashif | Claude (Anthropic, Claude Code) | Web map polish: data sources panel + layer legends, moving-map controls (play, follow, distance rings), phone/tablet layout, screenshot script, display README | display/ |
+| 2026-11-14 | Kashif | Claude (Anthropic, Claude Code) | Web map for the astronaut: darker distance rings, direction arrow, heads-up strip, hourly conditions from conditions.csv | display/ |

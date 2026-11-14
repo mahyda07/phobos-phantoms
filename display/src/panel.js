@@ -57,9 +57,38 @@ export function renderReadout(route, i, nextStop) {
     <p class="muted">Point ${i + 1} of ${n} · AI hazard is a model estimate, not validated.</p>`;
 }
 
+/** Heads-up strip over the map: the same per_vertex values as the readout, big enough to read at a glance. */
+export function renderHud(route, i, nextStop) {
+  const el = $("hud");
+  if (!route) { el.hidden = true; return; }
+  const pv = route.properties.per_vertex;
+  const h = (k, v, unit = "", cls = "") => `<div class="h ${cls}"><span class="k">${esc(k)}</span><span class="v">${v}<small>${esc(unit)}</small></span></div>`;
+  el.innerHTML =
+    h("Walk-back margin", num(pv.margin_min[i]), " min", "main") +
+    h("Time out", num(pv.t_min[i]), " min") +
+    h("Slope", num(pv.slope_deg[i]), "°") +
+    h("AI hazard", num(pv.hazard[i], 2), "") +
+    h("Next stop", nextStop ? esc(nextStop.id) : "none", "", "stop");
+  el.hidden = false;
+}
+
+/** Typical hourly conditions from conditions.csv (contracts/csv.md). Values exactly as in the file. */
+export function renderConditions(container, rows) {
+  if (!rows?.length) return;
+  const sources = [...new Set(rows.map((r) => r.source).filter(Boolean))];
+  const body = rows.map((r) => `<tr><td>${hhmm(Number(r.ltst_hour))}</td><td>${esc(r.temp_c)} °C</td><td>${esc(r.pressure_pa)} Pa</td><td>${esc(r.dust_tau)}</td><td>${esc(r.radiation_uGy_per_day)}</td></tr>`).join("");
+  container.insertAdjacentHTML("beforeend", `
+    <details class="conditions" open>
+      <summary>Hourly conditions (typical, not a forecast) · conditions.csv</summary>
+      <table class="hours"><thead><tr><th>LTST</th><th>Temp</th><th>Pressure</th><th>Dust τ</th><th>Radiation µGy/day</th></tr></thead><tbody>${body}</tbody></table>
+      ${rows.some((r) => r.estimate === "yes") ? `<p class="muted">Marked as estimates in the file.</p>` : ""}
+      ${sources.map((s) => `<p class="src">${esc(s)}</p>`).join("")}
+    </details>`);
+}
+
 export function renderWindow(win) {
   const el = $("window");
-  if (!win?.eva_window) { el.innerHTML = `<h2>Time window</h2><p class="muted">window.json not available yet.</p>`; return; }
+  if (!win?.eva_window) { el.innerHTML = `<h2>Time window</h2><p class="muted">EVA time window (sun height, start and end time) not available yet: waiting for window.json from the planner team.</p>`; return; }
   const { start_ltst, end_ltst } = win.eva_window;
   const rows = (win.ltst_hours || [])
     .map((h, k) => ({ h, sun: win.sun_elev_deg?.[k], t: win.temp_c?.[k] }))

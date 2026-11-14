@@ -97,16 +97,29 @@ export function drawRoute(map, f, route, { onPoint, onStop }) {
     m.addTo(group);
   }
 
-  // "You are here" marker that the slider / hover moves along the route.
-  const here = L.circleMarker(ll[0], { radius: 9, color: "#fff", weight: 3, fillColor: "#111", fillOpacity: 1, interactive: false });
+  // "You are here" arrow that the slider / hover / Play moves along the route. It points along the route
+  // (direction from this point to the next one; geometry only). Map is north-up: lat grows north, lng east.
+  const here = L.marker(ll[0], {
+    icon: L.divIcon({ className: "here-arrow", iconSize: [34, 34],
+      html: '<svg viewBox="0 0 34 34" width="34" height="34"><circle cx="17" cy="17" r="15" fill="#111" stroke="#fff" stroke-width="2.5"/><path d="M17 6 L25 25 L17 20.5 L9 25 Z" fill="#fff"/></svg>' }),
+    interactive: false, keyboard: false, zIndexOffset: 1000,
+  });
   here.addTo(group);
+  const headingDeg = (i) => {
+    const a = ll[Math.min(i, ll.length - 2)], b = ll[Math.min(i + 1, ll.length - 1)];
+    return (Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI; // 0 = north, 90 = east
+  };
+  const turnArrow = (i) => {
+    const svg = here.getElement()?.querySelector("svg");
+    if (svg && ll.length > 1) svg.style.transform = `rotate(${headingDeg(i)}deg)`;
+  };
 
   group.addTo(map);
   return {
     layer: group,
     stops,
     maxMargin,
-    setPoint(i) { here.setLatLng(ll[i]); here.bringToFront(); },
+    setPoint(i) { here.setLatLng(ll[i]); turnArrow(i); },
     focusStop(id) { const m = stopMarkers[id]; if (m) map.panTo(m.getLatLng()); },
   };
 }

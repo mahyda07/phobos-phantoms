@@ -35,9 +35,11 @@
   transform-origin: 0 0;
   margin: 0 !important;
   white-space: nowrap;
-  font: 10px/1 system-ui, sans-serif;
-  color: var(--muted, #9aa3ad);
-  text-shadow: 0 0 2px #000, 0 0 2px #000;
+  font: 600 11px/1 system-ui, sans-serif;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.78);
+  border-radius: 3px;
+  padding: 2px 4px;
 }
 /* Centre the label horizontally on the ring's north point, just above the line. */
 .mm-ring-label { translate: -50% -110%; }

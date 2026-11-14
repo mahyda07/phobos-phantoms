@@ -6,8 +6,8 @@ import "leaflet/dist/leaflet.css";
 import "./style.css";
 import { loadFrame } from "./frame.js";
 import { drawRoute, checkRoute, routeKind } from "./route.js";
-import { renderNoRoute, renderRouteSummary, renderReadout, renderWindow } from "./panel.js";
-import { renderStopCards, highlightStopCard, stopsFromCsv } from "./stop-cards.js";
+import { renderNoRoute, renderRouteSummary, renderReadout, renderWindow, renderHud, renderConditions } from "./panel.js";
+import { renderStopCards, highlightStopCard, stopsFromCsv, parseCsv } from "./stop-cards.js";
 import stopPhotos from "./stop-photos.json";
 import "./stop-cards.css";
 import { renderProofPanel, initProofToggle, parseWaypointsCsv } from "./proof.js";
@@ -170,7 +170,9 @@ async function main() {
     slider.value = i;
     view.setPoint(i);
     mm?.setIndex(i);
-    renderReadout(current, i, view.stops.find((s) => s.vertex >= i) || null);
+    const next = view.stops.find((s) => s.vertex >= i) || null;
+    renderReadout(current, i, next);
+    renderHud(current, i, next);
   };
   slider.addEventListener("input", () => showPoint(Number(slider.value)));
   const showStops = (stops, onSelect) => renderStopCards(stopsEl, stops, photos, { onSelect });
@@ -197,6 +199,7 @@ async function main() {
   const savedError = saved ? checkRoute(saved, f) : null;
   const noRoute = (msg) => {
     renderNoRoute(msg);
+    renderHud(null);
     csvStopLayer?.addTo(map);
     showStops(csvStops, (id) => { highlightStopCard(stopsEl, id); const m = csvStopMarkers[id]; if (m) map.panTo(m.getLatLng()); });
     setupProof(null, null);
@@ -234,6 +237,12 @@ async function main() {
   });
 
   renderWindow(await getJson("window.json"));
+  // Hourly conditions (Mahida's conditions.csv): temperature, pressure, dust, radiation, exactly as in the file.
+  const condText = await getText("conditions.csv");
+  if (condText) {
+    const [head, ...rows] = parseCsv(condText);
+    renderConditions(document.getElementById("window"), rows.map((r) => Object.fromEntries(head.map((h, k) => [h, r[k]]))));
+  }
   addScaleBar(map, f.cell);
 
   // Re-fit once layout has settled (first-load mis-zoom fix).
