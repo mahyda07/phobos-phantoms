@@ -12,7 +12,7 @@ Only the owner pushes to this folder. Need a change? Ask the owner in the group.
 - **Planned route**: coloured by walk-back margin at each point (`per_vertex.margin_min`), on a continuous red → amber → green ramp (0 to the largest margin on that route). Hazard pins mark hazards on the route. Drag the slider in the panel to read time out, margin, slope, AI hazard and next stop at any point.
 - **Science stops**: cards in the panel with a real Perseverance rover photo per stop. Click a card or a pin to jump between them.
 - **Proof view** (button top left): Perseverance's real path next to the planned route, and comparison numbers from `results.md` once it exists.
-- **Live planner** ("Plan a route", top left): click a start and an end point, pick stops, and the planner sends back a route. If the planner does not answer within 3 s or fails, the saved route stays on screen and the panel says it is the offline demo route.
+- **Live planner** ("Plan a route", top left): click a start and an end point, pick stops, and the planner sends back a route. While it works the box says "Planning… (free server, can take a few seconds)". If the planner does not answer within 10 s or fails, the saved route stays on screen and the panel says it is the offline demo route.
 - **Side panel** (right; under the map on phones and tablets): route summary, point readout, EVA time window, stops, proof, assumptions.
 - **SAMPLE badge**: a red "SAMPLE DATA" badge shows when the grid is synthetic (`SAMPLE` in `grid.json` `projection_wkt` or `source_dtm`) or the route is a sample (`SAMPLE` in `plan_id` or `model_version`). A route whose `model_version` starts with `standin-` gets a yellow "stand-in planner" badge. Rover photos are never shown on sample data.
 
@@ -43,7 +43,7 @@ npm run mock-planner                                        # terminal 1, http:/
 VITE_PLANNER_URL=http://127.0.0.1:8787 npm run dev:samples  # terminal 2
 ```
 
-`node scripts/mock-planner.mjs --delay 4000` tests the 3 s fallback; `--fail` always answers 500.
+`node scripts/mock-planner.mjs --delay 11000` tests the 10 s fallback; `--fail` always answers 500.
 
 ## Tests
 
