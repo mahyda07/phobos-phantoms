@@ -6,14 +6,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install jsonschema pytest
+      - uses: astral-sh/setup-uv@v6
+      - name: Install Python packages (base + dev, exactly as in uv.lock)
+        run: uv sync --locked
       - name: Validate contracts
-        run: python contracts/validate.py
+        run: uv run python contracts/validate.py
       - name: Tests (pass if none yet)
-        run: pytest -q || [ $? -eq 5 ]
+        run: uv run pytest -q || [ $? -eq 5 ]
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
