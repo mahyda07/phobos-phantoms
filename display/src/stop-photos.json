@@ -1,0 +1,75 @@
+{
+  "_note": "One real Perseverance raw image per science stop, picked by display/scripts/find-stop-photos.mjs: stop lat/lon_e -> local metres (frame.js) -> nearest rover waypoint in terrain/out/rover_waypoints.csv -> that sol's images in NASA's public raw-image feed (https://mars.nasa.gov/rss/api/?feed=raw_images&category=mars2020&feedtype=json&sol=N), Navcam terrain view (colour; the upper full-resolution tile of a look 20-40 deg down is preferred because it shows ground to the horizon without the rover deck). Images are hotlinked, not copied. They show terrain near the rover's position that sol, not the exact stop. Credit NASA/JPL-Caltech.",
+  "photos": {
+    "S1": {
+      "stop_id": "S1",
+      "sol": 436,
+      "nearest_waypoint_sol": 436,
+      "nearest_waypoint_distance_m": 32,
+      "image_id": "NLF_0436_0705655818_024ECM_N0243900NCAM03436_01_185J",
+      "camera": "NAVCAM_LEFT",
+      "date_taken": "2022-05-12T19:36:57.115",
+      "image_url": "https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/00436/ids/edr/browse/ncam/NLF_0436_0705655818_024ECM_N0243900NCAM03436_01_185J01_1200.jpg",
+      "full_res_url": "https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/00436/ids/edr/browse/ncam/NLF_0436_0705655818_024ECM_N0243900NCAM03436_01_185J01.png",
+      "page_url": "https://mars.nasa.gov/mars2020/multimedia/raw-images/NLF_0436_0705655818_024ECM_N0243900NCAM03436_01_185J",
+      "credit": "NASA/JPL-Caltech",
+      "note": "Taken on sol 436 near the rover's position ~32 m from this stop; shows the kind of terrain nearby, not the exact stop."
+    },
+    "S2": {
+      "stop_id": "S2",
+      "sol": 716,
+      "nearest_waypoint_sol": 716,
+      "nearest_waypoint_distance_m": 141,
+      "image_id": "NLF_0716_0730509726_897ECM_N0340952NCAM03716_01_195J",
+      "camera": "NAVCAM_LEFT",
+      "date_taken": "2023-02-24T11:31:59.504",
+      "image_url": "https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/00716/ids/edr/browse/ncam/NLF_0716_0730509726_897ECM_N0340952NCAM03716_01_195J01_1200.jpg",
+      "full_res_url": "https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/00716/ids/edr/browse/ncam/NLF_0716_0730509726_897ECM_N0340952NCAM03716_01_195J01.png",
+      "page_url": "https://mars.nasa.gov/mars2020/multimedia/raw-images/NLF_0716_0730509726_897ECM_N0340952NCAM03716_01_195J",
+      "credit": "NASA/JPL-Caltech",
+      "note": "Taken on sol 716 near the rover's position ~141 m from this stop; shows the kind of terrain nearby, not the exact stop."
+    },
+    "S3": {
+      "stop_id": "S3",
+      "sol": 405,
+      "nearest_waypoint_sol": 405,
+      "nearest_waypoint_distance_m": 496,
+      "image_id": "NLF_0405_0702883334_682ECM_N0201422NCAM03404_01_195J",
+      "camera": "NAVCAM_LEFT",
+      "date_taken": "2022-04-10T17:28:29.281",
+      "image_url": "https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/00405/ids/edr/browse/ncam/NLF_0405_0702883334_682ECM_N0201422NCAM03404_01_195J02_1200.jpg",
+      "full_res_url": "https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/00405/ids/edr/browse/ncam/NLF_0405_0702883334_682ECM_N0201422NCAM03404_01_195J02.png",
+      "page_url": "https://mars.nasa.gov/mars2020/multimedia/raw-images/NLF_0405_0702883334_682ECM_N0201422NCAM03404_01_195J",
+      "credit": "NASA/JPL-Caltech",
+      "note": "Taken on sol 405 near the rover's position ~496 m from this stop; shows the kind of terrain nearby, not the exact stop."
+    },
+    "S4": {
+      "stop_id": "S4",
+      "sol": 709,
+      "nearest_waypoint_sol": 709,
+      "nearest_waypoint_distance_m": 262,
+      "image_id": "NLF_0709_0729889968_787ECM_N0332864NCAM03709_01_195J",
+      "camera": "NAVCAM_LEFT",
+      "date_taken": "2023-02-17T07:22:36.187",
+      "image_url": "https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/00709/ids/edr/browse/ncam/NLF_0709_0729889968_787ECM_N0332864NCAM03709_01_195J01_1200.jpg",
+      "full_res_url": "https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/00709/ids/edr/browse/ncam/NLF_0709_0729889968_787ECM_N0332864NCAM03709_01_195J01.png",
+      "page_url": "https://mars.nasa.gov/mars2020/multimedia/raw-images/NLF_0709_0729889968_787ECM_N0332864NCAM03709_01_195J",
+      "credit": "NASA/JPL-Caltech",
+      "note": "Taken on sol 709 near the rover's position ~262 m from this stop; shows the kind of terrain nearby, not the exact stop."
+    },
+    "S5": {
+      "stop_id": "S5",
+      "sol": 715,
+      "nearest_waypoint_sol": 715,
+      "nearest_waypoint_distance_m": 431,
+      "image_id": "NLF_0715_0730421332_606ECM_N0340000NCAM03715_01_195J",
+      "camera": "NAVCAM_LEFT",
+      "date_taken": "2023-02-23T10:58:44.743",
+      "image_url": "https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/00715/ids/edr/browse/ncam/NLF_0715_0730421332_606ECM_N0340000NCAM03715_01_195J04_1200.jpg",
+      "full_res_url": "https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/00715/ids/edr/browse/ncam/NLF_0715_0730421332_606ECM_N0340000NCAM03715_01_195J04.png",
+      "page_url": "https://mars.nasa.gov/mars2020/multimedia/raw-images/NLF_0715_0730421332_606ECM_N0340000NCAM03715_01_195J",
+      "credit": "NASA/JPL-Caltech",
+      "note": "Taken on sol 715 near the rover's position ~431 m from this stop; shows the kind of terrain nearby, not the exact stop."
+    }
+  }
+}

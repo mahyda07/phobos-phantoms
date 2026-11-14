@@ -1,0 +1,23 @@
+{
+  "name": "phobos-display",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "copy-data": "node scripts/copy-data.mjs",
+    "predev": "node scripts/copy-data.mjs",
+    "dev": "vite --host 127.0.0.1 --port 5174 --strictPort",
+    "dev:samples": "node scripts/copy-data.mjs --set samples && vite --host 127.0.0.1 --port 5174 --strictPort",
+    "prebuild": "node scripts/copy-data.mjs",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 5174 --strictPort",
+    "mock-planner": "node scripts/mock-planner.mjs",
+    "test": "node --test src/planner.test.mjs src/stop-cards.test.mjs src/proof.test.mjs"
+  },
+  "dependencies": {
+    "leaflet": "1.9.4"
+  },
+  "devDependencies": {
+    "vite": "8.3.8"
+  }
+}

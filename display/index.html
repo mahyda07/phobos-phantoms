@@ -1,0 +1,38 @@
+<!-- Written with AI assistance (Claude). -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Marswalk planner</title>
+  </head>
+  <body>
+    <div id="map"></div>
+    <header id="header">
+      <div class="title">Phobos Phantoms · Marswalk planner · Jezero western delta</div>
+      <div class="sub" id="grid-size"></div>
+    </header>
+    <div id="sample-badge" hidden>SAMPLE DATA — synthetic test files, not NASA data</div>
+    <div id="error" hidden></div>
+    <aside id="panel">
+      <p id="route-source" class="route-source" hidden></p>
+      <section id="route-summary"><h2>Route</h2><p class="muted">Loading…</p></section>
+      <section id="readout-section" hidden>
+        <h2>At this point on the route</h2>
+        <input id="point-slider" type="range" min="0" max="0" value="0" aria-label="Move along the route" />
+        <div id="readout"></div>
+      </section>
+      <section id="window"></section>
+      <section>
+        <h2>Science stops</h2>
+        <div id="stops"></div>
+      </section>
+      <section id="proof"></section>
+      <section>
+        <h2>Assumptions</h2>
+        <ul id="assumptions"></ul>
+      </section>
+    </aside>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

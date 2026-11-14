@@ -1,0 +1,225 @@
+// Written with AI assistance (Claude).
+// Web map: HiRISE photo + terrain overlays + Perseverance's path on the jezero-local-v1 grid (Leaflet CRS.Simple).
+// Every number shown comes from the files in public/data/ (copied by scripts/copy-data.mjs).
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import "./style.css";
+import { loadFrame } from "./frame.js";
+import { drawRoute, checkRoute, routeKind } from "./route.js";
+import { renderNoRoute, renderRouteSummary, renderReadout, renderWindow } from "./panel.js";
+import { renderStopCards, highlightStopCard, stopsFromCsv } from "./stop-cards.js";
+import stopPhotos from "./stop-photos.json";
+import "./stop-cards.css";
+import { renderProofPanel, initProofToggle, parseWaypointsCsv } from "./proof.js";
+import { initPlannerControl } from "./planner.js";
+
+const DATA = "data/";
+const OVERLAY_OPACITY = 0.6;
+
+// Vite's dev/preview servers answer missing files with index.html (200), so check the content type too.
+async function fileExists(name, typePrefix) {
+  try {
+    const r = await fetch(DATA + name, { method: "HEAD" });
+    return r.ok && (r.headers.get("content-type") || "").startsWith(typePrefix);
+  } catch { return false; }
+}
+async function getJson(name) {
+  try {
+    const r = await fetch(DATA + name);
+    if (!r.ok || !(r.headers.get("content-type") || "").includes("json")) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+// Text files (csv, md). Same index.html-for-missing-files guard as getJson.
+async function getText(name) {
+  try {
+    const r = await fetch(DATA + name);
+    if (!r.ok || (r.headers.get("content-type") || "").includes("html")) return null;
+    return await r.text();
+  } catch { return null; }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+}
+// Attribution for one manifest layer: "<source> (<citation link>)".
+function attributionFor(manifest, id) {
+  const e = manifest?.layers?.find((l) => l.id === id);
+  if (!e) return undefined;
+  const cite = e.citation ? ` (<a href="${escapeHtml(e.citation)}" target="_blank" rel="noopener">source</a>)` : "";
+  return `${escapeHtml(e.name)}: ${escapeHtml(e.source)}${cite}`;
+}
+
+// Scale bar for CRS.Simple: 1 map unit = 1 cell = f.cell metres; at zoom z one unit is 2^z screen pixels.
+function addScaleBar(map, cellM) {
+  const ScaleBar = L.Control.extend({
+    options: { position: "bottomleft", maxWidth: 120 },
+    onAdd() {
+      this._div = L.DomUtil.create("div", "scale-bar");
+      map.on("zoomend", () => this._update());
+      this._update();
+      return this._div;
+    },
+    _update() {
+      const mPerPx = cellM / Math.pow(2, map.getZoom());
+      const maxM = mPerPx * this.options.maxWidth;
+      const p = Math.pow(10, Math.floor(Math.log10(maxM)));
+      const nice = [5, 2, 1].map((k) => k * p).find((v) => v <= maxM);
+      const px = nice / mPerPx;
+      const label = nice >= 1000 ? `${nice / 1000} km` : `${nice} m`;
+      this._div.innerHTML = `${label}<div class="bar" style="width:${Math.round(px)}px"></div>`;
+    },
+  });
+  new ScaleBar().addTo(map);
+}
+
+async function main() {
+  const gridRaw = await fetch(DATA + "grid.json").then((r) => r.json());
+  const f = await loadFrame(DATA + "grid.json");
+  const isSample = /SAMPLE/.test(String(gridRaw.projection_wkt)) || /SAMPLE/.test(String(gridRaw.source_dtm));
+  const manifest = await getJson("layers.manifest.json");
+
+  document.getElementById("grid-size").textContent = `${f.width} × ${f.height} cells · ${f.cell} m`;
+  if (isSample) document.getElementById("sample-badge").hidden = false;
+
+  const map = L.map("map", { crs: L.CRS.Simple, minZoom: -3, maxZoom: 4, zoomSnap: 0.25, attributionControl: true });
+  map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
+  if (isSample || !manifest) map.attributionControl.addAttribution("SAMPLE data — synthetic, not NASA data");
+
+  const bounds = f.leafletBounds();
+  const fit = () => map.fitBounds(bounds, { paddingTopLeft: [0, 70], paddingBottomRight: [0, 10] }); // keep pins clear of the title box
+  fit();
+
+  // Base layer: the HiRISE photo on the grid.
+  L.imageOverlay(DATA + "photo.png", bounds, { attribution: attributionFor(manifest, "photo") }).addTo(map);
+
+  // Overlays: off by default, pixelated, only listed if the file is really there.
+  const overlays = {};
+  const rasterOverlays = [
+    ["slope", "Slope"], ["rough", "Roughness"], ["dem", "Elevation"],
+    ["hazard", "Hazard"], ["science", "Science"],
+  ];
+  const present = await Promise.all(rasterOverlays.map(([id]) => fileExists(id + ".png", "image/")));
+  rasterOverlays.forEach(([id, fallbackName], i) => {
+    if (!present[i]) return;
+    const name = manifest?.layers?.find((l) => l.id === id)?.name || fallbackName;
+    overlays[name] = L.imageOverlay(DATA + id + ".png", bounds, {
+      opacity: OVERLAY_OPACITY, className: "data-layer", attribution: attributionFor(manifest, id),
+    });
+  });
+
+  // Perseverance's real path (local metres [x, y] -> Leaflet [lat, lng]).
+  const rover = await getJson("rover_path.json");
+  let roverLayer = null;
+  if (rover?.features?.length) {
+    const lines = rover.features
+      .filter((ft) => ft.geometry?.type === "LineString")
+      .map((ft) => ft.geometry.coordinates.map(([x, y]) => f.localToLeaflet(x, y)));
+    roverLayer = L.polyline(lines, { color: "#7cc7ff", weight: 3, opacity: 0.95, interactive: false,
+      attribution: attributionFor(manifest, "rover") || "Rover path: NASA/JPL-Caltech" });
+    roverLayer.addTo(map);
+    overlays["Perseverance path (real, NASA/JPL-Caltech)"] = roverLayer;
+  }
+
+  // Science stops from stops.csv (Ramish's grid copy, or Mahida's science/stops.csv until it exists).
+  const stopsCsv = await getText("stops.csv");
+  const csvStops = stopsCsv ? stopsFromCsv(stopsCsv, f).filter((s) => f.inside(s.x, s.y)) : [];
+  const stopsEl = document.getElementById("stops");
+  // Photos were picked for the REAL stops S1–S5; sample stops reuse those ids, so never attach them on sample data.
+  const photos = isSample ? {} : stopPhotos.photos || {};
+  let csvStopLayer = null;
+  const csvStopMarkers = {};
+  if (csvStops.length) {
+    csvStopLayer = L.layerGroup();
+    for (const s of csvStops) {
+      csvStopMarkers[s.id] = L.marker(f.localToLeaflet(s.x, s.y), {
+        icon: L.divIcon({ className: "stop-pin", html: s.id, iconSize: [30, 30] }),
+      }).bindTooltip(s.name).on("click", () => highlightStopCard(stopsEl, s.id)).addTo(csvStopLayer);
+    }
+    overlays["Science stops"] = csvStopLayer;
+  }
+
+  const layersControl = L.control.layers(null, overlays, { collapsed: false, position: "topright" }).addTo(map);
+  const routeSource = document.getElementById("route-source");
+  const resultsMd = await getText("results.md");
+  const wpText = await getText("rover_waypoints.csv");
+  const waypoints = wpText ? parseWaypointsCsv(wpText) : null;
+  let proofToggle = null;
+  const setupProof = (routeOk, layer) => {
+    renderProofPanel(document.getElementById("proof"), { rover, route: routeOk, resultsMd });
+    proofToggle?.destroy();
+    proofToggle = initProofToggle(map, f, { rover, roverLayer, routeLayer: layer, waypoints, onChange: () => {} });
+  };
+
+  // Planned route (route.json): drawn only if it belongs to this grid. Numbers come from route.json only.
+  const slider = document.getElementById("point-slider");
+  let view = null;
+  let current = null;
+  const showPoint = (i) => {
+    if (!view) return;
+    slider.value = i;
+    view.setPoint(i);
+    renderReadout(current, i, view.stops.find((s) => s.vertex >= i) || null);
+  };
+  slider.addEventListener("input", () => showPoint(Number(slider.value)));
+  const showStops = (stops, onSelect) => renderStopCards(stopsEl, stops, photos, { onSelect });
+
+  const showRoute = (route) => {
+    if (view) { layersControl.removeLayer(view.layer); view.layer.remove(); view = null; }
+    current = route;
+    const onStop = (id) => { highlightStopCard(stopsEl, id); view?.focusStop(id); };
+    view = drawRoute(map, f, route, { onPoint: showPoint, onStop });
+    layersControl.addOverlay(view.layer, "Planned route");
+    if (csvStopLayer) csvStopLayer.remove(); // the route's own stop pins replace the stops.csv pins
+    const kind = routeKind(route);
+    if (kind === "sample") document.getElementById("sample-badge").hidden = false;
+    slider.max = route.geometry.coordinates.length - 1;
+    renderRouteSummary(route, kind, view.maxMargin);
+    showStops(view.stops.length ? view.stops : csvStops, onStop);
+    showPoint(0);
+    setupProof(route, view.layer);
+  };
+
+  const saved = await getJson("route.json");
+  const savedError = saved ? checkRoute(saved, f) : null;
+  const noRoute = (msg) => {
+    renderNoRoute(msg);
+    csvStopLayer?.addTo(map);
+    showStops(csvStops, (id) => { highlightStopCard(stopsEl, id); const m = csvStopMarkers[id]; if (m) map.panTo(m.getLatLng()); });
+    setupProof(null, null);
+  };
+  if (saved && !savedError) showRoute(saved);
+  else noRoute(saved ? "Route not drawn: " + savedError
+    : "No planned route yet. Showing the terrain, the science stops and Perseverance's real path until the planner's route.json arrives.");
+
+  // Live planner (POST /plan). On failure the saved route (if any) stays: it is the offline demo route.
+  initPlannerControl(map, f, {
+    stops: (csvStops.length ? csvStops : saved?.properties?.stops || []).map((s) => ({ id: s.id, name: s.name })),
+    onRoute: (route, { source, reason }) => {
+      if (source === "planner" && route) {
+        showRoute(route);
+        routeSource.textContent = "Route from the live planner.";
+      } else {
+        routeSource.textContent = saved && !savedError
+          ? `Planner unavailable (${reason}) — showing the saved offline demo route.`
+          : `Planner unavailable (${reason}) — no saved route to fall back to yet.`;
+      }
+      routeSource.hidden = false;
+    },
+  });
+
+  renderWindow(await getJson("window.json"));
+  addScaleBar(map, f.cell);
+
+  // Re-fit once layout has settled (first-load mis-zoom fix).
+  requestAnimationFrame(() => { map.invalidateSize(); fit(); });
+  window.addEventListener("resize", () => map.invalidateSize());
+}
+
+main().catch((err) => {
+  console.error(err);
+  const el = document.getElementById("error");
+  el.textContent = "Could not load map data: " + err.message + " (run npm run copy-data)";
+  el.hidden = false;
+});

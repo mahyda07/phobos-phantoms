@@ -63,6 +63,26 @@
       "source": "NASA/JPL-Caltech Where is Perseverance? (M20_traverse.json)",
       "licence": "NASA data, public",
       "citation": "https://science.nasa.gov/mission/mars-2020-perseverance/location-map/"
+    },
+    {
+      "id": "science",
+      "name": "Science value (relative mineral signal)",
+      "file": "science.bin",
+      "kind": "raster",
+      "units": "0-1 relative",
+      "cell_m": 2,
+      "source": "CRISM FRT000047A3 MTRDR browse products (carbonate, clay, olivine), ~18 m, nearest-neighbour to 2 m; relative signal, not amounts",
+      "licence": "NASA PDS, public",
+      "citation": "https://ode.rsl.wustl.edu/mars (product FRT000047A3)"
+    },
+    {
+      "id": "stops",
+      "name": "Science stops",
+      "file": "stops.csv",
+      "kind": "vector",
+      "source": "Mahida, from CRISM FRT000047A3 (science/code/make_stops.py)",
+      "licence": "NASA PDS, public",
+      "citation": "science/stops.csv"
     }
   ]
 }

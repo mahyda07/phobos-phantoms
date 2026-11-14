@@ -1,0 +1,25 @@
+/* Written with AI assistance (Claude). */
+/* Science stop cards (stop-cards.js). Dark theme; uses --line, --muted, --accent, --bg from style.css with fallbacks. */
+.sc-card {
+  border: 1px solid var(--line, #2a3038); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px;
+  cursor: pointer; background: var(--bg, #0d0f12); outline: none; transition: border-color 0.15s;
+}
+.sc-card:hover, .sc-card:focus-visible, .sc-card.active { border-color: var(--accent, #e2763d); }
+.sc-card.active { box-shadow: 0 0 0 1px var(--accent, #e2763d) inset; }
+.sc-card h3 { margin: 0 0 6px; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+.sc-card p { margin: 0 0 4px; font-size: 13px; }
+.sc-card a { color: var(--accent, #e2763d); text-decoration: none; }
+.sc-card a:hover { text-decoration: underline; }
+
+.sc-card .stop-photo { margin: 0 0 6px; }
+.sc-card .stop-photo img {
+  display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 4px;
+  background: #1a1e24; border: 1px solid var(--line, #2a3038);
+}
+.sc-card .stop-photo figcaption { font-size: 11px; color: var(--muted, #9aa3ad); margin-top: 3px; line-height: 1.35; }
+.sc-card .stop-photo figcaption a { color: var(--muted, #9aa3ad); }
+.sc-card .stop-photo-note { display: block; font-size: 11px; color: var(--muted, #9aa3ad); opacity: 0.85; }
+.sc-card .stop-nophoto { font-size: 11px; color: var(--muted, #9aa3ad); font-style: italic; }
+.sc-card .stop-signal, .sc-card .stop-source { font-size: 12px; color: var(--muted, #9aa3ad); }
+.sc-card .stop-signal strong { color: var(--accent, #e2763d); font-variant-numeric: tabular-nums; }
+.sc-card .stop-source { word-break: break-word; }

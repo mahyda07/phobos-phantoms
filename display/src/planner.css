@@ -1,0 +1,48 @@
+/* Written with AI assistance (Claude). */
+/* "Plan a route" control (planner.js). Colours follow style.css tokens; fallbacks only if those are missing. */
+.planner-control {
+  background: var(--panel, rgba(16, 19, 24, 0.88));
+  color: var(--text, #e6e8eb);
+  border: 1px solid var(--line, #2a3038);
+  border-radius: 6px;
+  padding: 8px 10px;
+  width: 210px;
+  box-sizing: border-box;
+  font: 13px/1.4 system-ui, sans-serif;
+}
+.planner-control button {
+  font: inherit;
+  color: var(--text, #e6e8eb);
+  background: #1a1f26;
+  border: 1px solid var(--line, #2a3038);
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.planner-control button:hover { background: #1f242c; }
+.planner-control button:focus-visible,
+.planner-control input:focus-visible { outline: 2px solid var(--accent, #e2763d); outline-offset: 2px; }
+.planner-toggle { width: 100%; font-weight: 600; }
+.planner-toggle.active { background: var(--accent, #e2763d); border-color: var(--accent, #e2763d); color: #111; }
+.planner-options { border: 1px solid var(--line, #2a3038); border-radius: 4px; margin: 8px 0 6px; padding: 4px 8px 6px; }
+.planner-options legend { color: var(--muted, #9aa3ad); padding: 0 4px; font-size: 12px; }
+.planner-check { display: block; cursor: pointer; padding: 2px 0; }
+.planner-check input { accent-color: var(--accent, #e2763d); margin: 0 4px 0 0; vertical-align: -2px; }
+.planner-muted { color: var(--muted, #9aa3ad); margin: 2px 0; font-size: 12px; }
+.planner-status { margin: 6px 0; min-height: 1.4em; color: var(--muted, #9aa3ad); }
+.planner-status:empty { display: none; }
+.planner-clear { width: 100%; }
+.leaflet-container.planner-picking { cursor: crosshair; }
+.planner-pin {
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid #fff; border-radius: 50%;
+  color: #fff; font: 700 11px/1 system-ui, sans-serif;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5);
+}
+.planner-pin.planner-start { background: #2e9e4f; }
+.planner-pin.planner-end { background: #d7302a; }
+/* Compact until "Plan a route" is pressed (status line stays visible after a result). */
+.planner-control:not(.expanded) .planner-options,
+.planner-control:not(.expanded) .planner-hazard,
+.planner-control:not(.expanded) .planner-clear { display: none; }
+.planner-control:not(.expanded) .planner-status { margin-bottom: 0; }
