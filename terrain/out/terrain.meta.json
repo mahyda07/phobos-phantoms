@@ -1,0 +1,39 @@
+{
+  "frame": "jezero-local-v1",
+  "width": 750,
+  "height": 750,
+  "cell_m": 2.0,
+  "origin_eqc": [
+    4587712.0,
+    1094954.0
+  ],
+  "z_ref": -2561.0,
+  "z_min": -2560.0317993164062,
+  "z_max": -2460.8798828125,
+  "nodata": null,
+  "dtype": "float32-le",
+  "file": "dem.bin",
+  "lod": [
+    {
+      "level": 0,
+      "width": 750,
+      "height": 750,
+      "cell_m": 2.0,
+      "file": "dem.bin"
+    },
+    {
+      "level": 1,
+      "width": 512,
+      "height": 512,
+      "cell_m": 2.9296875,
+      "file": "dem_lod512.bin"
+    },
+    {
+      "level": 2,
+      "width": 256,
+      "height": 256,
+      "cell_m": 5.859375,
+      "file": "dem_lod256.bin"
+    }
+  ]
+}
