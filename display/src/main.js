@@ -18,6 +18,8 @@ import { renderSources, initLegendControl } from "./sources.js";
 import "./sources.css";
 import { renderProfile } from "./profile.js";
 import "./profile.css";
+import "./theme.css"; // Marswalk look (matches the headset page)
+import { initWelcome } from "./welcome.js";
 import "./responsive.css"; // keep last: phone/tablet overrides
 
 const DATA = "data/";
@@ -259,6 +261,7 @@ async function main() {
   window.addEventListener("resize", () => map.invalidateSize());
 }
 
+initWelcome();
 main().catch((err) => {
   console.error(err);
   const el = document.getElementById("error");
