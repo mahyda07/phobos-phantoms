@@ -14,6 +14,11 @@ jobs:
         run: python contracts/validate.py
       - name: Tests (pass if none yet)
         run: pytest -q || [ $? -eq 5 ]
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: JS tests (frame helpers)
+        run: node --test pipeline/frame.test.mjs
       - name: No files over 50 MB
         run: |
           big=$(find . -path ./.git -prune -o -type f -size +50M -print)

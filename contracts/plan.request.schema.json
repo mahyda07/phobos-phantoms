@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "POST /plan request body (display/headset -> planner service). The reply is a route.json.",
+  "type": "object",
+  "required": ["frame", "start", "end", "stops"],
+  "properties": {
+    "frame": { "const": "jezero-local-v1" },
+    "start": {
+      "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2,
+      "description": "[x, y] in local metres: x east of the NW corner, y north (negative going south)"
+    },
+    "end": {
+      "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2,
+      "description": "[x, y] in local metres, same frame as start"
+    },
+    "stops": {
+      "type": "array", "items": { "type": "string" }, "uniqueItems": true,
+      "description": "Stop ids from stops.csv to visit (planner chooses the order). Empty list = direct route"
+    },
+    "use_hazard": { "type": "boolean", "default": true, "description": "Include the AI hazard term in the cost" }
+  },
+  "additionalProperties": false
+}
