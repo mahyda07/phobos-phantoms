@@ -12,7 +12,7 @@ import { renderStopCards, highlightStopCard, stopsFromCsv, parseCsv } from "./st
 import stopPhotos from "./stop-photos.json";
 import "./stop-cards.css";
 import { renderProofPanel, initProofToggle, parseWaypointsCsv } from "./proof.js";
-import { initPlannerControl } from "./planner.js";
+import { initPlannerControl, buildPlanRequest, requestPlan } from "./planner.js";
 import { initMovingMap } from "./moving-map.js";
 import "./moving-map.css";
 import { renderSources, initLegendControl } from "./sources.js";
@@ -31,6 +31,8 @@ import { initExport } from "./export.js";
 import "./export.css";
 import { initBriefing } from "./briefing.js";
 import "./briefing.css";
+import { initShare, readInitialState } from "./share.js";
+import "./share.css";
 import { initA11y } from "./a11y.js";
 import "./a11y.css"; // after theme.css: focus rings, contrast fixes
 import "./responsive.css"; // keep last: phone/tablet overrides
@@ -185,6 +187,7 @@ async function main() {
   const slider = document.getElementById("point-slider");
   let view = null;
   let current = null;
+  let lastPlanRequest = null; // set only while the drawn route came from the live planner (for share links)
   let exporter = null; // route downloads (created further down, refreshed whenever the route changes)
   const compare = initCompare(map, { L, f, container: document.getElementById("compare") }); // previous vs new planner route
   let routeLL = [];   // current route in Leaflet coordinates (for the moving-map control)
@@ -237,6 +240,7 @@ async function main() {
     showStops(csvStops, (id) => { highlightStopCard(stopsEl, id); const m = csvStopMarkers[id]; if (m) map.panTo(m.getLatLng()); });
     setupProof(null, null);
     current = null;
+    lastPlanRequest = null;
     compare.clear();
     exporter?.refresh();
   };
@@ -245,20 +249,22 @@ async function main() {
     : "No planned route yet. Showing the terrain, the science stops and Perseverance's real path until the planner's route.json arrives.");
 
   // Live planner (POST /plan). On failure the saved route (if any) stays: it is the offline demo route.
+  const onPlannerRoute = (route, { source, reason, request }) => {
+    if (source === "planner" && route) {
+      if (current) compare.setRoutes(current, route); // keep the previous route as a dashed line + side-by-side numbers
+      showRoute(route);
+      lastPlanRequest = request || null;
+      routeSource.textContent = "Route from the live planner.";
+    } else {
+      routeSource.textContent = saved && !savedError
+        ? `Planner unavailable (${reason}) — showing the saved offline demo route.`
+        : `Planner unavailable (${reason}) — no saved route to fall back to yet.`;
+    }
+    routeSource.hidden = false;
+  };
   initPlannerControl(map, f, {
     stops: (csvStops.length ? csvStops : saved?.properties?.stops || []).map((s) => ({ id: s.id, name: s.name })),
-    onRoute: (route, { source, reason }) => {
-      if (source === "planner" && route) {
-        if (current) compare.setRoutes(current, route); // keep the previous route as a dashed line + side-by-side numbers
-        showRoute(route);
-        routeSource.textContent = "Route from the live planner.";
-      } else {
-        routeSource.textContent = saved && !savedError
-          ? `Planner unavailable (${reason}) — showing the saved offline demo route.`
-          : `Planner unavailable (${reason}) — no saved route to fall back to yet.`;
-      }
-      routeSource.hidden = false;
-    },
+    onRoute: onPlannerRoute,
   });
 
   // Moving map (created after the planner so it sits under it): only useful when a route is drawn.
@@ -322,7 +328,70 @@ async function main() {
   addScaleBar(map, f.cell);
 
   // Re-fit once layout has settled (first-load mis-zoom fix).
-  requestAnimationFrame(() => { map.invalidateSize(); fit(); });
+  // Shareable link: "Copy link to this view" stores the view in the URL hash (#p=…&z=…); opening such a link restores it.
+  const layerById = () => {
+    const m = {};
+    for (const { id, layer } of Object.values(rasterInfo)) m[id] = layer;
+    if (roverLayer) m.rover = roverLayer;
+    if (csvStopLayer) m.stops = csvStopLayer;
+    if (view) m.route = view.layer;
+    return m;
+  };
+  const proofBtn = () => document.querySelector(".proof-toggle button");
+  const getState = () => {
+    const c = map.getCenter();
+    const st = {
+      zoom: map.getZoom(), center: [c.lat, c.lng],
+      layers: Object.entries(layerById()).filter(([, l]) => map.hasLayer(l)).map(([id]) => id),
+      proof: proofBtn()?.getAttribute("aria-pressed") === "true",
+    };
+    if (view) st.point = Number(slider.value);
+    if (lastPlanRequest) Object.assign(st, { start: lastPlanRequest.start, end: lastPlanRequest.end,
+      stops: lastPlanRequest.stops, useHazard: lastPlanRequest.use_hazard });
+    return st;
+  };
+  const replan = async ({ start, end, stops = [], useHazard = true }) => {
+    let body;
+    try { body = buildPlanRequest({ start, end, stops, useHazard }); } catch { return; }
+    if (!f.inside(start[0], start[1]) || !f.inside(end[0], end[1])) return;
+    routeSource.textContent = "Planning the route from the shared link… (free server, can take a few seconds)";
+    routeSource.hidden = false;
+    const res = await requestPlan(body);
+    const err = res.ok ? checkRoute(res.route, f) : "fail";
+    if (!err) onPlannerRoute(res.route, { source: "planner", request: body });
+    else onPlannerRoute(null, { source: "fallback", reason: res.ok ? "bad-reply" : res.reason });
+  };
+  const applyState = async (st) => {
+    if (st.start && st.end) await replan(st); // first: showRoute resets the point, proof and route overlay
+    const byId = layerById();
+    if (st.layers) for (const [id, layer] of Object.entries(byId)) {
+      const on = st.layers.includes(id);
+      if (on && !map.hasLayer(layer)) map.addLayer(layer);
+      if (!on && map.hasLayer(layer)) map.removeLayer(layer);
+    }
+    if (st.proof !== undefined) {
+      const b = proofBtn();
+      if (b && (b.getAttribute("aria-pressed") === "true") !== st.proof) b.click();
+    }
+    if (st.zoom !== undefined || st.center) {
+      const z = Math.min(map.getMaxZoom(), Math.max(map.getMinZoom(), st.zoom ?? map.getZoom()));
+      map.setView(st.center || map.getCenter(), z, { animate: false });
+    }
+    if (view && st.point !== undefined) showPoint(Math.min(st.point, Number(slider.max)));
+  };
+  initShare(map, { getState, applyState, container: document.getElementById("briefing-tools") });
+
+  // After layout: next animation frame, or 250 ms if the tab is in the background (browsers pause frames there).
+  let laidOut = false;
+  const afterLayout = () => {
+    if (laidOut) return;
+    laidOut = true;
+    map.invalidateSize(); fit();
+    const init = readInitialState(); // after fit(), so a shared view's zoom/centre are not overwritten
+    if (init) applyState(init).catch((e) => console.warn("Share link:", e));
+  };
+  requestAnimationFrame(afterLayout);
+  setTimeout(afterLayout, 250);
   window.addEventListener("resize", () => map.invalidateSize());
 }
 

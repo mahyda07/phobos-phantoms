@@ -166,7 +166,7 @@ export function initPlannerControl(map, f, { stops = [], onRoute = () => {}, onS
       if (err) { console.warn("Planner reply not usable on this grid:", err); res = { ok: false, reason: "bad-reply" }; }
     }
     setPhase("idle");
-    if (res.ok) { setStatus(STATUS.done); onRoute(res.route, { source: "planner" }); }
+    if (res.ok) { setStatus(STATUS.done); onRoute(res.route, { source: "planner", request: body }); }
     else { setStatus(STATUS.fallback(res.reason)); onRoute(null, { source: "fallback", reason: res.reason }); }
   }
 

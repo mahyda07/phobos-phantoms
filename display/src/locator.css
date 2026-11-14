@@ -1,0 +1,52 @@
+/* Written with AI assistance (Claude). */
+/* "Where on Mars?" locator inset (locator.js). Dark glass frame like the other Leaflet controls (theme.css). */
+
+#map .locator-control {
+  background: rgba(12,17,26,.80); color: var(--text, #eef2f6); border: 1px solid var(--line, rgba(255,255,255,.10));
+  border-radius: 12px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  padding: 7px 8px 6px; width: 200px; box-sizing: content-box; font-size: 11px; line-height: 1.35;
+  transition: width .2s ease;
+}
+#map .locator-control.locator-large { width: 480px; max-width: calc(100vw - 40px); }
+
+.locator-head { font-weight: 600; font-size: 12px; color: var(--accent2, #ffb26b); margin-bottom: 1px; }
+.locator-caption { font-size: 11px; color: var(--text, #eef2f6); margin-bottom: 5px; }
+.locator-size { color: var(--muted, #9aa8b6); }
+
+.locator-frame {
+  position: relative; display: block; width: 100%; aspect-ratio: 2 / 1; overflow: hidden; cursor: zoom-in;
+  border-radius: 6px; border: 1px solid var(--line, rgba(255,255,255,.10)); background: #1a1410;
+}
+.locator-large .locator-frame { cursor: zoom-out; }
+.locator-frame:focus-visible { outline: 2px solid var(--accent2, #ffb26b); outline-offset: 2px; }
+.locator-img { display: block; width: 100%; height: 100%; object-fit: fill; }
+
+/* Dot: accent #e2763d, white ring, soft pulse. Centred on its left/top percentage. */
+.locator-dot {
+  position: absolute; width: 8px; height: 8px; margin: -5px 0 0 -5px; border-radius: 50%;
+  background: #e2763d; border: 1px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.45);
+  pointer-events: none;
+}
+.locator-dot::after {
+  content: ""; position: absolute; inset: -1px; border-radius: 50%;
+  border: 2px solid #e2763d; animation: locator-pulse 1.8s ease-out infinite;
+}
+.locator-large .locator-dot { width: 10px; height: 10px; margin: -6px 0 0 -6px; }
+@keyframes locator-pulse {
+  0% { transform: scale(1); opacity: .9; }
+  100% { transform: scale(3.2); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .locator-dot::after { animation: none; opacity: 0; }
+  #map .locator-control { transition: none; }
+}
+
+.locator-credit { margin-top: 4px; font-size: 9.5px; color: var(--muted, #9aa8b6); }
+.locator-credit a { color: var(--muted, #9aa8b6); text-decoration: underline dotted; }
+.locator-credit a:hover { color: var(--accent2, #ffb26b); }
+
+/* Phones: no room for an inset. */
+@media (max-width: 640px) {
+  #map .locator-control { display: none; }
+}
