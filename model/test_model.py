@@ -139,3 +139,23 @@ def test_window_uses_her_rule():
     s, e = int(win["eva_window"]["start_ltst"]), int(win["eva_window"]["end_ltst"])
     assert all(win["sun_elev_deg"][h] >= m_tw.MIN_SUN_ELEVATION_DEG for h in range(s, e))
     assert any(a <= s and e <= b for a, b in windows)
+
+
+def test_window_tie_break_prefers_the_warmer_block():
+    from model.window import warmer_on_tie
+    fc = [m_tw.HourForecast(h, s, 0.5) for h, s in zip(range(8, 14), [20, 30, 40, 40, 30, 20])]
+    temp = [-60.0] * 24
+    temp[8:14] = [-50, -45, -40, -35, -30, -25]
+    best, tied = warmer_on_tie(fc, temp, 2)
+    assert len(tied) == 1 and best["start_hour"] == 10          # 10-12 has the most sun: no tie
+    best, tied = warmer_on_tie(fc, temp, 4)                    # 8-12 and 10-14 tie on average sun (32.5)
+    assert [t["start_hour"] for t in tied] == [9]              # 9-13 = 35.0 is best; no tie
+    fc = [m_tw.HourForecast(h, s, 0.5) for h, s in zip(range(8, 14), [20, 30, 40, 30, 40, 30])]
+    best, tied = warmer_on_tie(fc, temp, 2)                    # 9-11, 10-12, 11-13, 12-14 all average 35
+    assert len(tied) == 4 and best["start_hour"] == 12         # warmest wins
+
+
+def test_published_window_is_ltst_11_15():
+    win = json.loads((OUT / "window.json").read_text())
+    assert (win["eva_window"]["start_ltst"], win["eva_window"]["end_ltst"]) == (11.0, 15.0)
+    assert "warmer block wins" in win["notes"]
