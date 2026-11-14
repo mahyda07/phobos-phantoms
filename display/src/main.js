@@ -33,6 +33,8 @@ import { initBriefing } from "./briefing.js";
 import "./briefing.css";
 import { initShare, readInitialState } from "./share.js";
 import "./share.css";
+import { initLocator, MARS_GLOBAL } from "./locator.js";
+import "./locator.css";
 import { initA11y } from "./a11y.js";
 import "./a11y.css"; // after theme.css: focus rings, contrast fixes
 import "./responsive.css"; // keep last: phone/tablet overrides
@@ -305,7 +307,8 @@ async function main() {
   initLegendControl(map, { manifest: isSample ? null : manifest, hazardMeta, overlays: rasterInfo, slopeLimit });
   renderSources(document.getElementById("sources"), isSample ? null : manifest, {
     extra: isSample ? [] : [{ name: "Perseverance raw images (stop photos)", source: "NASA/JPL-Caltech",
-      licence: "NASA media guidelines", citation: "https://mars.nasa.gov/mars2020/multimedia/raw-images/" }],
+      licence: "NASA media guidelines", citation: "https://mars.nasa.gov/mars2020/multimedia/raw-images/" },
+    { name: "Where on Mars? inset (global map)", source: MARS_GLOBAL.credit, licence: MARS_GLOBAL.licence, citation: MARS_GLOBAL.source }],
   });
 
   const win = await getJson("window.json");
@@ -326,6 +329,7 @@ async function main() {
     slopeLimit, manifest: isSample ? null : manifest, isSample,
   }));
   addScaleBar(map, f.cell);
+  initLocator(map, { L, grid: gridRaw, isSample }); // after the scale bar so it stacks above it
 
   // Re-fit once layout has settled (first-load mis-zoom fix).
   // Shareable link: "Copy link to this view" stores the view in the URL hash (#p=…&z=…); opening such a link restores it.

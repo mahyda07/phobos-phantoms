@@ -15,7 +15,7 @@
 export const MARS_GLOBAL = {
   url: "https://astrogeology.usgs.gov/ckan/dataset/dfdc2242-52dc-4126-bc89-03af8253ae79/resource/0d7b31dc-0b2e-4ca6-89dc-e3c1404c0232/download/mars_viking_clrmosaic_global_1024.jpg",
   name: "Mars Viking Global Color Mosaic 925m (browse image)",
-  credit: "Viking Orbiter colour mosaic: NASA / USGS Astrogeology (PDS)",
+  credit: "Viking Orbiter colour mosaic (NASA Planetary Data System) via USGS Astrogeology, public domain",
   source: "https://astrogeology.usgs.gov/search/map/mars_viking_global_color_mosaic_925m",
   licence: "Public domain (USGS Astrogeology product page: access constraints \"public domain\", use constraints \"None\")",
   lonConvention: "-180-180",
