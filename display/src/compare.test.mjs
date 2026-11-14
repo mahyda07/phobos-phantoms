@@ -23,7 +23,7 @@ test("compareRows returns each route's own values exactly as given", () => {
     assert.strictEqual(row(rows, label).prev, p[key], label);
     assert.strictEqual(row(rows, label).next, q[key], label);
   }
-  assert.strictEqual(row(rows, "Length").prev, 4297.3);
+  assert.strictEqual(row(rows, "Length").prev, base.properties.length_m);   // fallback route (AI planner since D28)
   assert.strictEqual(typeof row(rows, "Length").next, "number");
   assert.equal(rows.length, 9);
 });
@@ -48,7 +48,7 @@ test("compareHtml escapes text, has the note, and no derived wording", () => {
   assert.ok(html.includes("&lt;script&gt;"));
   assert.ok(html.includes("Each column shows that route's own numbers from its route.json; nothing is recalculated."));
   assert.ok(html.includes("<h2>Compare routes</h2>"));
-  assert.ok(html.includes("standin-basic-v1") && html.includes(base.properties.created_at));
+  assert.ok(html.includes(base.properties.model_version) && html.includes(base.properties.created_at));
   assert.ok(html.includes("solid = new route") && html.includes("dashed grey = previous route"));
   for (const h of [html, compareHtml(base, other)]) {
     assert.ok(!h.includes("%"), "no percentages");

@@ -2,7 +2,7 @@
 """Planner web service (PLAN.md D17, D21). Track [P5].
 
 Endpoints
-  GET  /health      -> {"status": "ok", "planner": ..., "model_version": ...}
+  GET  /health      -> {"status": "ok", "planner": ..., "model_version": ..., "hazard": <hazard layer in use>}
   GET  /layers      -> terrain/out/layers.manifest.json (every layer with source + licence)
   GET  /stops       -> the science stops on the grid (terrain/out/stops.csv as JSON)
   GET  /route/demo  -> the precomputed demo route (pipeline/fallback/route.json), also the display's fallback
@@ -60,6 +60,8 @@ def warm_up():
 def health():
     return {"status": "ok", "planner": PLANNER_NAME,
             "model_version": getattr(__import__(planner.__class__.__module__, fromlist=["x"]), "MODEL_VERSION", "unknown"),
+            "hazard": getattr(planner, "hazard_source", "terrain/out/hazard.bin (weight 0 in the stand-in)"
+                              if (DATA / "hazard.bin").exists() else "none"),
             "grid": {"width": planner.grid["width"], "height": planner.grid["height"], "cell_m": planner.grid["cell_m"]},
             "stops": list(planner.stops)}
 

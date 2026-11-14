@@ -50,8 +50,11 @@ test("slope limit shown only when given", () => {
 });
 
 test("planner labels: stand-in badge, model_version, SAMPLE", () => {
+  // stand-in badge: the fallback route is the AI planner's since D28, so test the badge on a stand-in copy
+  const standin = { ...route, properties: { ...p, model_version: "standin-basic-v1" } };
+  assert.ok(briefingHtml({ ...base, route: standin }).includes("stand-in planner"));
   const html = briefingHtml(base);
-  assert.ok(html.includes("stand-in planner"));
+  assert.equal(html.includes("stand-in planner"), p.model_version.startsWith("standin-"));
   assert.ok(html.includes(p.model_version) && html.includes(p.plan_id) && html.includes(p.created_at));
   assert.ok(!html.includes(">SAMPLE<"));
   const s = { ...route, properties: { ...p, plan_id: "SAMPLE-1", model_version: "team-v2" } };

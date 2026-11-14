@@ -19,6 +19,15 @@ if (Test-Path (Join-Path $repo "results.md")) { Copy-Item (Join-Path $repo "resu
 Copy-Item (Join-Path $repo "contracts")   (Join-Path $Out "contracts") -Recurse
 Copy-Item (Join-Path $repo "pipeline")    (Join-Path $Out "pipeline")  -Recurse
 Copy-Item (Join-Path $repo "terrain\out") (Join-Path $Out "terrain\out") -Recurse
+# AI planner (PLANNER=model on Render, PLAN.md D28): model/planner.py + the files it and the endpoints read.
+# model/planner.py imports only pipeline.planner_basic, so model/maryam/ and the training code are not needed.
+New-Item -ItemType Directory -Path (Join-Path $Out "model\out") | Out-Null
+Copy-Item (Join-Path $repo "model\__init__.py") (Join-Path $Out "model")
+Copy-Item (Join-Path $repo "model\planner.py")  (Join-Path $Out "model")
+foreach ($f in "hazard.bin", "window.json", "results.md", "results.json", "route.json") {
+    $src = Join-Path $repo "model\out\$f"
+    if (Test-Path $src) { Copy-Item $src (Join-Path $Out "model\out") } else { "model/out/$f not found: skipped" }
+}
 Get-ChildItem $Out -Recurse -Directory -Force |
     Where-Object { $_.Name -in "__pycache__", "node_modules", ".pytest_cache", "render" } |
     Sort-Object { $_.FullName.Length } -Descending |
@@ -26,7 +35,7 @@ Get-ChildItem $Out -Recurse -Directory -Force |
 
 $utf8 = New-Object System.Text.UTF8Encoding $false
 [System.IO.File]::WriteAllText((Join-Path $Out "requirements.txt"), "numpy`nscipy`nscikit-image`njsonschema`nfastapi`nuvicorn[standard]`n", $utf8)
-[System.IO.File]::WriteAllText((Join-Path $Out "README.md"), "# Phobos Planner service`n`nHosting copy of the planner web service from the Phobos Phantoms OG 7.66 project (NASA Space Apps Challenge 2026). Source of truth: the project repository (pipeline/, contracts/, terrain/out/); this copy is made by pipeline/render/make_render.ps1.`n`nRender: build ``pip install -r requirements.txt``, start ``uvicorn pipeline.api:app --host 0.0.0.0 --port `$PORT``, env PYTHON_VERSION=3.12.7 and CORS_ALLOW_ORIGINS.`n", $utf8)
+[System.IO.File]::WriteAllText((Join-Path $Out "README.md"), "# Phobos Planner service`n`nHosting copy of the planner web service from the Phobos Phantoms OG 7.66 project (NASA Space Apps Challenge 2026). Source of truth: the project repository (pipeline/, contracts/, terrain/out/); this copy is made by pipeline/render/make_render.ps1.`n`nRender: build ``pip install -r requirements.txt``, start ``uvicorn pipeline.api:app --host 0.0.0.0 --port `$PORT``, env PYTHON_VERSION=3.12.7, CORS_ALLOW_ORIGINS, and PLANNER=model for the AI-hazard planner (model/planner.py; default is the stand-in).`n", $utf8)
 
 Push-Location $Out
 try {
