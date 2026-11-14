@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Phobos Phantoms — Jezero Marswalk (mixed reality)</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #0b0f14; color: #e8e8e8; font-family: system-ui, sans-serif; overflow: hidden; }
+    #ui { position: fixed; top: 10px; left: 10px; z-index: 2; display: flex; flex-direction: column; gap: 6px; max-width: 360px; }
+    #ui .row { display: flex; gap: 6px; flex-wrap: wrap; }
+    button { background: #1d2733; color: #fff; border: 1px solid #3a4a5c; border-radius: 6px; padding: 8px 12px; font-size: 14px; cursor: pointer; }
+    button.primary { background: #b4512a; border-color: #d76a3d; }
+    button:disabled { opacity: .45; cursor: default; }
+    #status { font: 12px/1.4 ui-monospace, monospace; background: #0008; padding: 6px 8px; border-radius: 6px; white-space: pre; }
+    #credit { position: fixed; bottom: 8px; right: 10px; font-size: 11px; opacity: .7; z-index: 2; }
+  </style>
+</head>
+<body>
+  <div id="ui">
+    <div><b>Phobos Phantoms</b> · Jezero western delta · mixed reality</div>
+    <div class="row">
+      <button id="btn-ar" class="primary" disabled>Enter mixed reality</button>
+      <button id="btn-vr" disabled>Enter VR</button>
+    </div>
+    <div class="row">
+      <button id="btn-rotl">⟲ 15°</button><button id="btn-rotr">⟳ 15°</button>
+      <button id="btn-exag">Height ×2</button><button id="btn-layer">Layer: photo</button>
+    </div>
+    <div id="status">loading…</div>
+  </div>
+  <div id="credit">Terrain: USGS Mars 2020 TRN HiRISE DTM + orthomosaic · Rover path: NASA/JPL-Caltech</div>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

@@ -30,8 +30,10 @@ A mixed-reality Marswalk planner. Real NASA terrain at Jezero Crater becomes a s
 | D16 | Walking area 1.5 × 1.5 km, western delta front: NW 18.47254°N 77.39748°E · NE 18.47254°N 77.42279°E · SW 18.44724°N 77.39748°E · SE 18.44724°N 77.42279°E. Projection metres: xmin 4587712, xmax 4589212, ymin 1093454, ymax 1094954 (750 × 750 cells at 2 m). Contains 6.7 km of Perseverance's path, sols 405–717 (delta-front campaign) | ✅ | Ramish |
 | D17 | `POST /plan` request: `{"frame":"jezero-local-v1","start":[x,y],"end":[x,y],"stops":["S1",…],"use_hazard":true}` in local metres; reply is a `route.json`. Contract: `contracts/plan.request.schema.json` | ✅ | Ramish |
 | D18 | Hosting: **Vercel on Ramish's account** for both the web display and the headset app. Ramish deploys from `main` with the Vercel command line (free Hobby plan has no team members); Kashif tests locally and on the preview links Ramish posts. Planner service on Render | ✅ | Ramish |
-| D19 | Terrain outputs in `terrain/out/` (same names as `samples/out/`): `grid.json`, `terrain.meta.json`, `dem.bin`, `slope.bin`, `rough.bin`, `hazard.bin`, `science.bin`, and PNGs `photo.png`, `slope.png`, `rough.png`, `hazard.png`, `science.png`. All `.bin` = float32 little-endian, row-major from the NW corner. Grid size: read `width`/`height` from `grid.json` (real = 750 × 750) | ✅ | Ramish |
+| D19 | Terrain outputs in `terrain/out/` (same names as `samples/out/`): `grid.json`, `terrain.meta.json`, `dem.bin`, `slope.bin`, `rough.bin`, `hazard.bin`, `science.bin`, and PNGs `photo.png`, `photo_2k.jpg` (headset), `slope.png`, `rough.png`, `hazard.png`, `science.png`. All `.bin` = float32 little-endian, row-major from the NW corner. Grid size: read `width`/`height` from `grid.json` (real = 750 × 750) | ✅ | Ramish |
 | D20 | Coordinate helpers: `pipeline/frame.py` and `pipeline/frame.js` (tested). Copies: `xr/src/frame.js`, `display/src/frame.js` (Kashif copies it in). Never edit a copy. Leaflet point = `[height + y/2, x/2]`, overlay bounds `[[0,0],[height,width]]` | ✅ | Ramish |
+| D21 | Stand-in planner: Ramish writes a basic least-cost planner in `pipeline/` with the same inputs/outputs Maryam's will have, so the planner service and Gate 2 aren't blocked. Swapped for Maryam's `model/` planner as soon as it's in `main` | ✅ | Ramish |
+| D22 | Headset app: Vite + Three.js in `xr/`; hologram 0.6 m wide (1:2500), height ×2 default (×1/×4 toggle), 2048 px photo texture `photo_2k.jpg`, snap-rotate buttons. Until a planner route exists it shows Perseverance's real path, labelled as a stand-in | ✅ | Ramish |
 
 
 ## 3. Who waits on whom
@@ -68,6 +70,7 @@ A mixed-reality Marswalk planner. Real NASA terrain at Jezero Crater becomes a s
 Check-ins in the group: 13:00, 19:00, 01:00 — done / next / blocked.
 
 ## 5. Changelog
+- Sat: real terrain merged (terrain/out). Headset app + stand-in planner decided (D21, D22).
 - Sat: POST /plan contract, Vercel hosting, terrain file names and coordinate helpers decided (D17–D20).
 - Sat: walking area chosen from NASA's M20_traverse.json (most rover path of any 1.5 km square in the box). Science goal set.
 - Sat: repo scaffold + samples pushed (CI green). Power cut at Ramish's end → schedule shifted (D14). Event is Islamabad local virtual (D11).
