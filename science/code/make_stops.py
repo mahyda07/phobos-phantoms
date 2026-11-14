@@ -77,7 +77,7 @@ for i, (r, c) in enumerate(stops, 1):
     dist = int(round(float(np.hypot(dx, dy)), -1))
     ang = (np.degrees(np.arctan2(dx, dy)) + 360) % 360
     where = "near the centre of the area" if dist < 50 else "about %d m %s of the area centre" % (dist, dirs[int(((ang + 22.5) % 360) // 45)])
-    reason = "Strong combined CRISM mineral signal here, mostly %s (carbonate %.2f, clay %.2f, olivine index %.2f on a 0 to 1 scale)." % (top, vals["carbonate"], vals["clay"], vals["olivine"])
+    reason = "Relative CRISM signal strength (0 to 1) is highest here for %s: carbonate %.2f, clay %.2f, olivine %.2f." % (top, vals["carbonate"], vals["clay"], vals["olivine"])
     rows.append([ "S%d" % i, "%s-signal spot %d" % (top, i), where, round(lat, 6), round(lon, 6), "", "", reason, round(float(smooth[r, c]), 3), SOURCE])
 
 with open("science/stops.csv", "w", newline="", encoding="utf-8") as f:
