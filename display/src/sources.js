@@ -62,7 +62,7 @@ function hazardLegend(manifest, hazardMeta) {
  * Legend for one raster overlay. `manifest` null = the sample data set (samples/out has no manifest).
  * @returns {{title:string, gradientCss:string|null, minLabel:string|null, maxLabel:string|null, note:string}|null}
  */
-export function legendFor(layerId, manifest, hazardMeta) {
+export function legendFor(layerId, manifest, hazardMeta, { slopeLimit = null } = {}) {
   const sample = !manifest;
   const e = entry(manifest, layerId);
   const name = (fallback) => e?.name || fallback;
@@ -76,7 +76,8 @@ export function legendFor(layerId, manifest, hazardMeta) {
       const r = degRange(e?.colormap);
       if (!r) return { title: `${name("Slope")} (degrees)`, gradientCss: null, minLabel: null, maxLabel: null, note: "Colour scale: see source." };
       return { title: `${name("Slope")} (degrees)`, gradientCss: SLOPE_GYR, minLabel: `${r[0]}°`, maxLabel: `${r[1]}° or more`,
-        note: `Green = flatter, red = steeper. ${NO_CLASSES}` };
+        note: `Green = flatter, red = steeper. ${NO_CLASSES}` +
+          (slopeLimit ? ` Planner blocks ground steeper than ${slopeLimit.value}° (${slopeLimit.note}, docs/cost-model.md).` : "") };
     }
     case "rough": {
       if (sample) { // make_samples.py:49 save("rough", rough) -> grey, min..max
@@ -162,14 +163,14 @@ export function legendHtml(lg) {
  * Leaflet control (bottomright, above the attribution) with the legends of the raster overlays that are on.
  * overlays: { [displayName]: { id, layer } }. Hidden when none is on. Returns { destroy() }.
  */
-export function initLegendControl(map, { manifest = null, hazardMeta = null, overlays = {} } = {}) {
+export function initLegendControl(map, { manifest = null, hazardMeta = null, overlays = {}, slopeLimit = null } = {}) {
   if (!L || !map) return { destroy() {} };
-  const items = Object.values(overlays || {}).filter((o) => o && o.layer && legendFor(o.id, manifest, hazardMeta));
+  const items = Object.values(overlays || {}).filter((o) => o && o.layer && legendFor(o.id, manifest, hazardMeta, { slopeLimit }));
   let div = null;
   const update = () => {
     if (!div) return;
     const on = items.filter((o) => map.hasLayer(o.layer));
-    div.innerHTML = on.map((o) => legendHtml(legendFor(o.id, manifest, hazardMeta))).join("");
+    div.innerHTML = on.map((o) => legendHtml(legendFor(o.id, manifest, hazardMeta, { slopeLimit }))).join("");
     div.style.display = on.length ? "" : "none";
   };
   const Legend = L.Control.extend({

@@ -6,7 +6,8 @@ import "leaflet/dist/leaflet.css";
 import "./style.css";
 import { loadFrame } from "./frame.js";
 import { drawRoute, checkRoute, routeKind } from "./route.js";
-import { renderNoRoute, renderRouteSummary, renderReadout, renderWindow, renderHud, renderConditions } from "./panel.js";
+import { renderNoRoute, renderRouteSummary, renderReadout, renderWindow, renderHud, renderConditions, setSlopeLimit } from "./panel.js";
+import { costModelRow } from "./cost-model.js";
 import { renderStopCards, highlightStopCard, stopsFromCsv, parseCsv } from "./stop-cards.js";
 import stopPhotos from "./stop-photos.json";
 import "./stop-cards.css";
@@ -153,6 +154,9 @@ async function main() {
 
   const layersControl = L.control.layers(null, overlays, { collapsed: false, position: "topright" }).addTo(map);
   const routeSource = document.getElementById("route-source");
+  // Slope limit as published in docs/cost-model.md (shown only; the planner applies it, the display never does).
+  const slopeLimit = isSample ? null : costModelRow(await getText("cost-model.md"), "Slope limit");
+  setSlopeLimit(slopeLimit);
   const resultsMd = await getText("results.md");
   const wpText = await getText("rover_waypoints.csv");
   const waypoints = wpText ? parseWaypointsCsv(wpText) : null;
@@ -241,7 +245,7 @@ async function main() {
 
   // Legends for the raster overlays that are switched on, and the data sources list.
   const hazardMeta = await getJson("hazard.meta.json");
-  initLegendControl(map, { manifest: isSample ? null : manifest, hazardMeta, overlays: rasterInfo });
+  initLegendControl(map, { manifest: isSample ? null : manifest, hazardMeta, overlays: rasterInfo, slopeLimit });
   renderSources(document.getElementById("sources"), isSample ? null : manifest, {
     extra: isSample ? [] : [{ name: "Perseverance raw images (stop photos)", source: "NASA/JPL-Caltech",
       licence: "NASA media guidelines", citation: "https://mars.nasa.gov/mars2020/multimedia/raw-images/" }],
