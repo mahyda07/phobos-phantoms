@@ -25,6 +25,12 @@ import { renderStretches } from "./proof-stretches.js";
 import "./proof-stretches.css";
 import { initDemo } from "./demo.js";
 import "./demo.css";
+import { initCompare } from "./compare.js";
+import "./compare.css";
+import { initExport } from "./export.js";
+import "./export.css";
+import { initBriefing } from "./briefing.js";
+import "./briefing.css";
 import { initA11y } from "./a11y.js";
 import "./a11y.css"; // after theme.css: focus rings, contrast fixes
 import "./responsive.css"; // keep last: phone/tablet overrides
@@ -179,6 +185,8 @@ async function main() {
   const slider = document.getElementById("point-slider");
   let view = null;
   let current = null;
+  let exporter = null; // route downloads (created further down, refreshed whenever the route changes)
+  const compare = initCompare(map, { L, f, container: document.getElementById("compare") }); // previous vs new planner route
   let routeLL = [];   // current route in Leaflet coordinates (for the moving-map control)
   let mm = null;      // moving-map control: play along the route, follow, distance rings
   let profile = null; // elevation profile chart in the side panel
@@ -215,6 +223,7 @@ async function main() {
     profileEl.hidden = false;
     showPoint(0);
     setupProof(route, view.layer);
+    exporter?.refresh();
   };
 
   const saved = await getJson("route.json");
@@ -227,6 +236,9 @@ async function main() {
     csvStopLayer?.addTo(map);
     showStops(csvStops, (id) => { highlightStopCard(stopsEl, id); const m = csvStopMarkers[id]; if (m) map.panTo(m.getLatLng()); });
     setupProof(null, null);
+    current = null;
+    compare.clear();
+    exporter?.refresh();
   };
   if (saved && !savedError) showRoute(saved);
   else noRoute(saved ? "Route not drawn: " + savedError
@@ -237,6 +249,7 @@ async function main() {
     stops: (csvStops.length ? csvStops : saved?.properties?.stops || []).map((s) => ({ id: s.id, name: s.name })),
     onRoute: (route, { source, reason }) => {
       if (source === "planner" && route) {
+        if (current) compare.setRoutes(current, route); // keep the previous route as a dashed line + side-by-side numbers
         showRoute(route);
         routeSource.textContent = "Route from the live planner.";
       } else {
@@ -289,13 +302,23 @@ async function main() {
       licence: "NASA media guidelines", citation: "https://mars.nasa.gov/mars2020/multimedia/raw-images/" }],
   });
 
-  renderWindow(await getJson("window.json"));
+  const win = await getJson("window.json");
+  renderWindow(win);
+  let conditionRows = [];
   // Hourly conditions (Mahida's conditions.csv): temperature, pressure, dust, radiation, exactly as in the file.
   const condText = await getText("conditions.csv");
   if (condText) {
     const [head, ...rows] = parseCsv(condText);
-    renderConditions(document.getElementById("window"), rows.map((r) => Object.fromEntries(head.map((h, k) => [h, r[k]]))));
+    conditionRows = rows.map((r) => Object.fromEntries(head.map((h, k) => [h, r[k]])));
+    renderConditions(document.getElementById("window"), conditionRows);
   }
+
+  // Route downloads (GeoJSON / CSV, exactly the route shown) and the printable one-page EVA briefing.
+  exporter = initExport(document.getElementById("download-tools"), () => current);
+  initBriefing(document.getElementById("briefing-tools"), () => ({
+    route: current, stops: view ? view.stops : csvStops, photos, win, conditions: conditionRows,
+    slopeLimit, manifest: isSample ? null : manifest, isSample,
+  }));
   addScaleBar(map, f.cell);
 
   // Re-fit once layout has settled (first-load mis-zoom fix).

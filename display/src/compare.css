@@ -1,0 +1,19 @@
+/* Written with AI assistance (Claude). */
+/* Compare routes section (compare.js). Uses the panel colours from style.css. */
+#compare .cmp-legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted); margin: 0 0 8px; }
+#compare .cmp-legend span { display: inline-flex; align-items: center; gap: 6px; }
+#compare .cmp-swatch { display: inline-block; width: 26px; height: 0; }
+#compare .cmp-swatch.solid { border-top: 4px solid var(--accent, #e2763d); }
+#compare .cmp-swatch.dashed { border-top: 3px dashed var(--muted, #9aa3ad); opacity: 0.85; }
+#compare .cmp-table { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; table-layout: fixed; }
+#compare .cmp-table th, #compare .cmp-table td { text-align: left; vertical-align: top; padding: 4px 4px; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+#compare .cmp-table thead th { color: var(--muted); font-weight: 600; font-size: 12px; }
+#compare .cmp-table thead th:first-child { width: 30%; }
+#compare .cmp-table tbody th { color: var(--muted); font-weight: 500; }
+#compare .cmp-meta { display: block; font-weight: 400; font-size: 11px; color: var(--muted); margin-top: 2px; }
+#compare .cmp-prev, #compare thead th:nth-child(2) { color: var(--muted); }
+#compare .cmp-next { color: var(--text); }
+#compare .cmp-table small { font-size: 11px; color: var(--muted); }
+#compare .cmp-na { color: var(--muted); font-style: italic; }
+#compare .cmp-hide { margin: 0 0 8px; background: transparent; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer; }
+#compare .cmp-hide:hover, #compare .cmp-hide:focus-visible { color: var(--text); border-color: var(--accent, #e2763d); }
