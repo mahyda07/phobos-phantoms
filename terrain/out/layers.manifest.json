@@ -1,0 +1,68 @@
+{
+  "frame": "jezero-local-v1",
+  "layers": [
+    {
+      "id": "dem",
+      "name": "Elevation",
+      "file": "dem.bin",
+      "kind": "raster",
+      "units": "m",
+      "cell_m": 2.0,
+      "source": "USGS Mars 2020 TRN HiRISE DTM mosaic, 1 m, averaged to 2 m",
+      "licence": "USGS data release (U.S. Government work, public domain) \u2014 confirm on the DOI page",
+      "citation": "https://doi.org/10.5066/P9REJ9JN"
+    },
+    {
+      "id": "slope",
+      "name": "Slope",
+      "file": "slope.bin",
+      "kind": "raster",
+      "units": "deg",
+      "cell_m": 2.0,
+      "source": "Horn (1981) slope from the 2 m DEM",
+      "licence": "USGS data release (U.S. Government work, public domain) \u2014 confirm on the DOI page",
+      "citation": "https://doi.org/10.5066/P9REJ9JN",
+      "colormap": "0-35 deg green-red"
+    },
+    {
+      "id": "rough",
+      "name": "Roughness",
+      "file": "rough.bin",
+      "kind": "raster",
+      "units": "m",
+      "cell_m": 2.0,
+      "source": "Max elevation difference in 3x3 window of the 2 m DEM",
+      "licence": "USGS data release (U.S. Government work, public domain) \u2014 confirm on the DOI page",
+      "citation": "https://doi.org/10.5066/P9REJ9JN"
+    },
+    {
+      "id": "photo",
+      "name": "HiRISE photo",
+      "file": "photo.png",
+      "kind": "texture",
+      "cell_m": 2.0,
+      "source": "USGS Mars 2020 TRN HiRISE orthomosaic, 25 cm, averaged to 2 m",
+      "licence": "USGS data release (U.S. Government work, public domain) \u2014 confirm on the DOI page",
+      "citation": "https://doi.org/10.5066/P9QJDP48"
+    },
+    {
+      "id": "photo_2k",
+      "name": "HiRISE photo, headset texture",
+      "file": "photo_2k.jpg",
+      "kind": "texture",
+      "cell_m": 0.7324,
+      "source": "USGS Mars 2020 TRN HiRISE orthomosaic, 25 cm, resized to 2048 px",
+      "licence": "USGS data release (U.S. Government work, public domain) \u2014 confirm on the DOI page",
+      "citation": "https://doi.org/10.5066/P9QJDP48"
+    },
+    {
+      "id": "rover",
+      "name": "Perseverance path",
+      "file": "rover_path.json",
+      "kind": "vector",
+      "source": "NASA/JPL-Caltech Where is Perseverance? (M20_traverse.json)",
+      "licence": "NASA data, public",
+      "citation": "https://science.nasa.gov/mission/mars-2020-perseverance/location-map/"
+    }
+  ]
+}

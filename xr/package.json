@@ -1,0 +1,21 @@
+{
+  "name": "phobos-xr",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "copy-data": "node scripts/copy-data.mjs",
+    "predev": "node scripts/copy-data.mjs",
+    "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
+    "prebuild": "node scripts/copy-data.mjs",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 5173 --strictPort",
+    "test": "node --test src/terrain.test.mjs"
+  },
+  "dependencies": {
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "vite": "^8.0.0"
+  }
+}

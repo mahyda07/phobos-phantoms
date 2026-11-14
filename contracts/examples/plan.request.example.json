@@ -1,0 +1,7 @@
+{
+  "frame": "jezero-local-v1",
+  "start": [40.0, -480.0],
+  "end": [480.0, -40.0],
+  "stops": ["S1", "S2"],
+  "use_hazard": true
+}
