@@ -26,7 +26,8 @@ test("stopsFromCsv: real science/stops.csv -> 5 stops inside the terrain grid, f
   for (const s of stops) {
     assert.ok(f.inside(s.x, s.y), `${s.id} outside grid`);
     assert.equal(s.positionFrom, "latlon");
-    assert.match(s.reason, /^Strong combined CRISM mineral signal here, mostly \w+ \(carbonate [0-9.]+, clay [0-9.]+, olivine index [0-9.]+ on a 0 to 1 scale\)\.$/);
+    // Wording is Mahida's and may change; check the quoted field (with its commas) survived intact.
+    assert.match(s.reason, /carbonate [0-9.]+, clay [0-9.]+, olivine( index)? [0-9.]+/);
     assert.match(s.citation, /^CRISM FRT000047A3 .* https:\/\/ode\.rsl\.wustl\.edu\/mars$/);
     assert.ok(s.science_value > 0 && s.science_value <= 1);
   }
@@ -87,4 +88,14 @@ test("cardHtml: a route stop's photo_url wins over stop-photos.json", () => {
   assert.ok(html.includes('src="https://example.org/a.jpg"'));
   assert.ok(!html.includes(photosFile.photos.S1.image_url));
   assert.ok(!cardHtml({ id: "S1", name: "n", photo_url: "javascript:alert(1)" }).includes("javascript:"));
+});
+
+test("stopsFromCsv: terrain/out/stops.csv (grid copy) uses row/col cell centres", () => {
+  const f = makeFrame(JSON.parse(read("terrain/out/grid.json")));
+  const stops = stopsFromCsv(read("terrain/out/stops.csv"), f);
+  assert.equal(stops.length, 5);
+  for (const s of stops) {
+    assert.ok(f.inside(s.x, s.y), `${s.id} outside grid`);
+    assert.notEqual(s.positionFrom, "latlon");
+  }
 });

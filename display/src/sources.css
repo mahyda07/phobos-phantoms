@@ -1,0 +1,21 @@
+/* Written with AI assistance (Claude). */
+/* Data sources panel section + map legend control. Colours from style.css tokens. */
+
+.src-list { list-style: none; margin: 0; padding: 0; }
+.src-row { border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; margin-bottom: 6px; font-size: 12px; line-height: 1.4; }
+.src-name { font-weight: 600; font-size: 13px; color: var(--text); margin-bottom: 2px; }
+.src-line { color: var(--muted); overflow-wrap: anywhere; }
+.src-k { display: inline-block; min-width: 54px; color: var(--text); font-size: 11px; }
+.src-row a { color: #8cc8ff; }
+.src-cite-text { font-family: ui-monospace, monospace; font-size: 11px; }
+
+.src-legend-control {
+  background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px;
+  padding: 6px 8px; width: 220px; max-width: 40vw; font-size: 11px; line-height: 1.35;
+}
+.src-legend + .src-legend { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 6px; }
+.src-legend-title { font-weight: 600; color: var(--accent); margin-bottom: 3px; }
+.src-ramp { height: 8px; border-radius: 4px; margin: 3px 0 2px; border: 1px solid var(--line); }
+.src-ends { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); }
+.src-ends span:last-child { text-align: right; }
+.src-legend-note { color: var(--muted); margin-top: 3px; }

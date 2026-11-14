@@ -1,0 +1,44 @@
+/* Written with AI assistance (Claude). */
+/* Moving-map control + distance rings (moving-map.js). Colours follow style.css tokens; fallbacks only if missing. */
+.mm-control {
+  display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+  background: var(--panel, rgba(16, 19, 24, 0.88));
+  color: var(--text, #e6e8eb);
+  border: 1px solid var(--line, #2a3038);
+  border-radius: 6px;
+  padding: 6px 8px;
+  width: 210px;
+  box-sizing: border-box;
+  font: 13px/1.4 system-ui, sans-serif;
+}
+.mm-control button, .mm-control select {
+  font: inherit;
+  color: var(--text, #e6e8eb);
+  background: #1a1f26;
+  border: 1px solid var(--line, #2a3038);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.mm-control button:hover, .mm-control select:hover { background: #1f242c; }
+.mm-control button:disabled { opacity: 0.45; cursor: default; }
+.mm-control button:focus-visible, .mm-control select:focus-visible { outline: 2px solid var(--accent, #e2763d); outline-offset: 2px; }
+.mm-control .mm-play { flex: 1 1 auto; font-weight: 600; min-width: 84px; }
+.mm-control .mm-speed { padding: 4px 4px; }
+.mm-control .mm-follow, .mm-control .mm-rings { flex: 1 1 0; }
+.mm-control button.active { background: var(--accent, #e2763d); border-color: var(--accent, #e2763d); color: #111; }
+
+.leaflet-overlay-pane path.mm-ring { pointer-events: none; }
+.mm-ring-label {
+  pointer-events: none;
+  width: auto !important; height: auto !important;
+  transform-origin: 0 0;
+  margin: 0 !important;
+  white-space: nowrap;
+  font: 10px/1 system-ui, sans-serif;
+  color: var(--muted, #9aa3ad);
+  text-shadow: 0 0 2px #000, 0 0 2px #000;
+}
+/* Centre the label horizontally on the ring's north point, just above the line. */
+.mm-ring-label { translate: -50% -110%; }
+.mm-labels-hidden .mm-ring-label { display: none; }

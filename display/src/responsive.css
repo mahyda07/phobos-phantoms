@@ -1,0 +1,98 @@
+/* Written with AI assistance (Claude). */
+/* Phone and tablet layout. Import this LAST in main.js so it overrides style.css, planner.css, proof.css and
+   stop-cards.css. Nothing here applies above 900 px wide, so the desktop layout is unchanged.
+   Breakpoints:
+     <= 900 px               tablet + phone: map on top, panel below (from style.css); bigger tap targets, text >= 12 px,
+                             SAMPLE strip on top of the panel, layer list folded behind Leaflet's "Layers" button,
+                             attribution shortened to one line (full text on tap/hover)
+     <= 640 px, or short     phone portrait, or a landscape screen under 500 px tall: smaller header
+     short landscape         phone landscape: map left, panel right, side by side (stacking left a 215 px map) */
+
+@media (max-width: 900px) {
+  /* dvh follows the phone browser's address bar; the vh line is the fallback for older browsers. */
+  #map { bottom: 45vh; bottom: 45dvh; }
+  /* Dark scrollbar instead of a white strip (the panel scrolls a lot more when it is only 45% of the height). */
+  #panel { top: 55vh; top: 55dvh; color-scheme: dark; scrollbar-color: #3a414b #12151a; }
+
+  /* SAMPLE badge: a full-width strip pinned to the top of the panel. Floating over the map it covered the
+     open planner box; at the bottom of the screen it covered the panel text. */
+  #sample-badge {
+    top: 55vh; top: 55dvh; bottom: auto; left: 0; right: 0; width: auto; max-width: none; transform: none;
+    box-sizing: border-box; padding: 6px 12px; border-radius: 0; box-shadow: none;
+    font-size: 12px; line-height: 1.4; text-align: center;
+  }
+  #sample-badge:not([hidden]) ~ #panel { padding-top: 46px; }
+
+  /* Header: stop short of the Layers button (top right). */
+  #header { right: calc(var(--panel-w) + 66px); }
+
+  /* Layer control folded to Leaflet's own "Layers" button; the list opens on tap (focus) or hover.
+     Expanded, it covered a third of the phone map and ran under the header on a tablet (long rover label).
+     Leaflet's real collapsed mode needs JS (collapsed: true); this works with collapsed: false in main.js. */
+  #map .leaflet-control-layers-expanded { padding: 0; }
+  #map .leaflet-control-layers-expanded .leaflet-control-layers-toggle {
+    display: block; margin-left: auto; width: 44px; height: 44px; background-size: 26px 26px; filter: invert(0.9);
+  }
+  #map .leaflet-control-layers-expanded .leaflet-control-layers-list { display: none; }
+  #map .leaflet-control-layers:hover .leaflet-control-layers-list,
+  #map .leaflet-control-layers:focus-within .leaflet-control-layers-list { display: block; padding: 2px 10px 6px 6px; }
+  /* The header sits above the map, so it would cover the open list: hide it while the list is open. */
+  body:has(#map .leaflet-control-layers:hover, #map .leaflet-control-layers:focus-within) #header { visibility: hidden; }
+
+  /* Tap targets >= 36 px. #map raises specificity above Leaflet's .leaflet-touch rules. */
+  #map .leaflet-bar a { width: 36px; height: 36px; line-height: 36px; }
+  #map .proof-toggle button { min-height: 36px; padding: 8px 12px; font-size: 13px; }
+  #map .leaflet-control-layers label { display: flex; align-items: center; min-height: 36px; }
+  #map .planner-control button { min-height: 36px; }
+  #map .planner-check { display: flex; align-items: center; min-height: 36px; padding: 0; }
+  #map .planner-control:not(.expanded) .planner-hazard { display: none; } /* keep planner.css's compact state */
+  #point-slider { height: 36px; margin: 0 0 6px; }
+  /* Planner box scrolls inside itself instead of running under the scale bar / off the map
+     (it starts ~145 px from the top; 195 px leaves room for the scale bar below it). */
+  #map .planner-control {
+    max-width: calc(100vw - 20px); max-height: calc(55vh - 195px); max-height: calc(55dvh - 195px);
+    overflow-y: auto; scrollbar-color: #3a414b transparent;
+  }
+
+  /* Attribution: with the real data it wrapped to 2-3 lines over the scale bar. One line, cut with "…",
+     clear of the scale bar; the full text shows on tap/hover. */
+  #map .leaflet-control-attribution {
+    max-width: calc(100vw - var(--panel-w) - 150px); box-sizing: border-box;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  #map .leaflet-control-attribution:hover, #map .leaflet-control-attribution:focus-within {
+    max-width: calc(100vw - var(--panel-w) - 20px); white-space: normal;
+  }
+
+  /* Text >= 12 px (these are 11 px on desktop). */
+  #panel .stat .label, #panel .badge, #map .scale-bar,
+  #panel .sc-card .stop-photo figcaption, #panel .sc-card .stop-photo-note, #panel .sc-card .stop-nophoto { font-size: 12px; }
+
+  /* Controls from moving-map.css and sources.css (not wired into main.js when this was written; harmless if absent). */
+  #map .mm-control button, #map .mm-control select { min-height: 36px; }
+  #map .src-legend-control, #panel .src-k, #panel .src-cite-text { font-size: 12px; }
+}
+
+@media (max-width: 640px), (max-width: 900px) and (max-height: 500px) and (orientation: landscape) {
+  /* Smaller header so its two lines stay above "Proof view". */
+  #header { left: 56px; padding: 5px 9px; }
+  #header .title { font-size: 13px; line-height: 1.3; }
+}
+
+@media (max-width: 900px) and (max-height: 500px) and (orientation: landscape) {
+  :root { --panel-w: 45vw; }
+  #map { bottom: 0; right: var(--panel-w); }
+  #panel { top: 0; width: var(--panel-w); border-top: none; border-left: 1px solid var(--line); }
+  #sample-badge { top: 0; left: auto; right: 0; width: var(--panel-w); }
+  #map .planner-control { max-height: calc(100vh - 195px); max-height: calc(100dvh - 195px); }
+}
+
+/* Phones: keep the left control column short so the map stays visible.
+   Moving-map buttons go on one row; labels shrink to icons/short words. */
+@media (max-width: 640px) {
+  #map .mm-control { flex-wrap: nowrap; width: auto; padding: 4px; gap: 4px; }
+  #map .mm-control .mm-play { min-width: 0; flex: 0 0 auto; }
+  #map .mm-control .mm-follow, #map .mm-control .mm-rings { flex: 0 0 auto; padding: 4px 8px; }
+  #map .planner-control:not(.expanded) { width: auto; padding: 4px; }
+  #map .planner-control:not(.expanded) .planner-toggle { width: auto; }
+}
