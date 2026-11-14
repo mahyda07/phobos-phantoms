@@ -16,6 +16,8 @@ import { initMovingMap } from "./moving-map.js";
 import "./moving-map.css";
 import { renderSources, initLegendControl } from "./sources.js";
 import "./sources.css";
+import { renderProfile } from "./profile.js";
+import "./profile.css";
 import "./responsive.css"; // keep last: phone/tablet overrides
 
 const DATA = "data/";
@@ -165,11 +167,13 @@ async function main() {
   let current = null;
   let routeLL = [];   // current route in Leaflet coordinates (for the moving-map control)
   let mm = null;      // moving-map control: play along the route, follow, distance rings
+  let profile = null; // elevation profile chart in the side panel
   const showPoint = (i) => {
     if (!view) return;
     slider.value = i;
     view.setPoint(i);
     mm?.setIndex(i);
+    profile?.setPoint(i);
     const next = view.stops.find((s) => s.vertex >= i) || null;
     renderReadout(current, i, next);
     renderHud(current, i, next);
@@ -191,6 +195,9 @@ async function main() {
     slider.max = route.geometry.coordinates.length - 1;
     renderRouteSummary(route, kind, view.maxMargin);
     showStops(view.stops.length ? view.stops : csvStops, onStop);
+    const profileEl = document.getElementById("profile");
+    profile = renderProfile(profileEl, route, { stops: view.stops, onPoint: showPoint });
+    profileEl.hidden = false;
     showPoint(0);
     setupProof(route, view.layer);
   };
@@ -200,6 +207,8 @@ async function main() {
   const noRoute = (msg) => {
     renderNoRoute(msg);
     renderHud(null);
+    profile = null;
+    document.getElementById("profile").hidden = true;
     csvStopLayer?.addTo(map);
     showStops(csvStops, (id) => { highlightStopCard(stopsEl, id); const m = csvStopMarkers[id]; if (m) map.panTo(m.getLatLng()); });
     setupProof(null, null);
