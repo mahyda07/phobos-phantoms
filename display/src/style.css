@@ -1,0 +1,47 @@
+/* Written with AI assistance (Claude). */
+:root {
+  --bg: #0d0f12;
+  --panel: rgba(16, 19, 24, 0.88);
+  --text: #e6e8eb;
+  --muted: #9aa3ad;
+  --line: #2a3038;
+  --warn-bg: #b3261e;
+}
+
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, sans-serif; }
+#map { position: fixed; inset: 0; background: var(--bg); }
+
+#header {
+  position: fixed; top: 12px; left: 56px; z-index: 1000;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+  padding: 8px 12px; pointer-events: none;
+}
+#header .title { font-weight: 600; }
+#header .sub { color: var(--muted); font-size: 12px; }
+
+#sample-badge {
+  position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 1001;
+  background: var(--warn-bg); color: #fff; font-weight: 700; letter-spacing: 0.02em;
+  padding: 6px 14px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+#error { position: fixed; bottom: 40px; left: 12px; z-index: 1001; background: var(--warn-bg); color: #fff; padding: 8px 12px; border-radius: 6px; }
+
+/* Data rasters: never smooth. */
+.data-layer { image-rendering: pixelated; image-rendering: crisp-edges; }
+
+/* Dark Leaflet chrome */
+.leaflet-container { background: var(--bg); font: 13px/1.4 system-ui, sans-serif; }
+.leaflet-bar a, .leaflet-control-layers { background: var(--panel); color: var(--text); border-color: var(--line); }
+.leaflet-bar a:hover { background: #1f242c; color: #fff; }
+.leaflet-control-layers-expanded { color: var(--text); }
+.leaflet-control-layers-separator { border-top-color: var(--line); }
+.leaflet-container .leaflet-control-attribution { background: var(--panel); color: var(--muted); }
+.leaflet-control-attribution a { color: #8cc8ff; }
+
+.scale-bar { background: var(--panel); color: var(--text); padding: 2px 6px 4px; border-radius: 4px; font-size: 11px; }
+.scale-bar .bar { height: 5px; border: 2px solid var(--text); border-top: none; margin-top: 2px; }
+
+@media (max-width: 640px) {
+  #header { left: 52px; right: 12px; }
+  #sample-badge { top: auto; bottom: 36px; font-size: 12px; max-width: calc(100% - 32px); text-align: center; }
+}
