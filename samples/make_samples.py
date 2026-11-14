@@ -45,7 +45,8 @@ def save(name, arr, lo=None, hi=None, cmap=None):
     rgb = (np.stack([g, g * 0.6, g * 0.4], -1) if cmap == "mars" else np.stack([g, g, g], -1)) * 255
     Image.fromarray(rgb.astype(np.uint8)).save(OUT / f"{name}.png")
 
-save("dem", dem, cmap="mars"); save("slope", slope, 0, 35); save("rough", rough)
+save("dem", dem, cmap="mars"); save("photo", dem, cmap="mars")  # SAMPLE stand-in for the HiRISE photo
+save("slope", slope, 0, 35); save("rough", rough)
 save("hazard", hazard, 0, 1); save("science", science, 0, 1)
 lod1 = dem.reshape(128, 2, 128, 2).mean((1, 3)).astype("<f4"); lod1.tofile(OUT / "dem_lod1.bin")
 
