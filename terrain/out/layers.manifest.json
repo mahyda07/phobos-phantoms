@@ -83,6 +83,18 @@
       "source": "Mahida, from CRISM FRT000047A3 (science/code/make_stops.py)",
       "licence": "NASA PDS, public",
       "citation": "science/stops.csv"
+    },
+    {
+      "id": "hazard",
+      "name": "AI hazard estimate (model, not validated)",
+      "file": "hazard.bin",
+      "kind": "raster",
+      "units": "0-1 relative",
+      "cell_m": 2,
+      "source": "hazardnet-v1 (U-Net style, trained from scratch on HiRISE 25 cm photo; labels from the USGS 1 m DTM); ai-hazard-v1; held-out test mIoU 0.465 (baselines 0.287 / 0.291); see model/MODEL_CARD.md",
+      "licence": "Derived from USGS HiRISE orthomosaic + DTM (U.S. Government work, public domain); model by the team",
+      "citation": "model/MODEL_CARD.md",
+      "colormap": "0-1 green-amber-red"
     }
   ]
 }
