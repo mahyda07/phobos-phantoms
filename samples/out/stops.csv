@@ -1,0 +1,3 @@
+id,name,location_note,lat,lon_e,row,col,reason,science_value,source
+S1,Sample rim outcrop,SAMPLE,18.452528,77.424604,116,160,SAMPLE reason,0.0,SAMPLE
+S2,Sample bright patch,SAMPLE,18.449693,77.425954,200,200,SAMPLE reason,1.0,SAMPLE

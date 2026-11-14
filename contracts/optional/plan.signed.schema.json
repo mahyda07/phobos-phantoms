@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "plan.signed",
+  "type": "object",
+  "required": [
+    "alg",
+    "key_id",
+    "payload_b64",
+    "sig_b64"
+  ],
+  "properties": {
+    "alg": {
+      "const": "Ed25519"
+    },
+    "key_id": {
+      "type": "string"
+    },
+    "payload_b64": {
+      "type": "string",
+      "description": "base64url of the exact UTF-8 bytes of compact JSON {route, eva_window, seq, nonce, created_at}; the signature covers these bytes"
+    },
+    "sig_b64": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

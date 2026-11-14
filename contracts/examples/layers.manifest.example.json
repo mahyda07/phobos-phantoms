@@ -1,0 +1,16 @@
+{
+  "frame": "jezero-local-v1",
+  "layers": [
+    {
+      "id": "dem",
+      "name": "HiRISE DTM mosaic (USGS Mars 2020 TRN)",
+      "file": "dem.bin",
+      "kind": "raster",
+      "units": "m",
+      "cell_m": 2.0,
+      "source": "https://doi.org/10.5066/P9REJ9JN",
+      "licence": "CC0 1.0",
+      "citation": "Fergason et al., 2020, USGS data release"
+    }
+  ]
+}

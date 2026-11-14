@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "link.message",
+  "type": "object",
+  "required": [
+    "type",
+    "session",
+    "seq",
+    "from",
+    "sent_at",
+    "deliver_at"
+  ],
+  "properties": {
+    "type": {
+      "enum": [
+        "plan",
+        "select_stop",
+        "add_stop",
+        "ask",
+        "answer",
+        "status",
+        "ack"
+      ]
+    },
+    "session": {
+      "type": "string"
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "from": {
+      "enum": [
+        "web",
+        "xr",
+        "server"
+      ]
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "deliver_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "payload_b64": {
+      "type": "string"
+    },
+    "sig_b64": {
+      "type": "string"
+    }
+  }
+}

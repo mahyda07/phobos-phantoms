@@ -1,0 +1,27 @@
+{
+  "frame": "jezero-local-v1",
+  "projection_wkt": "EXAMPLE: paste the full WKT from gdalinfo here",
+  "origin_eqc": [
+    0.0,
+    0.0
+  ],
+  "box_eqc": {
+    "xmin": 0.0,
+    "ymin": -1500.0,
+    "xmax": 1500.0,
+    "ymax": 0.0
+  },
+  "box_latlon": {
+    "lat_min": 18.4,
+    "lat_max": 18.52,
+    "lon_min_e": 77.33,
+    "lon_max_e": 77.47
+  },
+  "cell_m": 2,
+  "width": 751,
+  "height": 751,
+  "z_ref": -2560.0,
+  "nodata": null,
+  "layers_dir": "terrain/out",
+  "source_dtm": "https://doi.org/10.5066/P9REJ9JN"
+}

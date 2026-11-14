@@ -1,6 +1,32 @@
+# Python / uv
 .venv/
 __pycache__/
 *.pyc
+.ruff_cache/
+.pytest_cache/
 .ipynb_checkpoints/
-science/raw/*
-!science/raw/.gitkeep
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.token
+
+# Big data: shared drive, not git
+data/
+*.zip
+*.ckpt
+*.pt
+*.safetensors
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

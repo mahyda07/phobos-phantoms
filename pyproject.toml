@@ -1,0 +1,39 @@
+# Written with AI assistance (Claude).
+[project]
+name = "phobos-phantoms"
+version = "0.1.0"
+description = "Mixed-reality Marswalk planner - NASA Space Apps 2026 (Phobos Phantoms OG 7.66)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "numpy",
+    "scipy",
+    "scikit-image",
+    "rasterio",
+    "pyproj",
+    "shapely",
+    "pandas",
+    "pillow",
+    "matplotlib",
+    "requests",
+    "jsonschema",
+    "fastapi",
+    "uvicorn[standard]",
+]
+
+[dependency-groups]
+dev = ["pytest", "ruff"]
+# GPU / model training. Install with: uv sync --group ai
+ai = ["torch", "torchvision", "transformers", "datasets", "evaluate", "accelerate"]
+
+[tool.uv]
+default-groups = ["dev"]
+
+# RTX 50-series (Blackwell) needs the CUDA 12.8 PyTorch build
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
+torchvision = { index = "pytorch-cu128" }

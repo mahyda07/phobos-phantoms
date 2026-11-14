@@ -1,0 +1,18 @@
+{
+  "frame": "jezero-local-v1",
+  "model": "SAMPLE",
+  "version": "SAMPLE",
+  "classes": [
+    "smooth terrain",
+    "crater floor"
+  ],
+  "hazard_groups": {
+    "smooth terrain": "low",
+    "crater floor": "high"
+  },
+  "metrics": {
+    "miou": 0.0
+  },
+  "file": "hazard.bin",
+  "cell_m": 2.0
+}

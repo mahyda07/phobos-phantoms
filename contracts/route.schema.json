@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "route.geojson",
+  "type": "object",
+  "required": [
+    "type",
+    "geometry",
+    "properties"
+  ],
+  "properties": {
+    "type": {
+      "const": "Feature"
+    },
+    "geometry": {
+      "type": "object",
+      "required": [
+        "type",
+        "coordinates"
+      ],
+      "properties": {
+        "type": {
+          "const": "LineString"
+        },
+        "coordinates": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          }
+        }
+      }
+    },
+    "properties": {
+      "type": "object",
+      "required": [
+        "frame",
+        "plan_id",
+        "created_at",
+        "length_m",
+        "time_out_min",
+        "time_back_min",
+        "margin_min",
+        "slope_max_deg",
+        "cost_weights",
+        "model_version",
+        "stops",
+        "per_vertex"
+      ],
+      "properties": {
+        "frame": {
+          "const": "jezero-local-v1"
+        },
+        "plan_id": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "length_m": {
+          "type": "number"
+        },
+        "time_out_min": {
+          "type": "number"
+        },
+        "time_back_min": {
+          "type": "number"
+        },
+        "margin_min": {
+          "type": "number"
+        },
+        "slope_max_deg": {
+          "type": "number"
+        },
+        "cost_weights": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "model_version": {
+          "type": "string"
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "legs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "length_m": {
+                "type": "number"
+              },
+              "time_min": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "stops": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "x",
+              "y",
+              "reason",
+              "citation"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "science_value": {
+                "type": "number"
+              },
+              "citation": {
+                "type": "string"
+              },
+              "photo_url": {
+                "type": "string"
+              },
+              "photo_credit": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "per_vertex": {
+          "type": "object",
+          "required": [
+            "t_min",
+            "margin_min",
+            "slope_deg",
+            "hazard"
+          ],
+          "properties": {
+            "t_min": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "margin_min": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "slope_deg": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "hazard": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

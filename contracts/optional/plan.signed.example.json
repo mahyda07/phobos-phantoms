@@ -1,0 +1,6 @@
+{
+  "alg": "Ed25519",
+  "key_id": "example",
+  "payload_b64": "eyJleGFtcGxlIjp0cnVlfQ",
+  "sig_b64": "EXAMPLE"
+}

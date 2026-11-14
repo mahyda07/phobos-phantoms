@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "window.json (time window + hourly conditions)",
+  "type": "object",
+  "required": [
+    "frame",
+    "sol",
+    "ls_deg",
+    "ltst_hours",
+    "sun_elev_deg",
+    "temp_c",
+    "pressure_pa",
+    "eva_window",
+    "one_way_light_time_min",
+    "notes"
+  ],
+  "properties": {
+    "frame": {
+      "const": "jezero-local-v1"
+    },
+    "sol": {
+      "type": "integer"
+    },
+    "ls_deg": {
+      "type": "number"
+    },
+    "utc": {
+      "type": "string"
+    },
+    "ltst_hours": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 24,
+      "maxItems": 24
+    },
+    "sun_elev_deg": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 24,
+      "maxItems": 24
+    },
+    "sun_az_deg": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 24,
+      "maxItems": 24
+    },
+    "temp_c": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 24,
+      "maxItems": 24
+    },
+    "pressure_pa": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 24,
+      "maxItems": 24
+    },
+    "eva_window": {
+      "type": "object",
+      "required": [
+        "start_ltst",
+        "end_ltst"
+      ],
+      "properties": {
+        "start_ltst": {
+          "type": "number"
+        },
+        "end_ltst": {
+          "type": "number"
+        }
+      }
+    },
+    "one_way_light_time_min": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}

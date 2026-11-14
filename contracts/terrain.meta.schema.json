@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "terrain.meta",
+  "type": "object",
+  "required": [
+    "frame",
+    "width",
+    "height",
+    "cell_m",
+    "origin_eqc",
+    "z_ref",
+    "z_min",
+    "z_max",
+    "dtype",
+    "file",
+    "lod"
+  ],
+  "properties": {
+    "frame": {
+      "const": "jezero-local-v1"
+    },
+    "width": {
+      "type": "integer",
+      "minimum": 2
+    },
+    "height": {
+      "type": "integer",
+      "minimum": 2
+    },
+    "cell_m": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "origin_eqc": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "z_ref": {
+      "type": "number"
+    },
+    "z_min": {
+      "type": "number"
+    },
+    "z_max": {
+      "type": "number"
+    },
+    "nodata": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "dtype": {
+      "const": "float32-le"
+    },
+    "file": {
+      "type": "string"
+    },
+    "lod": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "level",
+          "width",
+          "height",
+          "cell_m",
+          "file"
+        ],
+        "properties": {
+          "level": {
+            "type": "integer"
+          },
+          "width": {
+            "type": "integer"
+          },
+          "height": {
+            "type": "integer"
+          },
+          "cell_m": {
+            "type": "number"
+          },
+          "file": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

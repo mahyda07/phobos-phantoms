@@ -1,0 +1,21 @@
+{
+  "frame": "jezero-local-v1",
+  "projection_wkt": "SAMPLE - real WKT comes from the USGS DTM (+proj=eqc +lat_ts=0 +lon_0=0 +R=3396190)",
+  "origin_eqc": [
+    4589000.0,
+    1094000.0
+  ],
+  "box_eqc": {
+    "xmin": 4589000.0,
+    "ymin": 1093488.0,
+    "xmax": 4589512.0,
+    "ymax": 1094000.0
+  },
+  "cell_m": 2,
+  "width": 256,
+  "height": 256,
+  "z_ref": -2566.0,
+  "nodata": null,
+  "layers_dir": "samples/out",
+  "source_dtm": "SAMPLE (synthetic)"
+}

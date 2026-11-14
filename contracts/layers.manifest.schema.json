@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "layers.manifest",
+  "type": "object",
+  "required": [
+    "frame",
+    "layers"
+  ],
+  "properties": {
+    "frame": {
+      "const": "jezero-local-v1"
+    },
+    "layers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "file",
+          "kind",
+          "source",
+          "licence",
+          "citation"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "file": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "raster",
+              "vector",
+              "texture"
+            ]
+          },
+          "units": {
+            "type": "string"
+          },
+          "cell_m": {
+            "type": "number"
+          },
+          "source": {
+            "type": "string"
+          },
+          "licence": {
+            "type": "string"
+          },
+          "citation": {
+            "type": "string"
+          },
+          "colormap": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

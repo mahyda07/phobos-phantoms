@@ -1,4 +1,6 @@
-# Science sources
+# Science sources (Mahida)
 
-| File | Dataset | Mission | Link | Licence | Date downloaded |
-| --- | --- | --- | --- | --- | --- |
+One row per file in `science/out/`. No licence = we can't use it.
+
+| File | Dataset / product ID | Link | Licence | Notes |
+|---|---|---|---|---|

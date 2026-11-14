@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "grid.json (the one grid every layer uses)",
+  "type": "object",
+  "required": [
+    "frame",
+    "projection_wkt",
+    "origin_eqc",
+    "box_eqc",
+    "cell_m",
+    "width",
+    "height",
+    "z_ref",
+    "nodata",
+    "layers_dir"
+  ],
+  "properties": {
+    "frame": {
+      "const": "jezero-local-v1"
+    },
+    "projection_wkt": {
+      "type": "string",
+      "minLength": 10,
+      "description": "Copied from gdalinfo of the USGS DTM; never hand-typed"
+    },
+    "origin_eqc": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "north-west corner, projection metres"
+    },
+    "box_eqc": {
+      "type": "object",
+      "required": [
+        "xmin",
+        "ymin",
+        "xmax",
+        "ymax"
+      ],
+      "properties": {
+        "xmin": {
+          "type": "number"
+        },
+        "ymin": {
+          "type": "number"
+        },
+        "xmax": {
+          "type": "number"
+        },
+        "ymax": {
+          "type": "number"
+        }
+      }
+    },
+    "box_latlon": {
+      "type": "object",
+      "properties": {
+        "lat_min": {
+          "type": "number"
+        },
+        "lat_max": {
+          "type": "number"
+        },
+        "lon_min_e": {
+          "type": "number"
+        },
+        "lon_max_e": {
+          "type": "number"
+        }
+      }
+    },
+    "cell_m": {
+      "const": 2
+    },
+    "width": {
+      "type": "integer"
+    },
+    "height": {
+      "type": "integer"
+    },
+    "z_ref": {
+      "type": "number"
+    },
+    "nodata": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "layers_dir": {
+      "type": "string"
+    },
+    "source_dtm": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

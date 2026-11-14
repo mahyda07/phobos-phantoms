@@ -1,0 +1,18 @@
+{
+  "frame": "jezero-local-v1",
+  "model": "segformer-b0",
+  "version": "example",
+  "classes": [
+    "smooth terrain",
+    "boulder"
+  ],
+  "hazard_groups": {
+    "smooth terrain": "low",
+    "boulder": "high"
+  },
+  "metrics": {
+    "miou": 0.0
+  },
+  "file": "hazard.bin",
+  "cell_m": 2.0
+}

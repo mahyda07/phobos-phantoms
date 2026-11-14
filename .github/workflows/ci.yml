@@ -1,0 +1,20 @@
+# Written with AI assistance (Claude).
+name: checks
+on: [push, pull_request]
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install jsonschema pytest
+      - name: Validate contracts
+        run: python contracts/validate.py
+      - name: Tests (pass if none yet)
+        run: pytest -q || [ $? -eq 5 ]
+      - name: No files over 50 MB
+        run: |
+          big=$(find . -path ./.git -prune -o -type f -size +50M -print)
+          if [ -n "$big" ]; then echo "Too big for git, use the shared drive:"; echo "$big"; exit 1; fi

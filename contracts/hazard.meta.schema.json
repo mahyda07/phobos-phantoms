@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "hazard.meta",
+  "type": "object",
+  "required": [
+    "frame",
+    "model",
+    "version",
+    "classes",
+    "hazard_groups",
+    "metrics",
+    "file",
+    "cell_m"
+  ],
+  "properties": {
+    "frame": {
+      "const": "jezero-local-v1"
+    },
+    "model": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "classes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hazard_groups": {
+      "type": "object",
+      "additionalProperties": {
+        "enum": [
+          "low",
+          "medium",
+          "high"
+        ]
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "miou"
+      ],
+      "properties": {
+        "miou": {
+          "type": "number"
+        },
+        "per_class_iou": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "file": {
+      "type": "string"
+    },
+    "cell_m": {
+      "type": "number"
+    }
+  }
+}
