@@ -1,0 +1,141 @@
+{
+ "rule": {
+  "max_margin_loss_min": 10.0,
+  "max_extra_length": 0.1,
+  "tie_tolerance": 0.005,
+  "text": "lowest mean AI hazard along the demo walk among weights that keep the margin loss and extra length within the limits; smaller weight on a tie"
+ },
+ "start": [
+  429.15,
+  -1438.46
+ ],
+ "selected_weight": 4.0,
+ "rows": [
+  {
+   "weight": 0.0,
+   "length_m": 4297.3,
+   "time_out_min": 77.3,
+   "time_back_min": 18.8,
+   "margin_min": 138.0,
+   "slope_max_deg": 22.2,
+   "hazard_mean": 0.0583,
+   "hazard_gt05_share": 0.0044,
+   "stop_order": [
+    "S1",
+    "S3",
+    "S5",
+    "S2",
+    "S4"
+   ],
+   "proof_median_dist_m": 17.8,
+   "proof_mean_hazard": 0.035,
+   "proof_gt15": 0.011,
+   "passes": true
+  },
+  {
+   "weight": 0.5,
+   "length_m": 4300.0,
+   "time_out_min": 84.1,
+   "time_back_min": 12.2,
+   "margin_min": 137.5,
+   "slope_max_deg": 22.2,
+   "hazard_mean": 0.0466,
+   "hazard_gt05_share": 0.006,
+   "stop_order": [
+    "S4",
+    "S2",
+    "S5",
+    "S3",
+    "S1"
+   ],
+   "proof_median_dist_m": 17.0,
+   "proof_mean_hazard": 0.034,
+   "proof_gt15": 0.0114,
+   "passes": true
+  },
+  {
+   "weight": 1.0,
+   "length_m": 4301.2,
+   "time_out_min": 77.3,
+   "time_back_min": 18.9,
+   "margin_min": 138.1,
+   "slope_max_deg": 22.2,
+   "hazard_mean": 0.0456,
+   "hazard_gt05_share": 0.006,
+   "stop_order": [
+    "S1",
+    "S3",
+    "S5",
+    "S2",
+    "S4"
+   ],
+   "proof_median_dist_m": 15.7,
+   "proof_mean_hazard": 0.033,
+   "proof_gt15": 0.0114,
+   "passes": true
+  },
+  {
+   "weight": 2.0,
+   "length_m": 4310.9,
+   "time_out_min": 84.4,
+   "time_back_min": 12.2,
+   "margin_min": 137.3,
+   "slope_max_deg": 22.2,
+   "hazard_mean": 0.0427,
+   "hazard_gt05_share": 0.0054,
+   "stop_order": [
+    "S4",
+    "S2",
+    "S5",
+    "S3",
+    "S1"
+   ],
+   "proof_median_dist_m": 16.5,
+   "proof_mean_hazard": 0.031,
+   "proof_gt15": 0.0119,
+   "passes": true
+  },
+  {
+   "weight": 4.0,
+   "length_m": 4383.4,
+   "time_out_min": 79.2,
+   "time_back_min": 19.1,
+   "margin_min": 136.1,
+   "slope_max_deg": 22.3,
+   "hazard_mean": 0.0341,
+   "hazard_gt05_share": 0.0026,
+   "stop_order": [
+    "S1",
+    "S3",
+    "S5",
+    "S2",
+    "S4"
+   ],
+   "proof_median_dist_m": 16.0,
+   "proof_mean_hazard": 0.026,
+   "proof_gt15": 0.0104,
+   "passes": true
+  },
+  {
+   "weight": 8.0,
+   "length_m": 4439.5,
+   "time_out_min": 80.2,
+   "time_back_min": 19.1,
+   "margin_min": 135.2,
+   "slope_max_deg": 22.5,
+   "hazard_mean": 0.0305,
+   "hazard_gt05_share": 0.0031,
+   "stop_order": [
+    "S1",
+    "S3",
+    "S5",
+    "S2",
+    "S4"
+   ],
+   "proof_median_dist_m": 22.3,
+   "proof_mean_hazard": 0.02,
+   "proof_gt15": 0.0083,
+   "passes": true
+  }
+ ]
+}

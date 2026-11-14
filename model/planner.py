@@ -22,7 +22,7 @@ if str(ROOT) not in sys.path:
 from pipeline import planner_basic as pb  # noqa: E402
 
 MODEL_VERSION = "ai-hazard-v1"
-C_HAZARD = 0.0            # set after the sweep (model/sweep_hazard_weight.py)
+C_HAZARD = 4.0            # selected by model/sweep_hazard_weight.py (model/out/hazard_weight_sweep.json); see docs/cost-model.md
 HAZARD_FILE = ROOT / "model" / "out" / "hazard.bin"
 
 

@@ -16,5 +16,12 @@ These are the values the stand-in planner and time window use today (pipeline/pl
 | Minimum sun elevation | 30 | degrees | assumption (good light, short shadows) | stand-in time window (Ramish) |
 | Dust limit | not used | tau | The stand-in time window ignores dust. For reference, conditions.csv uses dust_tau 0.5 (MEDA, Savijarvi et al. 2024, sols 566-571) | Mahida (reference only) |
 | Temperature band | minimum −40 | °C | assumption, not a suit limit. MEDA air temperature measured on sols 500 and 501: −82 to −29 °C (science/conditions.csv) | stand-in time window (Ramish) |
+| Weight c (AI hazard) in the AI planner (model/planner.py, ai-hazard-v1) | 4.0 | — | Chosen by model/sweep_hazard_weight.py from 0, 0.5, 1, 2, 4, 8: lowest mean AI hazard along the demo walk among weights that cost at most 10 min of walk-back margin and at most 10% extra length (both limits are assumptions). Effect on the demo walk against weight 0: length 4297.3 to 4383.4 m, minimum margin 138.0 to 136.1 min, mean AI hazard 0.058 to 0.034 (model/out/hazard_weight_sweep.json) | Maryam |
+| AI hazard value of a cell | 0.5 × P(careful) + 1.0 × P(avoid) | 0 to 1 | assumption (a careful cell counts half). P = class probability from HazardNet (model/MODEL_CARD.md). The AI layer only raises cost; it never blocks a cell | Maryam |
+| Hazard classes: go / careful / avoid | score ≥ 0.7 / ≥ 0.4 / below | — | Maryam's score.py (model/maryam/score.py): score = min(slope score, roughness score); slope ramp 10 to 25 degrees, detrended-roughness ramp 0.3 to 1.5 m. Her starting guesses: assumption | Maryam |
+| Hazard groups | go = low, careful = medium, avoid = high | — | assumption | Maryam |
+| Minimum sun elevation in the AI track's time window (model/window.py) | 15 | degrees | Maryam's time_window.py: assumption | Maryam |
+| Dust limit in the AI track's time window (model/window.py) | 1.0 | tau | Maryam's time_window.py: assumption. conditions.csv has dust_tau 0.5 for every hour | Maryam |
+| EVA window length in model/window.py | 4 | hours | The Max EVA duration above (240 min); the window is the 4 hours with the highest average sun inside the good hours. Temperature is not part of this rule | Maryam |
 
 The cost of one grid square is 1 + a·(slope/limit)² + b·roughness + c·hazard − d·science. Squares above the slope limit or with no data are blocked.

@@ -1,0 +1,251 @@
+{
+ "model": "HazardNet (U-Net style, trained from scratch)",
+ "run": "hazardnet-v1",
+ "checkpoint_epoch": 21,
+ "checkpoint_sha256": "3f335677b72796d16a5d73d9383fe6ddd806570ce15d7e20fef4a5a4caa11153",
+ "classes": [
+  "go",
+  "careful",
+  "avoid"
+ ],
+ "labels_rule": {
+  "cell_m": 2,
+  "slope_ramp_deg": [
+   10.0,
+   25.0
+  ],
+  "rough_ramp_m": [
+   0.3,
+   1.5
+  ],
+  "go": 0.7,
+  "careful": 0.4,
+  "rough_window_m": 5,
+  "classes": [
+   "go",
+   "careful",
+   "avoid"
+  ],
+  "hazard_groups": {
+   "go": "low",
+   "careful": "medium",
+   "avoid": "high"
+  },
+  "hazard_value": {
+   "go": 0.0,
+   "careful": 0.5,
+   "avoid": 1.0
+  },
+  "ignore_index": 255
+ },
+ "hazardnet": {
+  "test": {
+   "miou": 0.46511259429138646,
+   "per_class_iou": {
+    "go": 0.8876661632775154,
+    "careful": 0.26636462085301815,
+    "avoid": 0.24130699874362574
+   },
+   "pixel_accuracy": 0.8658628546056409,
+   "confusion_rows_true_cols_pred": [
+    [
+     3908237,
+     221935,
+     31442
+    ],
+    [
+     180599,
+     202183,
+     26663
+    ],
+    [
+     60610,
+     127666,
+     78363
+    ]
+   ],
+   "cells": 4837698
+  },
+  "validation": {
+   "miou": 0.5266284697582749,
+   "per_class_iou": {
+    "go": 0.9422302642315655,
+    "careful": 0.273959121187545,
+    "avoid": 0.36369602385571437
+   },
+   "pixel_accuracy": 0.9293418695118801,
+   "confusion_rows_true_cols_pred": [
+    [
+     4422533,
+     161810,
+     18027
+    ],
+    [
+     77850,
+     120256,
+     25793
+    ],
+    [
+     13466,
+     53247,
+     63178
+    ]
+   ],
+   "cells": 4956160
+  }
+ },
+ "baselines": {
+  "majority_class": {
+   "miou": 0.2867489179082007,
+   "per_class_iou": {
+    "go": 0.860246753724602,
+    "careful": 0.0,
+    "avoid": 0.0
+   },
+   "pixel_accuracy": 0.860246753724602,
+   "confusion_rows_true_cols_pred": [
+    [
+     4161614,
+     0,
+     0
+    ],
+    [
+     409445,
+     0,
+     0
+    ],
+    [
+     266639,
+     0,
+     0
+    ]
+   ],
+   "cells": 4837698
+  },
+  "photo_stats_logistic_regression": {
+   "miou": 0.2914538282674651,
+   "per_class_iou": {
+    "go": 0.8558618848956462,
+    "careful": 0.017104645549655528,
+    "avoid": 0.0013949543570934359
+   },
+   "pixel_accuracy": 0.8547528183859348,
+   "confusion_rows_true_cols_pred": [
+    [
+     4126972,
+     32732,
+     1910
+    ],
+    [
+     401479,
+     7689,
+     277
+    ],
+    [
+     258914,
+     7350,
+     375
+    ]
+   ],
+   "cells": 4837698,
+   "train_cells_used": 4000000,
+   "features": [
+    "mean brightness (8x8 px)",
+    "brightness std (8x8 px)",
+    "std averaged over 5x5 cells",
+    "brightness gradient (Sobel)",
+    "gradient averaged over 5x5 cells",
+    "brightness range in 5x5 cells"
+   ]
+  }
+ },
+ "split": {
+  "train": {
+   "blocks": 43,
+   "tiles": 0,
+   "cells_per_class": {
+    "go": 20625446,
+    "careful": 1548191,
+    "avoid": 1265738
+   },
+   "class_share": {
+    "go": 0.8799,
+    "careful": 0.0661,
+    "avoid": 0.054
+   }
+  },
+  "val": {
+   "blocks": 10,
+   "tiles": 1210,
+   "cells_per_class": {
+    "go": 5218858,
+    "careful": 258819,
+    "avoid": 147323
+   },
+   "class_share": {
+    "go": 0.9278,
+    "careful": 0.046,
+    "avoid": 0.0262
+   }
+  },
+  "test": {
+   "blocks": 10,
+   "tiles": 1182,
+   "cells_per_class": {
+    "go": 4736124,
+    "careful": 456582,
+    "avoid": 294873
+   },
+   "class_share": {
+    "go": 0.8631,
+    "careful": 0.0832,
+    "avoid": 0.0537
+   }
+  },
+  "walk": {
+   "blocks": 1,
+   "tiles": 121,
+   "cells_per_class": {
+    "go": 498497,
+    "careful": 28655,
+    "avoid": 35348
+   },
+   "class_share": {
+    "go": 0.8862,
+    "careful": 0.0509,
+    "avoid": 0.0628
+   }
+  }
+ },
+ "gap_between_blocks_m": 92,
+ "training": {
+  "run": "hazardnet-v1",
+  "parameters": 4723811,
+  "best_val_miou": 0.5266356632823976,
+  "epochs_run": 34,
+  "settings": {
+   "tile_px": 512,
+   "batch": 16,
+   "epochs": 60,
+   "steps_per_epoch": 500,
+   "lr": 0.001,
+   "weight_decay": 0.0001,
+   "warmup_epochs": 2,
+   "patience": 12,
+   "focus_share": 0.5,
+   "class_weight_power": 0.5,
+   "brightness": 0.1,
+   "contrast": 0.2,
+   "run_name": "hazardnet-v1"
+  },
+  "seed": 20261114,
+  "torch": "2.11.0+cu128",
+  "device": "NVIDIA GeForce RTX 5070",
+  "best_checkpoint": "F:\\SpaceApps2026\\data\\ai\\runs\\hazardnet-v1\\best.pt",
+  "sha256_best": "3f335677b72796d16a5d73d9383fe6ddd806570ce15d7e20fef4a5a4caa11153",
+  "finished": "2026-11-15T00:32:47+0500"
+ },
+ "seed": 20261114,
+ "created": "2026-11-15T00:36:49+0500",
+ "note": "Labels are rule-based classes from the USGS 1 m DTM (Maryam's walkability rule). The network sees only the 25 cm photo. Test = whole 1.5 km blocks never used for training or for choosing the checkpoint."
+}
