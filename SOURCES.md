@@ -16,3 +16,5 @@ Rule: nothing gets used until it has a row here with its licence. Non-NASA sourc
 | Name | Used for | Link | Licence | Added by |
 |---|---|---|---|---|
 | uv, Python 3.12, NumPy, SciPy, scikit-image, rasterio, pyproj, FastAPI, uvicorn, jsonschema | Tooling | (PyPI) | various open source — list each before release | Ramish |
+| three.js 0.187 | Headset 3D / WebXR | https://threejs.org | MIT | Ramish |
+| Vite 8 | Build tool for xr/ | https://vitejs.dev | MIT | Ramish |
