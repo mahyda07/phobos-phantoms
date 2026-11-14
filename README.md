@@ -10,8 +10,8 @@ Real NASA terrain at Jezero Crater becomes a safety map. An AI-scored safest rou
 | What | Link | Notes |
 |---|---|---|
 | Headset app (Meta Quest 3 browser, also runs on a PC) | https://phantom-phobos.vercel.app | Hologram of the walking area on your desk; **Step in** to walk the planned route at full size with the visor |
-| Web map | *(display link: added after deploy)* | Route coloured by walk-back margin, science stops with rover photos, proof view, time window |
-| Planner web service | https://ramishsaeed-phobos-planner.hf.space | `GET /health`, `GET /stops`, `GET /window`, `GET /results`, `POST /plan`; interactive docs at `/docs` |
+| Web map |  | Route coloured by walk-back margin, science stops with rover photos, proof view, time window |
+| Planner web service | https://phobos-planner.onrender.com | `GET /health`, `GET /stops`, `GET /window`, `GET /results`, `POST /plan`; interactive docs at `/docs`. Free hosting: the first request after a quiet spell can take up to a minute |
 
 ## How it works
 1. **Terrain** (`terrain/`): USGS Mars 2020 HiRISE elevation (1 m) and photo (25 cm) of a 1.5 × 1.5 km area of Jezero's western delta, turned into a 2 m grid of elevation, slope and roughness.

@@ -18,7 +18,6 @@ Rule: nothing gets used until it has a row here with its licence. Non-NASA sourc
 | NumPy, SciPy, scikit-image | Grids, least-cost routes (MCP), filters | https://numpy.org · https://scipy.org · https://scikit-image.org | BSD-3-Clause (all three) | Ramish |
 | rasterio, pyproj | Reading the HiRISE GeoTIFFs, map projections | https://rasterio.readthedocs.io · https://pyproj4.github.io | BSD-3-Clause; MIT | Ramish |
 | FastAPI, uvicorn, jsonschema | Planner web service and contract checks | https://fastapi.tiangolo.com · https://www.uvicorn.org · https://python-jsonschema.readthedocs.io | MIT; BSD-3-Clause; MIT | Ramish |
-| Gradio 5.50, Hugging Face `spaces` | Planner service page and start-up on Hugging Face Spaces (ZeroGPU) | https://gradio.app · https://pypi.org/project/spaces/ | Apache-2.0; Apache-2.0 | Ramish |
 | three.js 0.187 | Headset 3D / WebXR | https://threejs.org | MIT | Ramish |
 | Vite 8 | Build tool for xr/ | https://vitejs.dev | MIT | Ramish |
 
@@ -36,4 +35,4 @@ Rule: nothing gets used until it has a row here with its licence. Non-NASA sourc
 | Name | Used for | Link | Terms | Added by |
 |---|---|---|---|---|
 | Vercel (Hobby) | Public links for the headset app and the web map | https://vercel.com | Vercel Terms of Service | Ramish |
-| Hugging Face Spaces | Public planner web service | https://huggingface.co/spaces | Hugging Face Terms of Service | Ramish |
+| Render (free web service) | Public planner web service | https://render.com | Render Terms of Service | Ramish |
