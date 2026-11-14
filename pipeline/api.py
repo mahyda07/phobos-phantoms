@@ -6,7 +6,8 @@ Endpoints
   GET  /layers      -> terrain/out/layers.manifest.json (every layer with source + licence)
   GET  /stops       -> the science stops on the grid (terrain/out/stops.csv as JSON)
   GET  /route/demo  -> the precomputed demo route (pipeline/fallback/route.json), also the display's fallback
-  GET  /window      -> window.json once Maryam publishes it (404 until then; never sample data)
+  GET  /window      -> window.json: the planner team's file if published, else the stand-in pipeline/fallback/window.json
+  GET  /results     -> proof vs Perseverance: model/out/results.md if published, else the stand-in results.md (text)
   POST /plan        -> body per contracts/plan.request.schema.json, reply is a route.json
 
 Settings (environment variables)
@@ -18,6 +19,7 @@ Run locally:  uv run uvicorn pipeline.api:app --reload --port 8000
 import csv, json, os, pathlib
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from jsonschema import Draft202012Validator
 
@@ -79,10 +81,18 @@ def route_demo():
 
 @app.get("/window")
 def window():
-    for p in (DATA / "window.json", ROOT / "model/out/window.json"):
+    for p in (DATA / "window.json", ROOT / "model/out/window.json", ROOT / "pipeline/fallback/window.json"):
         if p.exists():
             return json.loads(p.read_text())
     raise HTTPException(404, "window.json not published yet")
+
+
+@app.get("/results", response_class=PlainTextResponse)
+def results():
+    for p in (ROOT / "model/out/results.md", ROOT / "model/results.md", ROOT / "results.md"):
+        if p.exists():
+            return p.read_text(encoding="utf-8")
+    raise HTTPException(404, "results.md not published yet")
 
 
 @app.post("/plan")

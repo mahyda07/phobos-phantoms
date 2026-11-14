@@ -21,4 +21,8 @@ for (const f of need) {
 for (const cand of [join(repo, "model", "out", "route.json"), join(repo, "pipeline", "fallback", "route.json")]) {
   if (existsSync(cand)) { copyFileSync(cand, join(out, "route.json")); console.log("copied route from " + cand); break; }
 }
+// Time window (Maryam) for the visor's sun height, if published; the visor shows "—" without it.
+for (const cand of [join(repo, "model", "out", "window.json"), join(repo, "pipeline", "fallback", "window.json")]) {
+  if (existsSync(cand)) { copyFileSync(cand, join(out, "window.json")); console.log("copied window from " + cand); break; }
+}
 if (missing) console.warn(`${missing} terrain file(s) missing — run terrain/build_terrain.py first`);

@@ -3,11 +3,15 @@
 // Real NASA terrain on your desk in Quest 3 passthrough: hit-test placement, hands (move, two-hand scale),
 // snap-rotate buttons, height exaggeration, photo/slope layer, route ribbon (planner route if present,
 // otherwise Perseverance's real path as a labelled stand-in). No real-time shadows (PLAN.md D1).
+// Step-in walk (D26): "Step in" turns the hologram into the real 1:1 terrain around you and walks the planned
+// route; the visor (Kashif's design v1) shows margin, time out, slope, AI hazard, next stop and sun height.
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { XRHandModelFactory } from "three/addons/webxr/XRHandModelFactory.js";
 import { makeFrame } from "./frame.js";
 import { heightSampler, marginColour, holoScale } from "./terrain.js";
+import { stopVertexIndices, walkState, ltstAt, sunAt, visorFields } from "./walk.js";
+import { drawVisor, VISOR_W, VISOR_H } from "./visor.js";
 
 const DATA = "./data/";
 const HOLO_SIZE = 0.6;            // metres across on the desk (PLAN: 1:2500 for 1.5 km)
@@ -44,6 +48,7 @@ scene.add(anchor);
 
 let F, grid, sampler, extentM, S, exagIdx = 1, layer = "photo";
 let terrainMat, textures = {}, routeInfo = "", fps = 0;
+let routeData = null, stopIdx = [], winData = null, holoTube = null, walkTube = null;
 
 function applyScale(mult = model.userData.mult ?? 1) {
   model.userData.mult = mult;
@@ -103,6 +108,7 @@ async function init() {
   holo.add(base);
 
   await addRoute();
+  winData = await loadJSON(DATA + "window.json");
   applyScale(1);
   setStatus(info());
   enableButtons();
@@ -141,7 +147,15 @@ async function addRoute() {
   if (route && route.geometry?.coordinates?.length > 1) {
     const pts = route.geometry.coordinates.map(([x, y]) => toHolo(x, y));
     const m = route.properties.per_vertex?.margin_min || [];
-    holo.add(tubeFor(pts, pts.map((_, i) => marginColour(m[i])), 3));
+    holoTube = tubeFor(pts, pts.map((_, i) => marginColour(m[i])), 3);
+    holo.add(holoTube);
+    // thin ribbon just above the ground for the 1:1 step-in walk (hidden on the desk)
+    const wpts = route.geometry.coordinates.map(([x, y]) => toHolo(x, y, 0.4));
+    walkTube = tubeFor(wpts, wpts.map((_, i) => marginColour(m[i])), 0.25);
+    walkTube.visible = false;
+    holo.add(walkTube);
+    routeData = route;
+    stopIdx = stopVertexIndices(route.geometry.coordinates, route.properties.stops || []);
     for (const s of route.properties.stops || []) {
       const p = toHolo(s.x, s.y, 0);
       const pin = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 40, 8), new THREE.MeshBasicMaterial({ color: 0xff7a00 }));
@@ -199,11 +213,12 @@ const act = {
   },
   replace: () => { placed = false; anchor.visible = false; },
 };
-addButton("rotL", "⟲ 15°", -0.16, act.rotL);
-addButton("rotR", "⟳ 15°", -0.08, act.rotR);
-const bExag = addButton("exag", "Height ×2", 0, act.exag);
-const bLayer = addButton("layer", "Photo", 0.08, act.layer);
-addButton("replace", "Re-place", 0.16, act.replace);
+addButton("rotL", "⟲ 15°", -0.20, act.rotL);
+addButton("rotR", "⟳ 15°", -0.12, act.rotR);
+const bExag = addButton("exag", "Height ×2", -0.04, act.exag);
+const bLayer = addButton("layer", "Photo", 0.04, act.layer);
+addButton("replace", "Re-place", 0.12, act.replace);
+addButton("stepin", "Step in", 0.20, () => startWalk());
 const infoMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.05), new THREE.MeshBasicMaterial({ transparent: true }));
 infoMesh.position.set(0, 0.045, -0.01); infoMesh.rotation.x = -0.6;
 panel.add(infoMesh);
@@ -228,7 +243,7 @@ const ray = new THREE.Raycaster();
 renderer.domElement.addEventListener("click", (e) => {
   const v = new THREE.Vector2((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
   ray.setFromCamera(v, camera);
-  const hit = ray.intersectObjects(buttons)[0];
+  const hit = ray.intersectObjects(buttons.filter(shown))[0];
   if (hit) hit.object.userData.onPress();
 });
 
@@ -250,6 +265,7 @@ async function enterXR(mode) {
     hitSource = await session.requestHitTestSource({ space: viewer });
   }
   session.addEventListener("end", () => {
+    if (walking) stopWalk();
     hitSource = null; scene.background = desktopBg; placed = true; anchor.visible = true;
     anchor.position.set(0, 0, 0); reticle.visible = false;
   });
@@ -285,7 +301,7 @@ for (let i = 0; i < 2; i++) {
     tmpM.identity().extractRotation(ctrl.matrixWorld);
     ray.ray.origin.setFromMatrixPosition(ctrl.matrixWorld);
     ray.ray.direction.set(0, 0, -1).applyMatrix4(tmpM);
-    const hit = ray.intersectObjects(buttons)[0];
+    const hit = ray.intersectObjects(buttons.filter(shown))[0];
     if (hit) hit.object.userData.onPress();
   });
   scene.add(ctrl);
@@ -303,7 +319,10 @@ let two = null;
 const box = new THREE.Box3();
 function nearButton(p) {
   let best = null, bd = 0.04;
-  for (const b of buttons) { const d = b.getWorldPosition(new THREE.Vector3()).distanceTo(p); if (d < bd) { bd = d; best = b; } }
+  for (const b of buttons) {
+    if (!shown(b)) continue;
+    const d = b.getWorldPosition(new THREE.Vector3()).distanceTo(p); if (d < bd) { bd = d; best = b; }
+  }
   return best;
 }
 function updateHands() {
@@ -319,6 +338,7 @@ function updateHands() {
       if (!placed) { if (reticle.visible) placeAt(new THREE.Vector3().setFromMatrixPosition(reticle.matrix)); else placeInFront(); continue; }
       const b = nearButton(s.pos);
       if (b) { b.userData.onPress(); continue; }
+      if (walking) continue;
       box.setFromObject(model).expandByScalar(0.08);
       s.grabbing = box.containsPoint(s.pos);
       s.last.copy(s.pos);
@@ -336,12 +356,159 @@ function updateHands() {
   }
 }
 
+// ---------- step-in walk + visor (D26) ----------
+function shown(o) { for (let p = o; p; p = p.parent) if (!p.visible) return false; return true; }
+
+const SPEEDS = [10, 30, 60];      // simulated walking minutes per real minute
+const EYE = 1.7;                  // metres: desktop eye height above the ground
+let walking = false, playing = true, simT = 0, speedIdx = 1, lastNow = 0;
+let walkYaw = 0, walkSaved = null, lastVisorKey = "";
+const walkOrigin = new THREE.Vector3();
+
+// sky dome + haze so the walk reads as Mars (also hides passthrough while stepped in)
+const sky = (() => {
+  const g = new THREE.SphereGeometry(4000, 32, 16);
+  const col = new Float32Array(g.attributes.position.count * 3);
+  const top = new THREE.Color(0xd9b48f), hor = new THREE.Color(0xc79a74), low = new THREE.Color(0x5a3d2b);
+  for (let i = 0; i < g.attributes.position.count; i++) {
+    const y = g.attributes.position.getY(i) / 4000;
+    const c = y >= 0 ? hor.clone().lerp(top, Math.min(1, y * 2)) : hor.clone().lerp(low, Math.min(1, -y * 4));
+    col.set([c.r, c.g, c.b], i * 3);
+  }
+  g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false }));
+  m.visible = false; m.renderOrder = -1;
+  scene.add(m);
+  return m;
+})();
+const haze = new THREE.Fog(0xc79a74, 500, 3000);
+
+// visor: a canvas on a plane that follows the head (centre band left clear)
+const visorCanvas = document.createElement("canvas");
+visorCanvas.width = VISOR_W; visorCanvas.height = VISOR_H;
+const visorTex = new THREE.CanvasTexture(visorCanvas); visorTex.colorSpace = THREE.SRGBColorSpace;
+const visor = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 1.0 * VISOR_H / VISOR_W),
+  new THREE.MeshBasicMaterial({ map: visorTex, transparent: true, depthTest: false, depthWrite: false, fog: false }));
+visor.renderOrder = 10; visor.visible = false;
+scene.add(visor);
+
+// walk controls: a small panel at waist height in front of you (follows where you face, not your head tilt)
+const walkPanel = new THREE.Group();
+walkPanel.visible = false;
+scene.add(walkPanel);
+function addWalkButton(text, x, onPress) {
+  const b = addButton("walk-" + text, text, x, onPress);
+  panel.remove(b); walkPanel.add(b);
+  b.position.set(x, 0, 0);
+  b.material.fog = false;
+  return b;
+}
+const bPlay = addWalkButton("Pause", -0.12, () => { playing = !playing; bPlay.userData.setText(playing ? "Pause" : "Play"); });
+const bSpeed = addWalkButton(`Speed ${SPEEDS[speedIdx]}×`, -0.04, () => {
+  speedIdx = (speedIdx + 1) % SPEEDS.length; bSpeed.userData.setText(`Speed ${SPEEDS[speedIdx]}×`);
+});
+addWalkButton("Restart", 0.04, () => { simT = 0; playing = true; bPlay.userData.setText("Pause"); });
+addWalkButton("Step out", 0.12, () => stopWalk());
+
+function viewPose() {   // world position + quaternion of the eyes (headset or desktop camera)
+  const cam = renderer.xr.isPresenting ? renderer.xr.getCamera() : camera;
+  const pos = new THREE.Vector3(), quat = new THREE.Quaternion();
+  cam.getWorldPosition(pos); cam.getWorldQuaternion(quat);
+  return { pos, quat };
+}
+
+function startWalk() {
+  if (!routeData) { setStatus(info() + "\nNo planned route to walk yet."); return; }
+  walkSaved = {
+    anchorPos: anchor.position.clone(), anchorRot: anchor.rotation.clone(), modelRot: model.rotation.clone(),
+    mult: model.userData.mult ?? 1, camPos: camera.position.clone(), far: camera.far, near: camera.near,
+  };
+  walking = true; playing = true; simT = 0; lastNow = performance.now();
+  bPlay.userData.setText("Pause");
+  panel.visible = false; holoTube && (holoTube.visible = false); walkTube && (walkTube.visible = true);
+  sky.visible = true; scene.fog = haze; visor.visible = true; walkPanel.visible = true; reticle.visible = false;
+  camera.near = 0.05; camera.far = 6000; camera.updateProjectionMatrix();
+  model.scale.set(1, 1, 1);                       // real size, real height
+  anchor.rotation.set(0, 0, 0); anchor.visible = true;
+
+  if (!renderer.xr.isPresenting) {                 // desktop preview: put the camera at eye height, look around with the mouse
+    camera.position.set(0, EYE, 0);
+    orbit.target.set(0, EYE, -0.05); orbit.enableZoom = false; orbit.enablePan = false; orbit.update();
+    walkOrigin.set(0, 0, 0);
+  } else {
+    const { pos } = viewPose();
+    walkOrigin.set(pos.x, 0, pos.z);               // local-floor: the floor is y = 0
+  }
+  // turn the terrain so the first walking direction is straight ahead of you
+  const st = walkState(routeData, 0, stopIdx);
+  const v = new THREE.Vector3(Math.sin(st.heading), 0, -Math.cos(st.heading));
+  const { quat } = viewPose();
+  const f = new THREE.Vector3(0, 0, -1).applyQuaternion(quat); f.y = 0; f.normalize();
+  walkYaw = Math.atan2(f.x, f.z) - Math.atan2(v.x, v.z);
+  model.rotation.set(0, walkYaw, 0);
+  updateWalk(performance.now());
+}
+
+function stopWalk() {
+  walking = false;
+  sky.visible = false; scene.fog = null; visor.visible = false; walkPanel.visible = false;
+  panel.visible = true; holoTube && (holoTube.visible = true); walkTube && (walkTube.visible = false);
+  if (walkSaved) {
+    anchor.position.copy(walkSaved.anchorPos); anchor.rotation.copy(walkSaved.anchorRot);
+    model.rotation.copy(walkSaved.modelRot);
+    camera.near = walkSaved.near; camera.far = walkSaved.far; camera.updateProjectionMatrix();
+    if (!renderer.xr.isPresenting) { camera.position.copy(walkSaved.camPos); orbit.target.set(0, 0, 0); orbit.enableZoom = true; orbit.enablePan = true; orbit.update(); }
+    applyScale(walkSaved.mult);
+  }
+  lastVisorKey = "";
+}
+
+const tmpV = new THREE.Vector3(), tmpQ = new THREE.Quaternion();
+let walkNow = null;
+function updateWalk(now) {
+  const dt = Math.min(0.1, (now - lastNow) / 1000); lastNow = now;
+  const tEnd = routeData.properties.per_vertex.t_min.at(-1);
+  if (playing) simT = Math.min(tEnd, simT + dt * SPEEDS[speedIdx] / 60);   // real seconds x speed = simulated seconds; /60 -> minutes
+  const st = walkState(routeData, simT, stopIdx);
+  walkNow = st;
+  if (st.done && playing) { playing = false; bPlay.userData.setText("Play"); }
+
+  // move the world so the walker's point on the route is under your feet
+  const [hx, hy, hz] = F.localToThree(st.x, st.y, sampler(st.x, st.y));
+  tmpV.set(hx + holo.position.x, hy + holo.position.y, hz + holo.position.z).applyAxisAngle(new THREE.Vector3(0, 1, 0), walkYaw);
+  anchor.position.copy(walkOrigin).sub(tmpV);
+
+  // visor follows the head (smoothed), walk panel follows where you face at waist height
+  const { pos, quat } = viewPose();
+  tmpQ.copy(quat);
+  visor.quaternion.slerp(tmpQ, visor.userData.init ? 0.25 : 1);
+  visor.position.copy(pos).add(new THREE.Vector3(0, 0, -0.9).applyQuaternion(visor.quaternion));
+  visor.userData.init = true;
+  const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(quat); fwd.y = 0; fwd.normalize();
+  const yaw = Math.atan2(-fwd.x, -fwd.z);
+  walkPanel.position.lerp(pos.clone().addScaledVector(fwd, 0.42).add(new THREE.Vector3(0, -0.38, 0)), walkPanel.userData.init ? 0.1 : 1);
+  walkPanel.rotation.set(0, yaw, 0);
+  walkPanel.userData.init = true;
+
+  // redraw the visor only when a shown value changes
+  const sun = sunAt(winData, ltstAt(winData, st.t_min));
+  const f = visorFields(st, sun, String(routeData.properties.plan_id || "").startsWith("standin-"));
+  const key = JSON.stringify(f);
+  if (key !== lastVisorKey) { drawVisor(visorCanvas.getContext("2d"), f); visorTex.needsUpdate = true; lastVisorKey = key; }
+}
+const walkInfo = () => walkNow
+  ? `Step-in walk · ${SPEEDS[speedIdx]}× · ${playing ? "walking" : "paused"} · t ${walkNow.t_min.toFixed(1)} min · point ${walkNow.i + 1}/${routeData.geometry.coordinates.length} · ${fps} fps\n${routeInfo}`
+  : info();
+
+// desktop: HTML Step in / Step out
+document.getElementById("btn-walk").onclick = () => (walking ? stopWalk() : startWalk());
+
 // ---------- loop ----------
 let frames = 0, t0 = performance.now();
 renderer.setAnimationLoop((time, frame) => {
   frames++;
   const now = performance.now();
-  if (now - t0 > 1000) { fps = Math.round(frames * 1000 / (now - t0)); frames = 0; t0 = now; drawInfo(info()); setStatus(info()); }
+  if (now - t0 > 1000) { fps = Math.round(frames * 1000 / (now - t0)); frames = 0; t0 = now; drawInfo(info()); setStatus(walking ? walkInfo() : info()); }
   if (frame && renderer.xr.isPresenting) {
     if (!placed && hitSource) {
       const hits = frame.getHitTestResults(hitSource);
@@ -353,6 +520,7 @@ renderer.setAnimationLoop((time, frame) => {
     } else if (!placed && !hitSource) placeInFront();
     updateHands();
   } else orbit.update();
+  if (walking) updateWalk(now);
   renderer.render(scene, camera);
 });
 

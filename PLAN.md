@@ -29,7 +29,7 @@ A mixed-reality Marswalk planner. Real NASA terrain at Jezero Crater becomes a s
 | D15 | Night shifts: Ramish works late; others ⏳ | ⏳ | Mahida |
 | D16 | Walking area 1.5 × 1.5 km, western delta front: NW 18.47254°N 77.39748°E · NE 18.47254°N 77.42279°E · SW 18.44724°N 77.39748°E · SE 18.44724°N 77.42279°E. Projection metres: xmin 4587712, xmax 4589212, ymin 1093454, ymax 1094954 (750 × 750 cells at 2 m). Contains 6.7 km of Perseverance's path, sols 405–717 (delta-front campaign) | ✅ | Ramish |
 | D17 | `POST /plan` request: `{"frame":"jezero-local-v1","start":[x,y],"end":[x,y],"stops":["S1",…],"use_hazard":true}` in local metres; reply is a `route.json`. Contract: `contracts/plan.request.schema.json` | ✅ | Ramish |
-| D18 | Hosting: **Vercel on Ramish's account** for both the web display and the headset app. Ramish deploys from `main` with the Vercel command line (free Hobby plan has no team members); Kashif tests locally and on the preview links Ramish posts. Planner service on Render | ✅ | Ramish |
+| D18 | Hosting: **Vercel on Ramish's account** for both the web display and the headset app. Ramish deploys from `main` with the Vercel command line (free Hobby plan has no team members); Kashif tests locally and on the preview links Ramish posts. Planner service on Hugging Face Spaces (Gradio SDK on ZeroGPU hardware, planner runs on CPU, public, Ramish's account): https://ramishsaeed-phobos-planner.hf.space | ✅ | Ramish |
 | D19 | Terrain outputs in `terrain/out/` (same names as `samples/out/`): `grid.json`, `terrain.meta.json`, `dem.bin`, `slope.bin`, `rough.bin`, `hazard.bin`, `science.bin`, and PNGs `photo.png`, `photo_2k.jpg` (headset), `slope.png`, `rough.png`, `hazard.png`, `science.png`. All `.bin` = float32 little-endian, row-major from the NW corner. Grid size: read `width`/`height` from `grid.json` (real = 750 × 750) | ✅ | Ramish |
 | D20 | Coordinate helpers: `pipeline/frame.py` and `pipeline/frame.js` (tested). Copies: `xr/src/frame.js`, `display/src/frame.js` (Kashif copies it in). Never edit a copy. Leaflet point = `[height + y/2, x/2]`, overlay bounds `[[0,0],[height,width]]` | ✅ | Ramish |
 | D21 | Stand-in planner: Ramish writes a basic least-cost planner in `pipeline/` with the same inputs/outputs Maryam's will have, so the planner service and Gate 2 aren't blocked. Swapped for Maryam's `model/` planner as soon as it's in `main` | ✅ | Ramish |
@@ -37,6 +37,8 @@ A mixed-reality Marswalk planner. Real NASA terrain at Jezero Crater becomes a s
 | D23 | Display rules (answers to Kashif): a grid cell (row, col) covers [row, row+1) × [col, col+1), centre at +0.5; pixel lookups floor + clamp. A route is SAMPLE if `plan_id` or `model_version` contains "SAMPLE"; stand-in routes have `model_version` starting "standin-". Display and headset copy their data into `public/data/` at build time (not committed) | ✅ | Ramish |
 | D24 | Stops on the grid: `terrain/out/stops.csv` (Mahida's `science/stops.csv` + row/col). Science layer `terrain/out/science.bin` = mean of carbonate, clay, olivine relative signals (CRISM browse products, ~18 m, nearest-neighbour). Clay signal is ~0 in this area | ✅ | Ramish |
 | D25 | Stand-in planner live: `pipeline/planner_basic.py` + service `pipeline/api.py`; demo/fallback route `pipeline/fallback/route.json` (4.3 km, 5 stops, min margin 138 min, all ASSUMPTION settings). Service host: see changelog | ✅ | Ramish |
+| D26 | Step-in walk + visor in the headset (`xr/`): "Step in" shows the terrain at 1:1 with the route as a ground ribbon and the stops as beacons; simulated walk along `per_vertex.t_min` (10×/30×/60×); visor = Kashif's design v1 (6 fields straight from `route.json` `per_vertex`, sun height from `window.json`, neutral white until thresholds are in `docs/cost-model.md`). Next stop = first stop whose nearest route point comes after the current point; LTST = `eva_window.start_ltst` + time out in Mars hours. | ✅ | Ramish |
+| D27 | Stand-ins until the planner team publishes (same files, marked stand-in): `pipeline/window_basic.py` → `pipeline/fallback/window.json` (sun from NASA GISS Mars24 for Jezero on sol 500, temperature/pressure from `science/conditions.csv`, EVA window = longest run of hours with sun ≥ 30° and air ≥ −40 °C → LTST 11–15); `pipeline/proof_basic.py` → `results.md` + `pipeline/fallback/results.json` (Perseverance's track cut into 500 m stretches; planner vs straight line vs rover: distance to rover track and steep-ground share). `model/out/*` always wins. Service: `GET /window` falls back to the stand-in, new `GET /results`. Stop `science_value` (Mahida) is a 3 × 3 CRISM-pixel (~54 m) mean; `science.bin` is per 2 m cell, so they differ slightly by design. | ✅ | Ramish |
 
 
 ## 3. Who waits on whom
@@ -59,7 +61,7 @@ A mixed-reality Marswalk planner. Real NASA terrain at Jezero Crater becomes a s
 | Sat 14:15 | Walking area posted (4 corners) | Ramish |
 | Sat 14:45 | Final science stops `stops.csv` | Mahida |
 | Sat ~16:00 | Real terrain layers + `grid.json` | Ramish |
-| Sat ~19:00 | Planner service URL (Render) for Kashif | Ramish |
+| Sat ~19:00 | Planner service URL (Hugging Face) for Kashif | Ramish |
 | Sat ~17:30 | First real route | Maryam |
 | Sat 18:00 | `conditions.csv`; visor design | Mahida; Kashif |
 | Sat 21:00 | **Gate 2:** web route + panels + hologram on desk from public links | Mahida approves |
@@ -73,6 +75,7 @@ A mixed-reality Marswalk planner. Real NASA terrain at Jezero Crater becomes a s
 Check-ins in the group: 13:00, 19:00, 01:00 — done / next / blocked.
 
 ## 5. Changelog
+- Sat ~21:00: headset step-in walk + visor (D26); stand-in time window + proof vs Perseverance (D27); planner service on Hugging Face Spaces (Gradio SDK on ZeroGPU: Docker Spaces are paid, CPU basic not offered; Render can't read the private repo), files in `pipeline/hf/`; Vercel deploys run from `F:\SpaceApps2026\deploy\` outside git (Vercel blocks merge commits by the GitHub no-reply author); SOURCES.md completed (licences, DOIs, Mars24, hosting).
 - Sat ~16:30: science layer + stops on grid (D24); stand-in planner + service with demo route (D25).
 - Sat: real terrain merged (terrain/out). Headset app + stand-in planner decided (D21, D22).
 - Sat: POST /plan contract, Vercel hosting, terrain file names and coordinate helpers decided (D17–D20).
