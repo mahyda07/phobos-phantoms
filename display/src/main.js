@@ -12,7 +12,7 @@ import { renderStopCards, highlightStopCard, stopsFromCsv, parseCsv } from "./st
 import stopPhotos from "./stop-photos.json";
 import "./stop-cards.css";
 import { renderProofPanel, initProofToggle, parseWaypointsCsv } from "./proof.js";
-import { initPlannerControl } from "./planner.js";
+import { initPlannerControl, buildPlanRequest, requestPlan } from "./planner.js";
 import { initMovingMap } from "./moving-map.js";
 import "./moving-map.css";
 import { renderSources, initLegendControl } from "./sources.js";
@@ -25,6 +25,16 @@ import { renderStretches } from "./proof-stretches.js";
 import "./proof-stretches.css";
 import { initDemo } from "./demo.js";
 import "./demo.css";
+import { initCompare } from "./compare.js";
+import "./compare.css";
+import { initExport } from "./export.js";
+import "./export.css";
+import { initBriefing } from "./briefing.js";
+import "./briefing.css";
+import { initShare, readInitialState } from "./share.js";
+import "./share.css";
+import { initLocator, MARS_GLOBAL } from "./locator.js";
+import "./locator.css";
 import { initA11y } from "./a11y.js";
 import "./a11y.css"; // after theme.css: focus rings, contrast fixes
 import "./responsive.css"; // keep last: phone/tablet overrides
@@ -179,6 +189,9 @@ async function main() {
   const slider = document.getElementById("point-slider");
   let view = null;
   let current = null;
+  let lastPlanRequest = null; // set only while the drawn route came from the live planner (for share links)
+  let exporter = null; // route downloads (created further down, refreshed whenever the route changes)
+  const compare = initCompare(map, { L, f, container: document.getElementById("compare") }); // previous vs new planner route
   let routeLL = [];   // current route in Leaflet coordinates (for the moving-map control)
   let mm = null;      // moving-map control: play along the route, follow, distance rings
   let profile = null; // elevation profile chart in the side panel
@@ -215,6 +228,7 @@ async function main() {
     profileEl.hidden = false;
     showPoint(0);
     setupProof(route, view.layer);
+    exporter?.refresh();
   };
 
   const saved = await getJson("route.json");
@@ -227,25 +241,32 @@ async function main() {
     csvStopLayer?.addTo(map);
     showStops(csvStops, (id) => { highlightStopCard(stopsEl, id); const m = csvStopMarkers[id]; if (m) map.panTo(m.getLatLng()); });
     setupProof(null, null);
+    current = null;
+    lastPlanRequest = null;
+    compare.clear();
+    exporter?.refresh();
   };
   if (saved && !savedError) showRoute(saved);
   else noRoute(saved ? "Route not drawn: " + savedError
     : "No planned route yet. Showing the terrain, the science stops and Perseverance's real path until the planner's route.json arrives.");
 
   // Live planner (POST /plan). On failure the saved route (if any) stays: it is the offline demo route.
+  const onPlannerRoute = (route, { source, reason, request }) => {
+    if (source === "planner" && route) {
+      if (current) compare.setRoutes(current, route); // keep the previous route as a dashed line + side-by-side numbers
+      showRoute(route);
+      lastPlanRequest = request || null;
+      routeSource.textContent = "Route from the live planner.";
+    } else {
+      routeSource.textContent = saved && !savedError
+        ? `Planner unavailable (${reason}) — showing the saved offline demo route.`
+        : `Planner unavailable (${reason}) — no saved route to fall back to yet.`;
+    }
+    routeSource.hidden = false;
+  };
   initPlannerControl(map, f, {
     stops: (csvStops.length ? csvStops : saved?.properties?.stops || []).map((s) => ({ id: s.id, name: s.name })),
-    onRoute: (route, { source, reason }) => {
-      if (source === "planner" && route) {
-        showRoute(route);
-        routeSource.textContent = "Route from the live planner.";
-      } else {
-        routeSource.textContent = saved && !savedError
-          ? `Planner unavailable (${reason}) — showing the saved offline demo route.`
-          : `Planner unavailable (${reason}) — no saved route to fall back to yet.`;
-      }
-      routeSource.hidden = false;
-    },
+    onRoute: onPlannerRoute,
   });
 
   // Moving map (created after the planner so it sits under it): only useful when a route is drawn.
@@ -286,20 +307,95 @@ async function main() {
   initLegendControl(map, { manifest: isSample ? null : manifest, hazardMeta, overlays: rasterInfo, slopeLimit });
   renderSources(document.getElementById("sources"), isSample ? null : manifest, {
     extra: isSample ? [] : [{ name: "Perseverance raw images (stop photos)", source: "NASA/JPL-Caltech",
-      licence: "NASA media guidelines", citation: "https://mars.nasa.gov/mars2020/multimedia/raw-images/" }],
+      licence: "NASA media guidelines", citation: "https://mars.nasa.gov/mars2020/multimedia/raw-images/" },
+    { name: "Where on Mars? inset (global map)", source: MARS_GLOBAL.credit, licence: MARS_GLOBAL.licence, citation: MARS_GLOBAL.source }],
   });
 
-  renderWindow(await getJson("window.json"));
+  const win = await getJson("window.json");
+  renderWindow(win);
+  let conditionRows = [];
   // Hourly conditions (Mahida's conditions.csv): temperature, pressure, dust, radiation, exactly as in the file.
   const condText = await getText("conditions.csv");
   if (condText) {
     const [head, ...rows] = parseCsv(condText);
-    renderConditions(document.getElementById("window"), rows.map((r) => Object.fromEntries(head.map((h, k) => [h, r[k]]))));
+    conditionRows = rows.map((r) => Object.fromEntries(head.map((h, k) => [h, r[k]])));
+    renderConditions(document.getElementById("window"), conditionRows);
   }
+
+  // Route downloads (GeoJSON / CSV, exactly the route shown) and the printable one-page EVA briefing.
+  exporter = initExport(document.getElementById("download-tools"), () => current);
+  initBriefing(document.getElementById("briefing-tools"), () => ({
+    route: current, stops: view ? view.stops : csvStops, photos, win, conditions: conditionRows,
+    slopeLimit, manifest: isSample ? null : manifest, isSample,
+  }));
   addScaleBar(map, f.cell);
+  initLocator(map, { L, grid: gridRaw, isSample }); // after the scale bar so it stacks above it
 
   // Re-fit once layout has settled (first-load mis-zoom fix).
-  requestAnimationFrame(() => { map.invalidateSize(); fit(); });
+  // Shareable link: "Copy link to this view" stores the view in the URL hash (#p=…&z=…); opening such a link restores it.
+  const layerById = () => {
+    const m = {};
+    for (const { id, layer } of Object.values(rasterInfo)) m[id] = layer;
+    if (roverLayer) m.rover = roverLayer;
+    if (csvStopLayer) m.stops = csvStopLayer;
+    if (view) m.route = view.layer;
+    return m;
+  };
+  const proofBtn = () => document.querySelector(".proof-toggle button");
+  const getState = () => {
+    const c = map.getCenter();
+    const st = {
+      zoom: map.getZoom(), center: [c.lat, c.lng],
+      layers: Object.entries(layerById()).filter(([, l]) => map.hasLayer(l)).map(([id]) => id),
+      proof: proofBtn()?.getAttribute("aria-pressed") === "true",
+    };
+    if (view) st.point = Number(slider.value);
+    if (lastPlanRequest) Object.assign(st, { start: lastPlanRequest.start, end: lastPlanRequest.end,
+      stops: lastPlanRequest.stops, useHazard: lastPlanRequest.use_hazard });
+    return st;
+  };
+  const replan = async ({ start, end, stops = [], useHazard = true }) => {
+    let body;
+    try { body = buildPlanRequest({ start, end, stops, useHazard }); } catch { return; }
+    if (!f.inside(start[0], start[1]) || !f.inside(end[0], end[1])) return;
+    routeSource.textContent = "Planning the route from the shared link… (free server, can take a few seconds)";
+    routeSource.hidden = false;
+    const res = await requestPlan(body);
+    const err = res.ok ? checkRoute(res.route, f) : "fail";
+    if (!err) onPlannerRoute(res.route, { source: "planner", request: body });
+    else onPlannerRoute(null, { source: "fallback", reason: res.ok ? "bad-reply" : res.reason });
+  };
+  const applyState = async (st) => {
+    if (st.start && st.end) await replan(st); // first: showRoute resets the point, proof and route overlay
+    const byId = layerById();
+    if (st.layers) for (const [id, layer] of Object.entries(byId)) {
+      const on = st.layers.includes(id);
+      if (on && !map.hasLayer(layer)) map.addLayer(layer);
+      if (!on && map.hasLayer(layer)) map.removeLayer(layer);
+    }
+    if (st.proof !== undefined) {
+      const b = proofBtn();
+      if (b && (b.getAttribute("aria-pressed") === "true") !== st.proof) b.click();
+    }
+    if (st.zoom !== undefined || st.center) {
+      const z = Math.min(map.getMaxZoom(), Math.max(map.getMinZoom(), st.zoom ?? map.getZoom()));
+      map.setView(st.center || map.getCenter(), z, { animate: false });
+    }
+    if (view && st.point !== undefined) showPoint(Math.min(st.point, Number(slider.max)));
+  };
+  initShare(map, { getState, applyState, container: document.getElementById("briefing-tools") });
+
+  // After layout: next animation frame, or 250 ms if the tab is in the background (browsers pause frames there).
+  let laidOut = false;
+  const afterLayout = () => {
+    if (laidOut) return;
+    laidOut = true;
+    map.invalidateSize(); fit();
+    const init = readInitialState(); // after fit(), so a shared view's zoom/centre are not overwritten
+    if (init) applyState(init).catch((e) => console.warn("Share link:", e));
+  };
+  requestAnimationFrame(afterLayout);
+  setTimeout(afterLayout, 250);
   window.addEventListener("resize", () => map.invalidateSize());
 }
 

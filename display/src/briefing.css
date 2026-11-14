@@ -1,0 +1,75 @@
+/* Written with AI assistance (Claude). EVA briefing card (briefing.js): screen button + one-page A4 print layout.
+   On screen the card is hidden; when the button prints, only #briefing-print is shown. Black-on-white, readable in greyscale. */
+
+/* ---- screen: the button in the side panel ---- */
+.briefing-btn {
+  font: 600 13px/1.2 inherit; font-family: inherit; color: #eef2f6; background: rgba(12,17,26,.85);
+  border: 1px solid #e2763d; border-radius: 10px; padding: 8px 12px; cursor: pointer; width: 100%; text-align: left;
+}
+.briefing-btn:hover { background: rgba(226,118,61,.18); }
+.briefing-btn:focus-visible { outline: 2px solid #ffb26b; outline-offset: 2px; }
+.briefing-btn:disabled { opacity: .6; cursor: progress; }
+.briefing-note { margin: 4px 0 0; font-size: 12px; }
+#briefing-print { display: none; }
+
+/* ---- the card itself (also used when a page shows it on screen for checking) ---- */
+#briefing-print, #briefing-print * { box-sizing: border-box; }
+#briefing-print { color: #000; background: #fff; font: 9.5pt/1.25 "Inter", system-ui, -apple-system, "Segoe UI", Arial, sans-serif; }
+#briefing-print .bf-page { width: 100%; }
+#briefing-print h1 { font-size: 14pt; margin: 0 0 1mm; display: flex; align-items: center; gap: 3mm; flex-wrap: wrap; }
+#briefing-print h2 { font-size: 10pt; margin: 0 0 1mm; padding-bottom: .6mm; border-bottom: 1.2pt solid #000; text-transform: none; }
+#briefing-print h3 { font-size: 9.5pt; margin: 0 0 .6mm; }
+#briefing-print p { margin: 0 0 .8mm; }
+#briefing-print .bf-head { margin-bottom: 1.5mm; border-bottom: 2pt solid #000; padding-bottom: 1.5mm; }
+#briefing-print .bf-meta { font-size: 8.5pt; color: #222; margin: 0; }
+#briefing-print .bf-badge { font-size: 8pt; font-weight: 700; border: 1pt solid #000; border-radius: 1mm; padding: .3mm 1.5mm; letter-spacing: .02em; }
+#briefing-print .bf-sample { background: #000; color: #fff; }
+#briefing-print .bf-sec { margin: 0 0 1.4mm; break-inside: avoid; page-break-inside: avoid; }
+#briefing-print .bf-cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; align-items: start; }
+#briefing-print .bf-top { display: grid; grid-template-columns: 45mm 1fr; gap: 4mm; align-items: start; }
+#briefing-print .bf-map { margin: 0; }
+#briefing-print .bf-map img { width: 100%; height: auto; border: .5pt solid #000; display: block; }
+#briefing-print .bf-map figcaption { font-size: 7pt; }
+#briefing-print table { border-collapse: collapse; width: 100%; font-size: 9pt; }
+#briefing-print th, #briefing-print td { border: .5pt solid #555; padding: .5mm 1.5mm; text-align: left; vertical-align: top; }
+#briefing-print thead th { background: #e6e6e6; font-weight: 700; }
+#briefing-print .bf-legs td, #briefing-print .bf-legs thead th:not(:first-child), #briefing-print .bf-cond td, #briefing-print .bf-cond thead th:not(:first-child) { text-align: right; white-space: nowrap; }
+#briefing-print .bf-cond tbody th { background: #f2f2f2; font-weight: 600; white-space: nowrap; }
+#briefing-print .bf-legs th, #briefing-print .bf-legs td { padding-top: .3mm; padding-bottom: .3mm; }
+#briefing-print .bf-assume { columns: 2; column-gap: 6mm; }
+#briefing-print .bf-assume li { break-inside: avoid; }
+#briefing-print .bf-order { margin-bottom: 1mm; }
+#briefing-print .bf-stops { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5mm 4mm; }
+#briefing-print .bf-stop { display: flex; gap: 2mm; border: .5pt solid #555; padding: 1mm; break-inside: avoid; page-break-inside: avoid; font-size: 8.5pt; line-height: 1.18; }
+#briefing-print .bf-stop-notes { align-self: center; padding: 1mm; }
+#briefing-print .bf-stop-notes.bf-span { grid-column: 1 / -1; padding: 0; }
+#briefing-print .bf-stats { table-layout: fixed; margin-bottom: 1.2mm; }
+#briefing-print .bf-stats th { font-size: 8pt; font-weight: 600; background: #f2f2f2; vertical-align: bottom; }
+#briefing-print .bf-stats td { font-size: 9.5pt; font-weight: 700; }
+#briefing-print .bf-stats th:nth-child(4) { width: 25%; }
+#briefing-print .bf-stats th:nth-child(5) { width: 31%; }
+#briefing-print .bf-legs { margin-top: .6mm; }
+#briefing-print .bf-legs tbody th { background: #f2f2f2; font-weight: 600; }
+#briefing-print .bf-stop-text { flex: 1; min-width: 0; }
+#briefing-print .bf-id { display: inline-block; border: 1pt solid #000; border-radius: 1mm; padding: 0 1mm; font-weight: 700; }
+#briefing-print .bf-photo { margin: 0; width: 27mm; max-width: 32mm; flex: none; }
+#briefing-print .bf-photo img { width: 100%; height: 16mm; object-fit: cover; display: block; border: .5pt solid #000; }
+#briefing-print .bf-photo figcaption { font-size: 6.3pt; line-height: 1.12; margin-top: .4mm; }
+#briefing-print .bf-list { margin: 0; padding-left: 4mm; font-size: 8pt; line-height: 1.2; }
+#briefing-print .bf-list li { margin-bottom: .2mm; }
+#briefing-print .bf-src { font-size: 7.2pt; line-height: 1.15; word-break: break-word; }
+#briefing-print .bf-small { font-size: 7.5pt; color: #222; }
+#briefing-print .bf-tiny { font-size: 6.3pt; color: #333; line-height: 1.15; }
+#briefing-print .bf-na { font-style: italic; color: #333; }
+#briefing-print .bf-foot { margin-top: 1.5mm; padding-top: 1mm; border-top: 1.2pt solid #000; font-size: 8pt; font-weight: 600; }
+
+/* ---- print: only the card ---- */
+@page { size: A4 portrait; margin: 12mm; }
+/* Only while the button's print runs (body.briefing-printing, set by initBriefing): a normal Ctrl+P still prints the app. */
+@media print {
+  body.briefing-printing, html:has(body.briefing-printing) { background: #fff !important; color: #000 !important; height: auto !important; min-height: 0 !important;
+    overflow: visible !important; margin: 0 !important; padding: 0 !important; }
+  body.briefing-printing > *:not(#briefing-print) { display: none !important; }
+  body.briefing-printing > #briefing-print { display: block !important; }
+  #briefing-print * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
