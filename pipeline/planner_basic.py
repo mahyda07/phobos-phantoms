@@ -56,7 +56,8 @@ class Planner:
         # time to cross one cell (minutes), direction-free and conservative: uphill Tobler speed at the cell's slope
         v_flat = 6.0 * np.exp(-3.5 * (np.tan(np.radians(np.minimum(self.slope, 89.0))) + 0.05)) * SPEED_FACTOR   # km/h
         self.cell_minutes = np.where(self.blocked, BLOCKED, (self.cell / 1000.0) / v_flat * 60.0)
-        self._cache = {}
+        self._cache = {}          # (key, cell) -> (MCP, cumulative cost); stop entries are kept, others are trimmed
+        self._recent = []         # non-stop cache keys, oldest first (each entry holds ~10-20 MB)
 
     # ---------- helpers ----------
     def cost_grid(self, use_hazard=True):
@@ -75,13 +76,32 @@ class Planner:
         r, c = rc
         return [round((c + 0.5) * self.cell, 2), round(-(r + 0.5) * self.cell, 2), round(float(self.dem[r, c]), 2)]
 
+    MAX_RECENT = 6   # cost fields from start points kept in memory (Render free plan has 512 MB)
+
     def _mcp(self, key, cost, start):
         k = (key, start)
         if k not in self._cache:
             m = MCP_Geometric(cost, fully_connected=True)
             cum, _ = m.find_costs([start])
             self._cache[k] = (m, cum)
+            if not self._is_stop(start):
+                self._recent.append(k)
+                while len(self._recent) > self.MAX_RECENT:
+                    self._cache.pop(self._recent.pop(0), None)
+        elif k in self._recent:   # keep recently used start points longest
+            self._recent.remove(k); self._recent.append(k)
         return self._cache[k]
+
+    def _is_stop(self, rc):
+        return any((int(s["row"]), int(s["col"])) == rc for s in self.stops.values())
+
+    def warm_up(self):
+        """Pre-compute the cost fields from every science stop (with and without hazard), so a new
+        request only needs the fields from its own start point."""
+        for use_hazard in (True, False):
+            cost = self.cost_grid(use_hazard)
+            for s in self.stops.values():
+                self._mcp(f"cost-{use_hazard}", cost, (int(s["row"]), int(s["col"])))
 
     def _tobler_minutes(self, a, b):
         (ra, ca), (rb, cb) = a, b
@@ -103,11 +123,16 @@ class Planner:
             if self.blocked[rc]:
                 raise ValueError(f"{name} is on blocked ground (slope {self.slope[rc]:.1f} deg > {SLOPE_LIMIT:g})")
         # pairwise least costs
+        # The walking cost between two cells is the same both ways (MCP_Geometric averages the two cells' costs),
+        # so the field from END is never needed: pair[x, END] = cost from x to END.
         pair = {}
         for a in nodes:
+            if a == "END":
+                continue
             _, cum = self._mcp(key, cost, nodes[a])
             for b in nodes:
                 pair[a, b] = cum[nodes[b]]
+                pair[b, a] = cum[nodes[b]] if (b, a) not in pair else pair[b, a]
         best, best_order = math.inf, []
         for order in itertools.permutations(stop_ids):
             seq = ["START", *order, "END"]

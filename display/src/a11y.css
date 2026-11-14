@@ -1,0 +1,88 @@
+/* Written with AI assistance (Claude).
+   Keyboard + screen-reader styles for a11y.js: focus rings, .sr-only, skip link, shortcut help dialog,
+   panel heading disclosure buttons. Import after theme.css (before or after responsive.css both work). */
+
+/* Visible focus for keyboard users only (:focus-visible), 2px accent ring. */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible,
+.leaflet-control a:focus-visible,
+.leaflet-control button:focus-visible,
+.leaflet-control-layers-toggle:focus-visible,
+.leaflet-marker-icon:focus-visible,
+.sc-card:focus-visible,
+.stop-card:focus-visible {
+  outline: 2px solid var(--accent, #ff7a3d);
+  outline-offset: 2px;
+}
+/* The map fills the screen: draw its ring inside so it is not clipped. */
+#map:focus-visible, .leaflet-container:focus-visible { outline: 2px solid var(--accent, #ff7a3d); outline-offset: -4px; }
+/* Leaflet's layer checkboxes are tiny: ring the whole row label instead when the box has focus. */
+.leaflet-control-layers label:has(input:focus-visible) { outline: 2px solid var(--accent, #ff7a3d); outline-offset: 1px; border-radius: 4px; }
+/* Panel scroll target of the skip link: no ring on the whole panel (it gets focus by script only). */
+#panel:focus { outline: none; }
+@media (forced-colors: active) {
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible, .sc-card:focus-visible { outline-color: Highlight; }
+}
+
+/* Visually hidden, still read by screen readers. */
+.sr-only {
+  position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important;
+  overflow: hidden !important; clip: rect(0 0 0 0) !important; clip-path: inset(50%) !important; white-space: nowrap !important; border: 0 !important;
+}
+
+/* Skip link: off-screen until focused. */
+.a11y-skip {
+  position: fixed; top: 8px; left: 8px; z-index: 6000; transform: translateY(-150%);
+  padding: 8px 14px; border-radius: 10px; background: rgba(12, 17, 26, 0.96); color: var(--text, #eef2f6);
+  border: 1px solid var(--accent, #ff7a3d); font-weight: 600; font-size: 14px; line-height: 1.2; font-family: inherit; text-decoration: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+.a11y-skip:focus, .a11y-skip:focus-visible { transform: none; }
+
+/* Panel section headings turned into disclosure buttons by a11y.js: look exactly like the heading. */
+#panel h2 > button.a11y-fold {
+  all: unset; display: inline-flex; align-items: center; gap: 8px; flex: 1 1 auto; cursor: pointer;
+  font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit;
+}
+#panel h2 > button.a11y-fold:focus-visible { outline: 2px solid var(--accent, #ff7a3d); outline-offset: 3px; border-radius: 4px; }
+
+/* Shortcut help dialog. */
+.a11y-help-backdrop {
+  position: fixed; inset: 0; z-index: 5500; display: grid; place-items: center; padding: 16px;
+  background: rgba(3, 5, 9, 0.62);
+}
+.a11y-help-backdrop[hidden] { display: none; }
+.a11y-help {
+  width: min(460px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; box-sizing: border-box;
+  padding: 18px 20px 16px; border-radius: 14px; color: var(--text, #eef2f6);
+  background: rgba(12, 17, 26, 0.97); border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+  border-top: 3px solid var(--accent, #ff7a3d); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  font-size: 14px; line-height: 1.45; font-family: inherit;
+}
+.a11y-help h2 { margin: 0 0 10px; font-size: 16px; color: var(--accent2, #ffb26b); text-transform: none; letter-spacing: 0; }
+.a11y-help table { width: 100%; border-collapse: collapse; }
+.a11y-help th, .a11y-help td { text-align: left; vertical-align: top; padding: 5px 4px; border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.1)); }
+.a11y-help th { font-weight: 400; white-space: nowrap; color: var(--muted, #9aa8b6); padding-right: 14px; }
+.a11y-help kbd {
+  display: inline-block; min-width: 1.4em; padding: 1px 6px; border-radius: 5px; text-align: center;
+  font: 600 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--text, #eef2f6);
+  background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.22);
+}
+.a11y-help p { margin: 10px 0 12px; font-size: 12px; color: var(--muted, #9aa8b6); }
+.a11y-help-close {
+  font-weight: 600; font-size: 13px; line-height: 1; font-family: inherit; padding: 9px 16px; border-radius: 10px; cursor: pointer;
+  color: var(--text, #eef2f6); background: rgba(255, 255, 255, 0.08); border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+}
+.a11y-help-close:hover { background: rgba(255, 255, 255, 0.14); }
+@media (max-width: 480px) { .a11y-help th { white-space: normal; } }
+
+/* Contrast fixes on top of theme.css (white on the orange gradient measured 2.3–2.6:1; dark text is 4.6–7.3:1). */
+#map .planner-toggle, .mw-pill.hot, .mw-btn.primary { color: #111 !important; }
+#mw-help:hover { color: #111; }
+/* Proof view "on" state was hidden by theme.css's transparent Leaflet buttons. */
+.leaflet-bar.proof-toggle button.on { background: var(--accent, #e2763d) !important; color: #111 !important; }

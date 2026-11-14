@@ -11,6 +11,11 @@ const stat = (label, value, unit = "", cls = "") =>
 
 const $ = (id) => document.getElementById(id);
 
+// Slope limit from docs/cost-model.md ({ value, note }), shown beside slope values. Null = not published.
+let slopeLimit = null;
+export function setSlopeLimit(limit) { slopeLimit = limit; }
+const slopeUnit = () => (slopeLimit ? `° of ${slopeLimit.value}° limit` : "°");
+
 export function renderNoRoute(message) {
   $("route-summary").innerHTML = `<h2>Route</h2><p class="muted">${esc(message)}</p>`;
   $("readout").innerHTML = "";
@@ -28,7 +33,7 @@ export function renderRouteSummary(route, kind, maxMargin) {
       ${stat("Length", num(p.length_m, 0), " m")}
       ${stat("Walk out", num(p.time_out_min), " min")}
       ${stat("Walk back", num(p.time_back_min), " min")}
-      ${stat("Steepest slope", num(p.slope_max_deg), "°")}
+      ${stat("Steepest slope", num(p.slope_max_deg), slopeUnit())}
       ${stat("Stops", (p.stops || []).length)}
     </div>
     <div class="legend">
@@ -50,7 +55,7 @@ export function renderReadout(route, i, nextStop) {
     <div class="stats">
       ${stat("Walk-back margin here", num(pv.margin_min[i]), " min", "big")}
       ${stat("Time out", num(pv.t_min[i]), " min")}
-      ${stat("Slope here", num(pv.slope_deg[i]), "°")}
+      ${stat("Slope here", num(pv.slope_deg[i]), slopeUnit())}
       ${stat("AI hazard here", num(pv.hazard[i], 2), " of 1")}
       ${stat("Next stop", nextStop ? `${esc(nextStop.id)} <span class="stop-name">${esc(nextStop.name)}</span>` : "none left")}
     </div>
@@ -66,7 +71,7 @@ export function renderHud(route, i, nextStop) {
   el.innerHTML =
     h("Walk-back margin", num(pv.margin_min[i]), " min", "main") +
     h("Time out", num(pv.t_min[i]), " min") +
-    h("Slope", num(pv.slope_deg[i]), "°") +
+    h("Slope", num(pv.slope_deg[i]), slopeLimit ? `° / ${slopeLimit.value}°` : "°") +
     h("AI hazard", num(pv.hazard[i], 2), "") +
     h("Next stop", nextStop ? esc(nextStop.id) : "none", "", "stop");
   el.hidden = false;

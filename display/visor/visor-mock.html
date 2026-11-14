@@ -1,25 +1,23 @@
 <!-- Written with AI assistance (Claude). -->
 <!--
-  Visor design v1 (static mock, 1600x900) for the Quest 3 headset. Ramish rebuilds it in xr/.
-  ALL VALUES ARE SAMPLE, copied verbatim from samples/out/ at ONE route point:
-    route point = index 150 (0-based) of 463 points in samples/out/route.json geometry.coordinates
-    - Walk-back margin  224.51  <- route.json properties.per_vertex.margin_min[150]
-    - Time out            5.263 <- route.json properties.per_vertex.t_min[150]
-    - Slope here          6.03  <- route.json properties.per_vertex.slope_deg[150]
-    - AI hazard here      0.21  <- route.json properties.per_vertex.hazard[150]
-    - Next stop   S1 "Sample rim outcrop" <- route.json properties.stops[0].id / .name
-        (S1 chosen because its x,y = (320,-232) equals geometry.coordinates[198], i.e. later on the
-         route than point 150; how the headset decides "next" is an open question, see README.md)
-    - Sun elevation      72.4   <- window.json sun_elev_deg[11] (ltst_hours[11] = 11)
-        (LTST hour 11 is an assumed mock time inside window.json eva_window 10.0-15.0)
-    - Route length 1063.2 m is NOT shown (not a visor field).
+  Visor design v2 (static mock, 1600x900) for the Quest 3 headset. Ramish rebuilds it in xr/.
+  Values are REAL output of the stand-in planner (standin-basic-v1), copied verbatim at ONE route point:
+    route point = index 700 (0-based) of 1822 points in pipeline/fallback/route.json geometry.coordinates
+    - Walk-back margin  163.71  <- route.json properties.per_vertex.margin_min[700]
+    - Time out           40.84  <- route.json properties.per_vertex.t_min[700]
+    - Slope here          5.01  <- route.json properties.per_vertex.slope_deg[700]
+    - AI hazard here      0.0   <- route.json properties.per_vertex.hazard[700] (stand-in: hazard weight 0, AI layer not ready)
+    - Next stop   S5 "carbonate-signal spot 5" <- route.json properties.stops (S5 is at point 934, the first stop after 700)
+    - Sun elevation      46.1   <- pipeline/fallback/window.json sun_elev_deg at ltst_hours = 12
+        (12:00 LTST is an assumed demo time inside window.json eva_window 11.0-15.0)
+    - Route length (properties.length_m) is NOT shown (not a visor field).
   No colour thresholds exist yet (docs/cost-model.md is empty) -> values are neutral white.
 -->
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Visor design v1</title>
+<title>Visor design v2</title>
 <style>
   :root {
     --bg: #0b0f14;
@@ -66,8 +64,8 @@
 
   .badge {
     position: absolute; left: 905px; top: 26px; transform: translateX(-50%);
-    background: var(--badge); color: #111; font-weight: 800; font-size: 30px;
-    padding: 6px 22px; border-radius: 10px; letter-spacing: 3px;
+    background: var(--badge); color: #111; font-weight: 800; font-size: 20px;
+    padding: 6px 14px; border-radius: 10px; letter-spacing: 1.5px; white-space: nowrap;
   }
   .legend {
     position: absolute; left: 905px; top: 90px; transform: translateX(-50%);
@@ -84,50 +82,50 @@
 </style>
 </head>
 <body>
-  <div class="badge">SAMPLE</div>
+  <div class="badge">STAND-IN PLANNER</div>
   <div class="legend">colour bands pending</div>
   <div class="reticle"></div>
 
-  <!-- per_vertex.margin_min[150] = 224.51 -->
+  <!-- per_vertex.margin_min[700] = 163.71 -->
   <div class="panel" id="margin">
     <div class="label">Walk-back margin</div>
-    <div class="value big">224.51<span class="unit">min</span></div>
+    <div class="value big">163.71<span class="unit">min</span></div>
     <div class="sub">spare time if you turn back here</div>
   </div>
 
-  <!-- per_vertex.t_min[150] = 5.263 -->
+  <!-- per_vertex.t_min[700] = 40.84 -->
   <div class="panel" id="timeout">
     <div class="label">Time out</div>
-    <div class="value">5.263<span class="unit">min</span></div>
+    <div class="value">40.84<span class="unit">min</span></div>
     <div class="sub">walking time from start</div>
   </div>
 
-  <!-- per_vertex.slope_deg[150] = 6.03 -->
+  <!-- per_vertex.slope_deg[700] = 5.01 -->
   <div class="panel" id="slope">
     <div class="label">Slope here</div>
-    <div class="value">6.03<span class="unit">degrees</span></div>
+    <div class="value">5.01<span class="unit">degrees</span></div>
   </div>
 
-  <!-- per_vertex.hazard[150] = 0.21 -->
+  <!-- per_vertex.hazard[700] = 0.0 -->
   <div class="panel" id="hazard">
     <div class="label">AI hazard here</div>
-    <div class="value">0.21<span class="unit">of 1</span></div>
+    <div class="value">0.0<span class="unit">of 1</span></div>
     <div class="sub">AI hazard estimate (model, not validated)</div>
   </div>
 
-  <!-- properties.stops[0].id = "S1", .name = "Sample rim outcrop" -->
+  <!-- properties.stops: S5 "carbonate-signal spot 5" (route point 934) -->
   <div class="panel" id="stop">
     <div class="label">Next stop</div>
-    <div class="value">S1 <span style="font-size:52px">Sample rim outcrop</span></div>
+    <div class="value">S5 <span style="font-size:40px">carbonate-signal spot 5</span></div>
   </div>
 
-  <!-- window.json sun_elev_deg[11] = 72.4 (ltst_hours[11] = 11) -->
+  <!-- window.json sun_elev_deg at ltst 12 = 46.1 -->
   <div class="panel" id="sun">
     <div class="label">Sun height</div>
-    <div class="value">72.4<span class="unit">degrees</span></div>
-    <div class="sub">at 11:00 LTST · typical sol (climatology), not a forecast</div>
+    <div class="value">46.1<span class="unit">degrees</span></div>
+    <div class="sub">at 12:00 LTST · typical sol, not a forecast</div>
   </div>
 
-  <div class="footer">Values from route.json per_vertex at point 150 of 463 (0-based index) · sun from window.json at LTST hour 11 · SAMPLE</div>
+  <div class="footer">Stand-in planner route · per_vertex at point 700 of 1822 (0-based) · sun from window.json at 12:00 LTST · hazard layer not ready yet</div>
 </body>
 </html>
