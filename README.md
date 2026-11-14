@@ -6,6 +6,23 @@ Real NASA terrain at Jezero Crater becomes a safety map. An AI-scored safest rou
 
 > Status: built during the hackathon, 14–15 Nov 2026. Work started after kick-off on Sat 14 Nov.
 
+## Try it (public links, no login)
+| What | Link | Notes |
+|---|---|---|
+| Headset app (Meta Quest 3 browser, also runs on a PC) | https://phantom-phobos.vercel.app | Hologram of the walking area on your desk; **Step in** to walk the planned route at full size with the visor |
+| Web map | *(display link: added after deploy)* | Route coloured by walk-back margin, science stops with rover photos, proof view, time window |
+| Planner web service | https://ramishsaeed-phobos-planner.hf.space | `GET /health`, `GET /stops`, `GET /window`, `GET /results`, `POST /plan`; interactive docs at `/docs` |
+
+## How it works
+1. **Terrain** (`terrain/`): USGS Mars 2020 HiRISE elevation (1 m) and photo (25 cm) of a 1.5 × 1.5 km area of Jezero's western delta, turned into a 2 m grid of elevation, slope and roughness.
+2. **Science** (`science/`, `terrain/build_science.py`): carbonate, clay and olivine signals from CRISM (MRO) pick five science stops; relative signal strength, not mineral amounts.
+3. **Planner** (`pipeline/planner_basic.py`, stand-in until `model/`): least-cost walking route through the stops; slope above 25° is blocked; walking time from Tobler's hiking function; every point carries time out, time back and walk-back margin.
+4. **Time window** (`pipeline/window_basic.py`, stand-in): sun height per hour from NASA GISS Mars24 and temperature from Perseverance MEDA pick the EVA hours.
+5. **Proof** (`pipeline/proof_basic.py`, stand-in; `results.md`): on Perseverance's real 6.7 km track the planner stays closer to where NASA drove than a straight line, and uses less steep ground than the rover did.
+6. **Show it**: web map (`display/`, Leaflet) and mixed-reality headset app (`xr/`, three.js WebXR) read the same files.
+
+Every number on screen comes from a file in this repo; stand-in results are marked "standin" / "STAND-IN".
+
 ## Team and folders
 
 Push **only into your own folder**. Nothing goes in the root except the shared files below.
