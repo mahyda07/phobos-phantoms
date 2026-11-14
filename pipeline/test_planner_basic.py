@@ -39,3 +39,13 @@ def test_unknown_stop(tmp_path):
     p = make_grid(tmp_path)
     with pytest.raises(ValueError, match="unknown stop"):
         p.plan([11, -11], [11, -11], ["S9"])
+
+
+def test_cache_is_capped_and_stops_are_kept():
+    pl = Planner()
+    pl.warm_up()
+    stops_cached = len(pl._cache)
+    for i in range(Planner.MAX_RECENT + 4):
+        pl.plan([300 + 20 * i, -1000], [1200, -400], ["S1"])
+    assert len(pl._recent) <= Planner.MAX_RECENT
+    assert len(pl._cache) <= stops_cached + Planner.MAX_RECENT
