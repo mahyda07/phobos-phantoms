@@ -24,7 +24,7 @@ register("data:text/javascript," + encodeURIComponent(HOOKS));
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "../..");
 const { makeFrame } = await import("./frame.js");
-const { leafletToLocal, buildPlanRequest, requestPlan } = await import("./planner.js");
+const { leafletToLocal, buildPlanRequest, requestPlan, PLAN_TIMEOUT_MS } = await import("./planner.js");
 
 const readJson = (p) => JSON.parse(readFileSync(path.join(ROOT, p), "utf8"));
 const SCHEMA = readJson("contracts/plan.request.schema.json");
@@ -143,13 +143,23 @@ test("mock planner: rejects bodies outside the contract with 400, answers CORS p
   assert.match(pre.headers.get("access-control-allow-headers"), /Content-Type/i);
 });
 
-test("requestPlan: planner slower than 3 s -> timeout", async () => {
+test("requestPlan: waits 10 s by default (agreed with the planner team)", () => {
+  assert.equal(PLAN_TIMEOUT_MS, 10000);
+});
+
+test("requestPlan: a planner answering in 4 s still succeeds with the default wait", async () => {
   const url = await startMock(["--delay", "4000"]);
-  const t0 = Date.now();
   const res = await requestPlan(BODY, { url });
+  assert.equal(res.ok, true);
+});
+
+test("requestPlan: planner slower than the wait -> timeout", async () => {
+  const url = await startMock(["--delay", "1500"]);
+  const t0 = Date.now();
+  const res = await requestPlan(BODY, { url, timeoutMs: 1000 });
   const dt = Date.now() - t0;
   assert.deepEqual(res, { ok: false, reason: "timeout" });
-  assert.ok(dt >= 2900 && dt < 3200, `took ${dt} ms`);
+  assert.ok(dt >= 950 && dt < 1300, `took ${dt} ms`);
 });
 
 test("requestPlan: planner error -> http-500", async () => {

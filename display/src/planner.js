@@ -1,7 +1,7 @@
 // Written with AI assistance (Claude).
 // Live planner client (D17): click start + end on the map, POST {VITE_PLANNER_URL}/plan, get a route.json back.
 // The reply is drawn as-is by the caller (onRoute); this module never computes or changes any route number.
-// If the planner is missing, fails, or takes longer than 3 s, the caller keeps the saved demo route (team rule).
+// If the planner is missing, fails, or takes longer than PLAN_TIMEOUT_MS (10 s, agreed with P5), the caller keeps the saved demo route.
 // Contract: contracts/plan.request.schema.json. Frame helpers: ./frame.js (not edited here).
 import L from "leaflet";
 import "./planner.css";
@@ -40,7 +40,11 @@ function looksLikeRoute(r) {
  * POSTs the body to url + "/plan". Never throws.
  * -> { ok: true, route } | { ok: false, reason: "no-url" | "timeout" | "http-<status>" | "network" | "bad-reply" }
  */
-export async function requestPlan(body, { url = import.meta.env?.VITE_PLANNER_URL, timeoutMs = 3000, fetchImpl = globalThis.fetch } = {}) {
+// How long to wait for the planner before falling back to the saved route. Agreed with Ramish (P5): 10 s, because the
+// free Render server can take a few seconds (a new 5-stop route took ~7 s before his caching fix).
+export const PLAN_TIMEOUT_MS = 10000;
+
+export async function requestPlan(body, { url = import.meta.env?.VITE_PLANNER_URL, timeoutMs = PLAN_TIMEOUT_MS, fetchImpl = globalThis.fetch } = {}) {
   if (!url || typeof url !== "string") return { ok: false, reason: "no-url" };
   const ctrl = new AbortController();
   let timedOut = false;
@@ -70,7 +74,7 @@ export async function requestPlan(body, { url = import.meta.env?.VITE_PLANNER_UR
 export const STATUS = {
   start: "Click the start point",
   end: "Click the end point",
-  planning: "Planning…",
+  planning: "Planning… (free server, can take a few seconds)",
   done: "New route from planner",
   outside: "Click inside the map area",
   fallback: (reason) => `Planner unavailable (${reason}) — showing the saved demo route`,
