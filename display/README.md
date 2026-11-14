@@ -105,3 +105,7 @@ The first location that has the file wins. Missing files are listed when the scr
 ## Visor design
 
 `visor/` has the headset (Quest 3) visor design: `visor-design.png`, the static mock it was made from (`visor-mock.html`), and `visor/README.md` with each field, its source in `route.json` / `window.json`, and open questions for Ramish.
+
+## Marswalk look, welcome and tour (added by Ramish with AI assistance)
+- `src/welcome.js` + `src/theme.css` (imported in `src/main.js`, before `responsive.css`): welcome screen with live mission numbers from `data/route.json` and `data/window.json`, a 6-step guided tour (route summary, point readout, play controls, planner, layers, proof), foldable side-panel sections (only Route and "At this point" open at first; opening Proof view on the map opens its section), a brand header with "Guided tour" and "Open in headset", and a `?` button to reopen the welcome.
+- Restyle only: no drawing or data code changed, all existing tests unchanged.

@@ -1,0 +1,89 @@
+/* Written with AI assistance (Claude, for Ramish). Marswalk look for the web map: matches the headset page.
+   Only restyles; no layout logic. Loaded before responsive.css so phone/tablet overrides still win. */
+:root { --bg:#06090f; --panel: rgba(12,17,26,.78); --text:#eef2f6; --muted:#9aa8b6; --line: rgba(255,255,255,.10); --accent:#ff7a3d; --accent2:#ffb26b; }
+html, body { font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); }
+#map { background: radial-gradient(900px 600px at 50% 120%, rgba(255,110,50,.18), transparent 60%), var(--bg); }
+
+/* side panel: glass, calmer spacing, foldable sections */
+#panel { background: linear-gradient(180deg, rgba(12,17,26,.92), rgba(8,12,18,.96)); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-left: 1px solid var(--line); padding: 12px 14px 40px; }
+#panel section { border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px 12px; margin-bottom: 10px; background: rgba(255,255,255,.025); animation: mw-up .45s both; }
+#panel section:nth-of-type(2) { animation-delay: .05s; } #panel section:nth-of-type(3) { animation-delay: .1s; } #panel section:nth-of-type(4) { animation-delay: .15s; }
+#panel section > h2 { cursor: pointer; user-select: none; margin: 0; padding: 2px 0; color: var(--accent2); }
+#panel section > h2::after { content: "▾"; margin-left: auto; color: var(--muted); transition: transform .2s; }
+#panel section:not(.mw-collapsed) > h2 { margin-bottom: 8px; }
+#panel section.mw-collapsed > h2::after { transform: rotate(-90deg); }
+#panel section.mw-collapsed > :not(h2) { display: none !important; }
+#panel section.mw-collapsed { padding-bottom: 8px; background: transparent; }
+#panel section > h2:hover { color: #fff; }
+.stat { background: rgba(255,255,255,.04); border-color: var(--line); border-radius: 10px; }
+.stat.big .value { background: linear-gradient(90deg, #fff, var(--accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.stop-card { border-radius: 12px; background: rgba(255,255,255,.03); transition: border-color .15s, transform .15s; }
+.stop-card:hover { transform: translateY(-1px); }
+
+/* header becomes a brand chip */
+#header { background: rgba(12,17,26,.72); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 14px; padding: 8px 14px; pointer-events: auto; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+#header .mw-brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
+#header .mw-brand em { font-style: normal; font-weight: 500; color: var(--muted); }
+#header .mw-brand .mw-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); animation: mw-blink 2.4s infinite; }
+#header { display: flex; align-items: center; gap: 12px; padding: 6px 8px 6px 14px; }
+#header .sub { display: none; }
+#header .mw-links { display: flex; gap: 6px; }
+.mw-pill { font: 600 12px/1 inherit; font-family: inherit; color: var(--text); background: rgba(255,255,255,.06); border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; cursor: pointer; text-decoration: none; }
+.mw-pill:hover { background: rgba(255,255,255,.12); }
+.mw-pill.hot { background: linear-gradient(135deg, var(--accent), #e2452a); border-color: transparent; color: #fff; }
+
+/* Leaflet controls: dark glass */
+.leaflet-control-layers, .leaflet-bar, .planner-control, .mm-control, .src-legend-control, .scale-bar {
+  background: rgba(12,17,26,.80) !important; color: var(--text) !important; border: 1px solid var(--line) !important;
+  border-radius: 12px !important; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 8px 24px rgba(0,0,0,.35) !important; }
+.leaflet-bar a, .leaflet-bar button { background: transparent !important; color: var(--text) !important; border-color: var(--line) !important; }
+.leaflet-control-layers label { color: var(--text); }
+.leaflet-control-attribution { background: rgba(6,9,15,.7) !important; color: var(--muted) !important; }
+.leaflet-control-attribution a { color: var(--accent2) !important; }
+.planner-control button.planner-toggle { background: linear-gradient(135deg, var(--accent), #e2452a) !important; border: 0 !important; color: #fff !important; font-weight: 700; }
+
+/* welcome */
+#mw-welcome { position: fixed; inset: 0; z-index: 5000; display: grid; place-items: center; overflow: hidden;
+  background: radial-gradient(1200px 700px at 75% 110%, rgba(255,110,50,.28), transparent 60%), radial-gradient(900px 600px at 10% -10%, rgba(80,120,255,.12), transparent 60%), rgba(6,9,15,.96);
+  transition: opacity .6s ease, visibility .6s; }
+#mw-welcome.out { opacity: 0; visibility: hidden; }
+#mw-welcome .mw-stars { position: absolute; inset: -50%; background-image: radial-gradient(1px 1px at 20% 30%, #fff8, transparent), radial-gradient(1px 1px at 70% 80%, #fff6, transparent), radial-gradient(1.5px 1.5px at 40% 60%, #fffa, transparent), radial-gradient(1px 1px at 85% 15%, #fff7, transparent), radial-gradient(1px 1px at 55% 45%, #fff5, transparent); background-size: 320px 320px; animation: mw-drift 140s linear infinite; opacity: .7; }
+#mw-welcome .mw-card { position: relative; width: min(780px, 92vw); padding: 32px 34px 24px; border-radius: 24px; background: rgba(12,17,26,.7); border: 1px solid rgba(255,255,255,.14); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); box-shadow: 0 30px 80px rgba(0,0,0,.55); animation: mw-up .8s .1s cubic-bezier(.2,.8,.2,1) both; }
+#mw-welcome .mw-eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+#mw-welcome h1 { margin: 8px 0 6px; font-size: clamp(40px, 6.5vw, 70px); line-height: 1; letter-spacing: -.03em; font-weight: 800; }
+#mw-welcome h1 span { background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+#mw-welcome .mw-lead { font-size: 17px; color: #d7dee6; margin: 0 0 16px; max-width: 620px; line-height: 1.45; }
+#mw-welcome .mw-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; min-height: 32px; }
+#mw-welcome .mw-chip { padding: 7px 12px; border-radius: 999px; background: rgba(255,255,255,.06); border: 1px solid var(--line); font-size: 13px; animation: mw-up .5s both; }
+#mw-welcome .mw-chip b { color: #fff; } #mw-welcome .mw-chip.warn { border-color: rgba(255,178,107,.5); color: var(--accent2); }
+#mw-welcome .mw-steps { list-style: none; padding: 0; margin: 0 0 22px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+#mw-welcome .mw-steps li { padding: 12px 14px; border-radius: 14px; background: rgba(255,255,255,.04); border: 1px solid var(--line); font-size: 13px; color: var(--muted); line-height: 1.4; }
+#mw-welcome .mw-steps b { display: block; color: #fff; font-size: 15px; margin-bottom: 3px; }
+#mw-welcome .mw-steps i { font-style: normal; color: var(--accent2); margin-right: 6px; }
+#mw-welcome .mw-cta { display: flex; flex-wrap: wrap; gap: 10px; }
+.mw-btn { font: 600 15px/1 inherit; font-family: inherit; padding: 14px 20px; border-radius: 14px; cursor: pointer; border: 1px solid var(--line); color: var(--text); background: rgba(255,255,255,.06); text-decoration: none; transition: transform .15s, box-shadow .2s, background .2s; }
+.mw-btn:hover { transform: translateY(-1px); background: rgba(255,255,255,.1); }
+.mw-btn.primary { background: linear-gradient(135deg, var(--accent), #e2452a); border-color: transparent; box-shadow: 0 8px 30px rgba(255,100,50,.4); }
+#mw-welcome .mw-foot { margin: 14px 0 0; font-size: 12px; color: var(--muted); }
+@media (max-width: 760px), (max-height: 680px) { #mw-welcome { place-items: start center; overflow-y: auto; padding: 14px 0; } #mw-welcome .mw-steps { grid-template-columns: 1fr; } #mw-welcome .mw-card { padding: 22px 18px; } }
+
+/* guided tour */
+#mw-tour-ring { position: fixed; z-index: 4900; border-radius: 12px; box-shadow: 0 0 0 4px var(--accent), 0 0 0 9999px rgba(3,5,9,.62); pointer-events: none; transition: all .35s cubic-bezier(.2,.8,.2,1); }
+#mw-tour-tip { position: fixed; z-index: 4950; width: 300px; padding: 14px 16px; border-radius: 14px; background: rgba(12,17,26,.95); border: 1px solid var(--line); border-top: 3px solid var(--accent); box-shadow: 0 16px 40px rgba(0,0,0,.5); font-size: 13px; line-height: 1.45; transition: top .35s, left .35s; }
+#mw-tour-tip b { display: block; font-size: 15px; margin-bottom: 4px; color: #fff; }
+#mw-tour-tip .mw-row { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+#mw-tour-tip .mw-count { color: var(--muted); font-size: 12px; }
+#mw-help { position: fixed; z-index: 1200; right: calc(var(--panel-w) + 14px); bottom: 34px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: rgba(12,17,26,.85); color: #fff; font: 700 16px/1 inherit; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+#mw-help:hover { background: var(--accent); }
+
+@keyframes mw-up { from { transform: translateY(14px); opacity: 0; } }
+@keyframes mw-blink { 50% { opacity: .35; } }
+@keyframes mw-drift { to { transform: translate3d(-320px, -160px, 0); } }
+@media (prefers-reduced-motion: reduce) { #mw-welcome *, #panel section, #mw-tour-ring, #mw-tour-tip { animation: none !important; transition: none !important; } }
+@media (max-width: 760px) {
+  #header { gap: 8px; padding: 5px 6px 5px 10px; }
+  #header .mw-brand { font-size: 13px; white-space: nowrap; }
+  #header .mw-brand em, #header .mw-links .mw-pill:not(.hot) { display: none; }
+  #header .mw-pill { padding: 6px 9px; font-size: 11px; white-space: nowrap; }
+  #mw-help { right: 14px; bottom: 14px; }
+}

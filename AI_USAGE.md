@@ -27,3 +27,4 @@ AI-generated images or video must carry a visible watermark and must not use or 
 | 2026-11-14 | Ramish | Claude (Anthropic) | Headset step-in walk + visor (walk logic and tests, visor drawing, 1:1 terrain, walk controls) | xr/ |
 | 2026-11-14 | Ramish | Claude (Anthropic) | Planner service hosting moved to Render: staging/push script, PLAN/README/SOURCES updates | pipeline/render/, PLAN.md, README.md, SOURCES.md |
 | 2026-11-14 | Ramish | Claude (Anthropic) | Headset page welcome screen, onboarding guide (page and in-headset), toolbar, toasts | xr/index.html, xr/src/ui.css, xr/src/onboarding.js, xr/src/main.js |
+| 2026-11-14 | Ramish | Claude (Anthropic) | Web map Marswalk look: welcome screen, guided tour, foldable panel, header (restyle only) | display/src/welcome.js, display/src/theme.css, display/src/main.js |
