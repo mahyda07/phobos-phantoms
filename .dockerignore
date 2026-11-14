@@ -1,0 +1,5 @@
+**
+!contracts/**
+!pipeline/**
+!terrain/out/**
+pipeline/__pycache__

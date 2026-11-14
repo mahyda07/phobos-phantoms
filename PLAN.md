@@ -34,6 +34,9 @@ A mixed-reality Marswalk planner. Real NASA terrain at Jezero Crater becomes a s
 | D20 | Coordinate helpers: `pipeline/frame.py` and `pipeline/frame.js` (tested). Copies: `xr/src/frame.js`, `display/src/frame.js` (Kashif copies it in). Never edit a copy. Leaflet point = `[height + y/2, x/2]`, overlay bounds `[[0,0],[height,width]]` | ✅ | Ramish |
 | D21 | Stand-in planner: Ramish writes a basic least-cost planner in `pipeline/` with the same inputs/outputs Maryam's will have, so the planner service and Gate 2 aren't blocked. Swapped for Maryam's `model/` planner as soon as it's in `main` | ✅ | Ramish |
 | D22 | Headset app: Vite + Three.js in `xr/`; hologram 0.6 m wide (1:2500), height ×2 default (×1/×4 toggle), 2048 px photo texture `photo_2k.jpg`, snap-rotate buttons. Until a planner route exists it shows Perseverance's real path, labelled as a stand-in | ✅ | Ramish |
+| D23 | Display rules (answers to Kashif): a grid cell (row, col) covers [row, row+1) × [col, col+1), centre at +0.5; pixel lookups floor + clamp. A route is SAMPLE if `plan_id` or `model_version` contains "SAMPLE"; stand-in routes have `model_version` starting "standin-". Display and headset copy their data into `public/data/` at build time (not committed) | ✅ | Ramish |
+| D24 | Stops on the grid: `terrain/out/stops.csv` (Mahida's `science/stops.csv` + row/col). Science layer `terrain/out/science.bin` = mean of carbonate, clay, olivine relative signals (CRISM browse products, ~18 m, nearest-neighbour). Clay signal is ~0 in this area | ✅ | Ramish |
+| D25 | Stand-in planner live: `pipeline/planner_basic.py` + service `pipeline/api.py`; demo/fallback route `pipeline/fallback/route.json` (4.3 km, 5 stops, min margin 138 min, all ASSUMPTION settings). Service host: see changelog | ✅ | Ramish |
 
 
 ## 3. Who waits on whom
@@ -70,6 +73,7 @@ A mixed-reality Marswalk planner. Real NASA terrain at Jezero Crater becomes a s
 Check-ins in the group: 13:00, 19:00, 01:00 — done / next / blocked.
 
 ## 5. Changelog
+- Sat ~16:30: science layer + stops on grid (D24); stand-in planner + service with demo route (D25).
 - Sat: real terrain merged (terrain/out). Headset app + stand-in planner decided (D21, D22).
 - Sat: POST /plan contract, Vercel hosting, terrain file names and coordinate helpers decided (D17–D20).
 - Sat: walking area chosen from NASA's M20_traverse.json (most rover path of any 1.5 km square in the box). Science goal set.

@@ -12,3 +12,5 @@ AI-generated images or video must carry a visible watermark and must not use or 
 | 2026-11-14 | Ramish | Claude (Anthropic) | Terrain build script (DTM crop to 2 m grid, slope, roughness, LODs, photo, rover path) and tests | terrain/build_terrain.py, terrain/test_terrain.py, terrain/README.md, SOURCES.md |
 | 2026-11-14 | Ramish | Claude (Anthropic) | Headset texture photo_2k.jpg + reuse local photo in terrain build | terrain/build_terrain.py, terrain/README.md |
 | 2026-11-14 | Ramish | Claude (Anthropic) | Headset hologram app (Vite + Three.js WebXR): placement, hands, snap-rotate, layers, route ribbon | xr/ |
+| 2026-11-14 | Ramish | Claude (Anthropic) | Science layer and stops on the grid (reproject CRISM layers, score, row/col) | terrain/build_science.py, terrain/README.md |
+| 2026-11-14 | Ramish | Claude (Anthropic) | Stand-in planner, planner web service, Dockerfile, demo/fallback route, tests | pipeline/planner_basic.py, pipeline/api.py, pipeline/test_planner_basic.py, pipeline/fallback/, Dockerfile, .dockerignore, PLAN.md |
