@@ -29,7 +29,7 @@ A mixed-reality Marswalk planner. Real NASA terrain at Jezero Crater becomes a s
 | D15 | Night shifts: Ramish works late; others ⏳ | ⏳ | Mahida |
 | D16 | Walking area 1.5 × 1.5 km, western delta front: NW 18.47254°N 77.39748°E · NE 18.47254°N 77.42279°E · SW 18.44724°N 77.39748°E · SE 18.44724°N 77.42279°E. Projection metres: xmin 4587712, xmax 4589212, ymin 1093454, ymax 1094954 (750 × 750 cells at 2 m). Contains 6.7 km of Perseverance's path, sols 405–717 (delta-front campaign) | ✅ | Ramish |
 | D17 | `POST /plan` request: `{"frame":"jezero-local-v1","start":[x,y],"end":[x,y],"stops":["S1",…],"use_hazard":true}` in local metres; reply is a `route.json`. Contract: `contracts/plan.request.schema.json` | ✅ | Ramish |
-| D18 | Hosting: **Vercel on Ramish's account** for both the web display and the headset app. Ramish deploys from `main` with the Vercel command line (free Hobby plan has no team members); Kashif tests locally and on the preview links Ramish posts. Planner service on Hugging Face Spaces (Gradio SDK on ZeroGPU hardware, planner runs on CPU, public, Ramish's account): https://ramishsaeed-phobos-planner.hf.space | ✅ | Ramish |
+| D18 | Hosting: **Vercel on Ramish's account** for both the web display and the headset app. Ramish deploys from `main` with the Vercel command line (free Hobby plan has no team members); Kashif tests locally and on the preview links Ramish posts. Planner service on Render (free web service, Singapore, Ramish's account): https://phobos-planner.onrender.com , deployed from the public hosting copy https://github.com/aprettymess/phobos-planner made by `pipeline/render/make_render.ps1` | ✅ | Ramish |
 | D19 | Terrain outputs in `terrain/out/` (same names as `samples/out/`): `grid.json`, `terrain.meta.json`, `dem.bin`, `slope.bin`, `rough.bin`, `hazard.bin`, `science.bin`, and PNGs `photo.png`, `photo_2k.jpg` (headset), `slope.png`, `rough.png`, `hazard.png`, `science.png`. All `.bin` = float32 little-endian, row-major from the NW corner. Grid size: read `width`/`height` from `grid.json` (real = 750 × 750) | ✅ | Ramish |
 | D20 | Coordinate helpers: `pipeline/frame.py` and `pipeline/frame.js` (tested). Copies: `xr/src/frame.js`, `display/src/frame.js` (Kashif copies it in). Never edit a copy. Leaflet point = `[height + y/2, x/2]`, overlay bounds `[[0,0],[height,width]]` | ✅ | Ramish |
 | D21 | Stand-in planner: Ramish writes a basic least-cost planner in `pipeline/` with the same inputs/outputs Maryam's will have, so the planner service and Gate 2 aren't blocked. Swapped for Maryam's `model/` planner as soon as it's in `main` | ✅ | Ramish |
@@ -61,7 +61,7 @@ A mixed-reality Marswalk planner. Real NASA terrain at Jezero Crater becomes a s
 | Sat 14:15 | Walking area posted (4 corners) | Ramish |
 | Sat 14:45 | Final science stops `stops.csv` | Mahida |
 | Sat ~16:00 | Real terrain layers + `grid.json` | Ramish |
-| Sat ~19:00 | Planner service URL (Hugging Face) for Kashif | Ramish |
+| Sat ~19:00 | Planner service URL (Render) for Kashif | Ramish |
 | Sat ~17:30 | First real route | Maryam |
 | Sat 18:00 | `conditions.csv`; visor design | Mahida; Kashif |
 | Sat 21:00 | **Gate 2:** web route + panels + hologram on desk from public links | Mahida approves |
@@ -75,6 +75,7 @@ A mixed-reality Marswalk planner. Real NASA terrain at Jezero Crater becomes a s
 Check-ins in the group: 13:00, 19:00, 01:00 — done / next / blocked.
 
 ## 5. Changelog
+- Sat ~21:45: planner service moved to Render (https://phobos-planner.onrender.com): Hugging Face's free plan now only offers ZeroGPU for Gradio/Docker Spaces (CPU basic needs PRO) and the ZeroGPU start-up check kept failing. Render deploys a public hosting copy (aprettymess/phobos-planner) because it can't read the private team repo. `pipeline/hf/` removed; `pipeline/render/make_render.ps1` added.
 - Sat ~21:00: headset step-in walk + visor (D26); stand-in time window + proof vs Perseverance (D27); planner service on Hugging Face Spaces (Gradio SDK on ZeroGPU: Docker Spaces are paid, CPU basic not offered; Render can't read the private repo), files in `pipeline/hf/`; Vercel deploys run from `F:\SpaceApps2026\deploy\` outside git (Vercel blocks merge commits by the GitHub no-reply author); SOURCES.md completed (licences, DOIs, Mars24, hosting).
 - Sat ~16:30: science layer + stops on grid (D24); stand-in planner + service with demo route (D25).
 - Sat: real terrain merged (terrain/out). Headset app + stand-in planner decided (D21, D22).
