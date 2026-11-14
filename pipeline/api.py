@@ -47,6 +47,8 @@ app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["GET", 
 def warm_up():
     """Pre-compute the stop-to-everywhere cost fields so the first /plan call is fast."""
     try:
+        if hasattr(planner, "warm_up"):
+            planner.warm_up()                      # cost fields from every stop, with and without hazard
         if FALLBACK.exists():
             start = json.loads(FALLBACK.read_text())["geometry"]["coordinates"][0][:2]
             planner.plan(start, start, list(planner.stops))
