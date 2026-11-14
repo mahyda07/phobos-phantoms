@@ -21,6 +21,12 @@ import { renderProfile } from "./profile.js";
 import "./profile.css";
 import "./theme.css"; // Marswalk look (matches the headset page)
 import { initWelcome } from "./welcome.js";
+import { renderStretches } from "./proof-stretches.js";
+import "./proof-stretches.css";
+import { initDemo } from "./demo.js";
+import "./demo.css";
+import { initA11y } from "./a11y.js";
+import "./a11y.css"; // after theme.css: focus rings, contrast fixes
 import "./responsive.css"; // keep last: phone/tablet overrides
 
 const DATA = "data/";
@@ -158,11 +164,13 @@ async function main() {
   const slopeLimit = isSample ? null : costModelRow(await getText("cost-model.md"), "Slope limit");
   setSlopeLimit(slopeLimit);
   const resultsMd = await getText("results.md");
+  const resultsJson = await getJson("results.json"); // per-stretch proof numbers
   const wpText = await getText("rover_waypoints.csv");
   const waypoints = wpText ? parseWaypointsCsv(wpText) : null;
   let proofToggle = null;
   const setupProof = (routeOk, layer) => {
     renderProofPanel(document.getElementById("proof"), { rover, route: routeOk, resultsMd });
+    renderStretches(document.getElementById("proof"), resultsJson); // re-added after every re-render
     proofToggle?.destroy();
     proofToggle = initProofToggle(map, f, { rover, roverLayer, routeLayer: layer, waypoints, onChange: () => {} });
   };
@@ -177,6 +185,7 @@ async function main() {
   const showPoint = (i) => {
     if (!view) return;
     slider.value = i;
+    slider.setAttribute("aria-valuetext", `Point ${i + 1} of ${Number(slider.max) + 1}`);
     view.setPoint(i);
     mm?.setIndex(i);
     profile?.setPoint(i);
@@ -242,6 +251,35 @@ async function main() {
   // Moving map (created after the planner so it sits under it): only useful when a route is drawn.
   mm = initMovingMap(map, f, { L, getPointLatLng: (i) => routeLL[i], pointCount: routeLL.length, onIndex: showPoint });
   if (routeLL.length) mm.setIndex(0);
+
+  // Demo mode: one button runs the ~30 s walkthrough for the screen recording (demo.js).
+  const demo = initDemo(map, {
+    L, f,
+    getRouteLatLngs: () => routeLL,
+    pointCount: () => routeLL.length,
+    setIndex: showPoint,
+    stops: () => view?.stops || [],
+    openSection: (id) => {
+      const s = document.getElementById(id)?.closest("#panel > section");
+      if (!s) return;
+      s.classList.remove("mw-collapsed");
+      s.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    },
+    clickProof: () => document.querySelector(".proof-toggle button")?.click(),
+    closeWelcome: () => {
+      const w = document.getElementById("mw-welcome");
+      if (w && !w.classList.contains("out")) document.getElementById("mw-go")?.click();
+    },
+  });
+  window.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.body.classList.contains("demo-running")) demo.stop(); });
+
+  // Keyboard shortcuts + screen-reader helpers (a11y.js). "?" opens the shortcut list.
+  const clickByClass = (cls) => {
+    const el = document.querySelector("." + cls);
+    const b = el && (el.matches("button") ? el : el.querySelector("button"));
+    b?.click();
+  };
+  initA11y({ getIndex: () => Number(slider.value), setIndex: showPoint, pointCount: () => (view ? routeLL.length : 0), clickByClass });
 
   // Legends for the raster overlays that are switched on, and the data sources list.
   const hazardMeta = await getJson("hazard.meta.json");

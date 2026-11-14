@@ -1,0 +1,27 @@
+/* Written with AI assistance (Claude). */
+/* Per-stretch proof table inside the #proof section (side panel is 380 px wide). */
+details.ps { margin-top: 10px; font-size: 12px; color: var(--text, #e6e8eb); }
+details.ps > summary { cursor: pointer; color: var(--text, #e6e8eb); font-weight: 600; padding: 4px 0; }
+details.ps > summary:hover, details.ps > summary:focus-visible { color: var(--accent, #e2763d); }
+.ps-note, .ps-source { margin: 6px 0; color: var(--muted, #9aa3ad); font-size: 12px; line-height: 1.4; }
+/* Scroll box: horizontal scroll inside the panel; max-height so the sticky header sticks within it. */
+.ps-scroll { overflow: auto; max-height: 340px; border: 1px solid var(--line, #2a3038); border-radius: 6px; }
+.ps-scroll:focus-visible { outline: 2px solid var(--accent, #e2763d); outline-offset: 1px; }
+table.ps-table { border-collapse: separate; border-spacing: 0; font-size: 12px; font-variant-numeric: tabular-nums; min-width: 100%; }
+table.ps-table th, table.ps-table td { padding: 3px 6px; border-bottom: 1px solid var(--line, #2a3038); text-align: right; white-space: nowrap; }
+table.ps-table thead th { position: sticky; top: 0; z-index: 2; background: #12151a; vertical-align: bottom; padding: 0; }
+table.ps-table tbody th { position: sticky; left: 0; z-index: 1; background: #12151a; text-align: left; font-weight: 500; }
+table.ps-table thead th:first-child { left: 0; z-index: 3; }
+table.ps-table tbody tr:hover td, table.ps-table tbody tr:hover th { background: #1a1f26; }
+.ps-skipped td { text-align: left; color: var(--muted, #9aa3ad); white-space: normal; }
+button.ps-sort {
+  all: unset; box-sizing: border-box; display: block; width: 100%; min-width: 64px; max-width: 120px; padding: 4px 6px;
+  white-space: normal; text-align: right; color: var(--muted, #9aa3ad); font-weight: 500; font-size: 11px; line-height: 1.25; cursor: pointer;
+}
+table.ps-table thead th:first-child button.ps-sort { text-align: left; min-width: 56px; }
+button.ps-sort:hover { color: var(--text, #e6e8eb); }
+button.ps-sort:focus-visible { outline: 2px solid var(--accent, #e2763d); outline-offset: -2px; }
+.ps-arrow::after { content: ""; margin-left: 3px; }
+th[aria-sort="ascending"] button.ps-sort, th[aria-sort="descending"] button.ps-sort { color: var(--accent, #e2763d); }
+th[aria-sort="ascending"] .ps-arrow::after { content: "▲"; }
+th[aria-sort="descending"] .ps-arrow::after { content: "▼"; }

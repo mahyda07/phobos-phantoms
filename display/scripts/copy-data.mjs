@@ -50,6 +50,7 @@ if (set === "samples") {
   firstOf("route.json", ["model/out/route.json", "pipeline/fallback/route.json"]);
   if (!copied.includes("window.json")) firstOf("window.json", ["model/out/window.json", "pipeline/fallback/window.json"]);
   firstOf("results.md", ["model/out/results.md", "model/results.md", "results.md"]);
+  firstOf("results.json", ["model/out/results.json", "pipeline/fallback/results.json"]); // per-stretch proof numbers
   // Stops: Ramish's grid copy (with row/col) wins; until it exists use Mahida's science/stops.csv (lat/lon only).
   if (!copied.includes("stops.csv")) firstOf("stops.csv", ["science/stops.csv"]);
   firstOf("conditions.csv", ["terrain/out/conditions.csv", "science/conditions.csv"]);

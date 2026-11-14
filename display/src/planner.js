@@ -194,6 +194,14 @@ export function initPlannerControl(map, f, { stops = [], onRoute = () => {}, onS
     setStatus("");
   }
   L.DomEvent.on(toggle, "click", onToggle);
+  // Keyboard: while picking, Enter on the focused map picks the map centre (pan there with the arrow keys first).
+  const onKey = (e) => {
+    if (e.key === "Enter" && (phase === "start" || phase === "end") && e.target === map.getContainer()) {
+      e.preventDefault();
+      onMapClick({ latlng: map.getCenter() });
+    }
+  };
+  map.getContainer().addEventListener("keydown", onKey);
   L.DomEvent.on(clear, "click", onClear);
 
   const Ctl = L.Control.extend({ options: { position: "topleft" }, onAdd: () => root, onRemove: () => {} });
@@ -205,6 +213,7 @@ export function initPlannerControl(map, f, { stops = [], onRoute = () => {}, onS
       listen(false);
       removeMarkers();
       L.DomEvent.off(toggle, "click", onToggle);
+      map.getContainer().removeEventListener("keydown", onKey);
       L.DomEvent.off(clear, "click", onClear);
       control.remove();
     },
