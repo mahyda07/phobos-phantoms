@@ -22,6 +22,9 @@ Defaults: DTM `F:/SpaceApps2026/data/terrain/JEZ_TRN_DTM_1m.tif`, photo streamed
 | `rover_path.json` | Perseverance's real path inside the area, local metres, with sol per piece |
 | `rover_waypoints.csv` | rover stops inside the area with row/col and the rover's own tilt/pitch/roll |
 
-`hazard.bin` (Maryam's AI model) and `science.bin` (from Mahida's CRISM maps) are added later on the same grid.
+| `science.bin`, `science.png` | relative mineral signal 0–1 (carbonate, clay, olivine from CRISM FRT000047A3, nearest-neighbour from ~18 m). Built by `terrain/build_science.py` |
+| `stops.csv` | Mahida's stops with `row`/`col` filled on our grid |
+
+Run `uv run python terrain/build_science.py` after `science/` changes. `hazard.bin` (Maryam's AI model) is added later on the same grid.
 
 Only the owner pushes to this folder. Need a change? Ask the owner in the group.
