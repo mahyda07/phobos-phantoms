@@ -2,7 +2,7 @@
 /* Science stop cards (stop-cards.js). Dark theme; uses --line, --muted, --accent, --bg from style.css with fallbacks. */
 .sc-card {
   border: 1px solid var(--line, #2a3038); border-radius: 6px; padding: 8px 10px; margin-bottom: 10px;
-  cursor: pointer; background: var(--bg, #0d0f12); outline: none; transition: border-color 0.15s;
+  cursor: pointer; background: var(--bg, #0d0f12); transition: border-color 0.15s;
 }
 .sc-card:hover, .sc-card:focus-visible, .sc-card.active { border-color: var(--accent, #e2763d); }
 .sc-card.active { box-shadow: 0 0 0 1px var(--accent, #e2763d) inset; }

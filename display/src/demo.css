@@ -1,0 +1,58 @@
+/* Written with AI assistance (Claude). */
+/* Demo mode (demo.js): the Demo button, the lower-third caption and the progress bar. The caption and the bar
+   live inside #map, so they are centred on the map area and never cover the side panel. */
+.demo-control .demo-btn {
+  font-family: inherit; font-size: 13px; font-weight: 600; line-height: 1.4;
+  color: var(--text, #e6e8eb);
+  background: rgba(12, 17, 26, 0.8);
+  border: 1px solid var(--line, #2a3038);
+  border-radius: 12px;
+  padding: 6px 12px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.demo-control .demo-btn:hover:not(:disabled) { background: rgba(30, 36, 46, 0.9); }
+.demo-control .demo-btn:disabled { opacity: 0.45; cursor: default; }
+.demo-control .demo-btn:focus-visible { outline: 2px solid var(--accent, #e2763d); outline-offset: 2px; }
+.demo-control .demo-btn.active { background: var(--accent, #e2763d); border-color: var(--accent, #e2763d); color: #111; }
+
+/* Lower-third caption: above the heads-up strip (#hud sits at bottom: 34px). */
+.demo-caption {
+  position: absolute; z-index: 1001; left: 50%; bottom: 110px;
+  transform: translate(-50%, 12px);
+  max-width: 70%; width: max-content; box-sizing: border-box;
+  padding: 12px 26px; border-radius: 22px;
+  background: rgba(6, 9, 15, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  color: #fff; font-size: 22px; font-weight: 600; line-height: 1.3; text-align: center;
+  text-wrap: balance;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s ease, visibility 0s linear 0.22s;
+}
+.demo-caption.show { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition-delay: 0s; }
+
+/* Progress: a thin accent line along the top of the map. */
+.demo-progress {
+  position: absolute; z-index: 1001; top: 0; left: 0; right: 0; height: 3px;
+  background: rgba(255, 255, 255, 0.08); pointer-events: none; opacity: 0; transition: opacity 0.3s;
+}
+.demo-progress.show { opacity: 1; }
+.demo-progress-bar { height: 100%; background: #e2763d; transform-origin: 0 50%; transform: scaleX(0); }
+
+/* Clean recording: hide the planner box, the layer list and the help button while the demo runs. */
+body.demo-running .planner-control,
+body.demo-running .leaflet-control-layers,
+body.demo-running #mw-help { display: none !important; }
+
+/* Reduced motion: no caption slide or fade. */
+@media (prefers-reduced-motion: reduce) {
+  .demo-caption, .demo-caption.show { transition: none; transform: translate(-50%, 0); }
+  .demo-progress { transition: none; }
+}
+
+/* Tablet / phone: the heads-up strip is hidden, so the caption can sit lower and use more width. */
+@media (max-width: 900px) {
+  .demo-caption { bottom: 28px; max-width: 90%; font-size: 18px; padding: 10px 16px; border-radius: 16px; }
+}

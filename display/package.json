@@ -12,7 +12,7 @@
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1 --port 5174 --strictPort",
     "mock-planner": "node scripts/mock-planner.mjs",
-    "test": "node --test src/planner.test.mjs src/stop-cards.test.mjs src/proof.test.mjs src/moving-map.test.mjs src/sources.test.mjs src/profile.test.mjs",
+    "test": "node --test src/planner.test.mjs src/stop-cards.test.mjs src/proof.test.mjs src/moving-map.test.mjs src/sources.test.mjs src/profile.test.mjs src/cost-model.test.mjs src/proof-stretches.test.mjs src/demo.test.mjs src/a11y.test.mjs",
     "screenshot": "node scripts/screenshot.mjs"
   },
   "dependencies": {
