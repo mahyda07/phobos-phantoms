@@ -1,0 +1,83 @@
+{
+  "_comment": "Settings of the AI hazard model (Maryam, AI and safety model track [P1]; written with AI assistance, Claude). Every script in model/hazard/ reads this file. Paths under data_dir are outside git.",
+  "seed": 20261114,
+  "data_dir": "F:/SpaceApps2026/data",
+  "dtm_file": "terrain/JEZ_TRN_DTM_1m.tif",
+  "walk_photo_file": "terrain/photo_25cm.tif",
+  "ortho_url": "https://planetarymaps.usgs.gov/mosaic/mars2020_trn/HiRISE/JEZ_hirise_soc_006_orthoMosaic_25cm_Eqc_latTs0_lon0_first.tif",
+  "ai_dir": "ai",
+  "walk_box": {
+    "xmin": 4587712.0,
+    "ymin": 1093454.0,
+    "xmax": 4589212.0,
+    "ymax": 1094954.0
+  },
+  "band": {
+    "y_top": 1097954.0,
+    "y_bottom": 1090454.0
+  },
+  "block_m": 1500.0,
+  "blocks_x": [
+    -6,
+    6
+  ],
+  "blocks_y": [
+    -2,
+    2
+  ],
+  "labels": {
+    "_comment": "Hazard classes on 2 m cells from the 1 m DTM, using the rules of Maryam's walkability score (score.py): score = min(slope score, roughness score); go >= 0.7, careful >= 0.4, avoid below. Roughness is detrended (local slope removed) so slope is not counted twice.",
+    "cell_m": 2,
+    "slope_ramp_deg": [
+      10.0,
+      25.0
+    ],
+    "rough_ramp_m": [
+      0.3,
+      1.5
+    ],
+    "go": 0.7,
+    "careful": 0.4,
+    "rough_window_m": 5,
+    "classes": [
+      "go",
+      "careful",
+      "avoid"
+    ],
+    "hazard_groups": {
+      "go": "low",
+      "careful": "medium",
+      "avoid": "high"
+    },
+    "hazard_value": {
+      "go": 0.0,
+      "careful": 0.5,
+      "avoid": 1.0
+    },
+    "ignore_index": 255
+  },
+  "split": {
+    "_comment": "Whole 1.5 km blocks on the same lattice as the walking area. Block (0,0) is the walking area: never used for training or validation.",
+    "val_blocks": 10,
+    "test_blocks": 10,
+    "min_valid_share_block": 0.5,
+    "tile_cells": 64,
+    "tile_min_valid_share": 0.5
+  },
+  "train": {
+    "tile_px": 512,
+    "batch": 16,
+    "epochs": 60,
+    "steps_per_epoch": 500,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "warmup_epochs": 2,
+    "patience": 12,
+    "focus_share": 0.5,
+    "class_weight_power": 0.5,
+    "brightness": 0.1,
+    "contrast": 0.2,
+    "run_name": "hazardnet-v1"
+  },
+  "model_version": "ai-hazard-v1"
+}

@@ -1,0 +1,58 @@
+{
+ "walking_area": {
+  "cells": 562500,
+  "mean_hazard": 0.12720417976379395,
+  "median_hazard": 0.027007177472114563,
+  "share_by_class": {
+   "go": 0.8657208888888889,
+   "careful": 0.08739555555555556,
+   "avoid": 0.04688355555555555
+  },
+  "share_hazard_over_0.5": 0.081184
+ },
+ "perseverance_track": {
+  "samples_every_m": 1.0,
+  "samples": 7136,
+  "mean_hazard": 0.04943278431892395,
+  "median_hazard": 0.012068301439285278,
+  "share_by_class": {
+   "go": 0.9480100896860987,
+   "careful": 0.05198991031390134,
+   "avoid": 0.0
+  },
+  "share_hazard_over_0.5": 0.00952914798206278
+ },
+ "agreement_with_dtm_rule_on_walking_area": {
+  "miou": 0.573339559951306,
+  "per_class_iou": {
+   "go": 0.9308267288419526,
+   "careful": 0.26245173431973784,
+   "avoid": 0.5267402166922278
+  },
+  "pixel_accuracy": 0.9112017777777778,
+  "confusion_rows_true_cols_pred": [
+   [
+    475080,
+    21494,
+    1923
+   ],
+   [
+    9323,
+    16177,
+    3155
+   ],
+   [
+    2565,
+    11489,
+    21294
+   ]
+  ],
+  "label_share": {
+   "go": 0.8862168888888889,
+   "careful": 0.05094222222222222,
+   "avoid": 0.06284088888888889
+  },
+  "note": "The walking area was never used for training or model selection; labels here are the DTM rule (Maryam's score)."
+ },
+ "created": "2026-11-15T00:36:52+0500"
+}
