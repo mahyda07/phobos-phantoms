@@ -22,6 +22,6 @@ These are the values the stand-in planner and time window use today (pipeline/pl
 | Hazard groups | go = low, careful = medium, avoid = high | — | assumption | Maryam |
 | Minimum sun elevation in the AI track's time window (model/window.py) | 15 | degrees | Maryam's time_window.py: assumption | Maryam |
 | Dust limit in the AI track's time window (model/window.py) | 1.0 | tau | Maryam's time_window.py: assumption. conditions.csv has dust_tau 0.5 for every hour | Maryam |
-| EVA window length in model/window.py | 4 | hours | The Max EVA duration above (240 min); the window is the 4 hours with the highest average sun inside the good hours. Temperature is not part of this rule | Maryam |
+| EVA window length in model/window.py | 4 | hours | The Max EVA duration above (240 min); the window is the 4 hours with the highest average sun inside the good hours. Temperature is used only as a tie-break: on equal average sun (within 0.05 degrees) the warmer block wins. Sol 500: LTST 10-14 and 11-15 tie at 42.8 degrees average sun; 11-15 is warmer (mean air -33.6 vs -37.3 C, coldest hour -39.8 vs -44.0 C, science/conditions.csv), so the window is LTST 11-15 (model/out/window.json) | Maryam (tie-break: Ramish) |
 
 The cost of one grid square is 1 + a·(slope/limit)² + b·roughness + c·hazard − d·science. Squares above the slope limit or with no data are blocked.
