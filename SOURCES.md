@@ -10,7 +10,7 @@ Rule: nothing gets used until it has a row here with its licence. Non-NASA sourc
 | NASA JPL Mars Trek | Cross-check of site, visuals | https://trek.nasa.gov/mars/ | to check | |
 | USGS–NASA Planetary Geologic Mapping (Jezero map SIM 3464) | Science stops | https://astrogeology-usgs.hub.arcgis.com/pages/interactive-maps-mars | to check | |
 | Perseverance traverse and waypoints (Where is Perseverance?) | Proof check, rover path on map | https://mars.nasa.gov/mmgis-maps/M20/Layers/json/M20_traverse.json · https://mars.nasa.gov/mmgis-maps/M20/Layers/json/M20_waypoints.json | NASA/JPL-Caltech, public | Ramish |
-| Mars Perseverance raw images | Stop-card photos (credit NASA/JPL-Caltech) | https://mars.nasa.gov/mars2020/multimedia/raw-images/ | NASA media guidelines | |
+| Mars Perseverance raw images | Stop-card photos on the web map: 5 Navcam images hotlinked, not copied (sols 405, 436, 709, 715, 716; IDs in display/src/stop-photos.json); credit NASA/JPL-Caltech | https://mars.nasa.gov/mars2020/multimedia/raw-images/ | NASA media guidelines | Kashif |
 
 ## Third-party data, models, libraries
 | Name | Used for | Link | Licence | Added by |

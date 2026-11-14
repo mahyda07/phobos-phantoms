@@ -41,10 +41,17 @@ if (set === "samples") {
     if (existsSync(src)) copy(src, f);
     else missing.push((required.includes(f) ? "" : "(optional) ") + "terrain/out/" + f);
   }
-  const routes = [join(repo, "model", "out", "route.json"), join(repo, "pipeline", "fallback", "route.json")];
-  const route = routes.find((p) => existsSync(p));
-  if (route) { copy(route, "route.json"); console.log("route.json from " + route.slice(repo.length + 1)); }
-  else missing.push("(optional) route.json (model/out/route.json, pipeline/fallback/route.json)");
+  // Files from other tracks: first existing candidate wins. Locations not yet confirmed are listed as candidates.
+  const firstOf = (name, candidates) => {
+    const src = candidates.map((c) => join(repo, ...c.split("/"))).find((p) => existsSync(p));
+    if (src) { copy(src, name); console.log(`${name} from ${src.slice(repo.length + 1)}`); }
+    else missing.push(`(optional) ${name} (${candidates.join(", ")})`);
+  };
+  firstOf("route.json", ["model/out/route.json", "pipeline/fallback/route.json"]);
+  if (!copied.includes("window.json")) firstOf("window.json", ["model/out/window.json", "pipeline/fallback/window.json"]);
+  firstOf("results.md", ["model/out/results.md", "model/results.md", "results.md"]);
+  // Stops: Ramish's grid copy (with row/col) wins; until it exists use Mahida's science/stops.csv (lat/lon only).
+  if (!copied.includes("stops.csv")) firstOf("stops.csv", ["science/stops.csv"]);
   console.log(`data set: REAL from terrain/out/`);
 }
 

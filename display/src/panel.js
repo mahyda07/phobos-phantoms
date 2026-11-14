@@ -75,23 +75,4 @@ export function renderWindow(win) {
     <p class="muted">Typical conditions (climatology), not a forecast. ${esc(win.notes || "")}</p>`;
 }
 
-export function renderStops(stops, onStop) {
-  const el = $("stops");
-  if (!stops.length) { el.innerHTML = `<p class="muted">No stops in this route.</p>`; return; }
-  el.innerHTML = stops.map((s) => `
-    <article class="stop-card" data-id="${esc(s.id)}" tabindex="0">
-      <h3><span class="badge">${esc(s.id)}</span> ${esc(s.name)}</h3>
-      <p>${esc(s.reason)}</p>
-      <p class="muted">${s.science_value != null ? `Relative signal strength ${num(s.science_value, 2)} (0–1) · ` : ""}Source: ${esc(s.citation)}</p>
-    </article>`).join("");
-  el.querySelectorAll(".stop-card").forEach((c) => {
-    const go = () => onStop(c.dataset.id);
-    c.addEventListener("click", go);
-    c.addEventListener("keydown", (e) => { if (e.key === "Enter") go(); });
-  });
-}
 
-export function highlightStop(id) {
-  document.querySelectorAll(".stop-card").forEach((c) => c.classList.toggle("active", c.dataset.id === id));
-  document.querySelector(`.stop-card[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-}

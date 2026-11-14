@@ -14,3 +14,4 @@ AI-generated images or video must carry a visible watermark and must not use or 
 | 2026-11-14 | Ramish | Claude (Anthropic) | Headset hologram app (Vite + Three.js WebXR): placement, hands, snap-rotate, layers, route ribbon | xr/ |
 | 2026-11-14 | Kashif | Claude (Anthropic, Claude Code) | Web map foundation (Vite + Leaflet, frame.js copy, data copy script, real photo map) and visor design mock + field list for the headset | display/ |
 | 2026-11-14 | Kashif | Claude (Anthropic, Claude Code) | Web map route view: route coloured by walk-back margin, stops, hazard pins, side panel, point-by-point readout, time window | display/src/, display/index.html, display/screens/ |
+| 2026-11-14 | Kashif | Claude (Anthropic, Claude Code) | Web map: live planner client (POST /plan, 3 s fallback, local mock planner), stop cards with Perseverance photos, proof view vs rover path, integration | display/ |
