@@ -10,7 +10,7 @@
     "prebuild": "node scripts/copy-data.mjs",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1 --port 5173 --strictPort",
-    "test": "node --test src/terrain.test.mjs"
+    "test": "node --test src/terrain.test.mjs src/walk.test.mjs"
   },
   "dependencies": {
     "three": "^0.187.0"
