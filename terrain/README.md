@@ -8,7 +8,7 @@
 ```
 uv run python terrain/build_terrain.py
 ```
-Defaults: DTM `F:/SpaceApps2026/data/terrain/JEZ_TRN_DTM_1m.tif`, photo streamed from USGS, rover files in `F:/SpaceApps2026/data/rover/`. Big files (`photo_25cm.tif`, `dem_2m.tif`) go to `F:/SpaceApps2026/data/terrain/` and the shared drive, never git. `--skip-photo` skips the slow photo step.
+Defaults: DTM `F:/SpaceApps2026/data/terrain/JEZ_TRN_DTM_1m.tif`, photo streamed from USGS, rover files in `F:/SpaceApps2026/data/rover/`. Big files (`photo_25cm.tif`, `dem_2m.tif`) go to `F:/SpaceApps2026/data/terrain/` and the shared drive, never git. `--skip-photo` skips the photo step. If `photo_25cm.tif` is already in the big-files folder, it is reused instead of downloaded again.
 
 ## Outputs in `terrain/out/` (750 × 750 cells, 2 m; `.bin` = float32 little-endian, row-major from the NW corner)
 | File | What |
@@ -18,6 +18,7 @@ Defaults: DTM `F:/SpaceApps2026/data/terrain/JEZ_TRN_DTM_1m.tif`, photo streamed
 | `slope.bin` | slope (degrees), Horn (1981) method on the 2 m DEM (same as `gdaldem slope`) |
 | `rough.bin` | roughness (m): largest elevation difference in the 3×3 window (same as `gdaldem roughness`) |
 | `photo.png`, `dem.png`, `slope.png`, `rough.png` | map images, 750 × 750, north at the top |
+| `photo_2k.jpg` | sharper 2048 × 2048 photo for the headset hologram |
 | `rover_path.json` | Perseverance's real path inside the area, local metres, with sol per piece |
 | `rover_waypoints.csv` | rover stops inside the area with row/col and the rover's own tilt/pitch/roll |
 

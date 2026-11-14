@@ -46,6 +46,16 @@
       "citation": "https://doi.org/10.5066/P9QJDP48"
     },
     {
+      "id": "photo_2k",
+      "name": "HiRISE photo, headset texture",
+      "file": "photo_2k.jpg",
+      "kind": "texture",
+      "cell_m": 0.7324,
+      "source": "USGS Mars 2020 TRN HiRISE orthomosaic, 25 cm, resized to 2048 px",
+      "licence": "USGS data release (U.S. Government work, public domain) \u2014 confirm on the DOI page",
+      "citation": "https://doi.org/10.5066/P9QJDP48"
+    },
+    {
       "id": "rover",
       "name": "Perseverance path",
       "file": "rover_path.json",
