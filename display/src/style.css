@@ -78,7 +78,7 @@ table.hours th { color: var(--muted); font-weight: 500; }
 .scale-bar { background: var(--panel); color: var(--text); padding: 2px 6px 4px; border-radius: 4px; font-size: 11px; }
 .scale-bar .bar { height: 5px; border: 2px solid var(--text); border-top: none; margin-top: 2px; }
 
-#sample-badge { top: 64px; left: 56px; transform: none; }
+#sample-badge { top: auto; bottom: 34px; left: calc((100% - var(--panel-w)) / 2); transform: translateX(-50%); }
 
 @media (max-width: 900px) {
   :root { --panel-w: 0px; }
@@ -90,3 +90,5 @@ table.hours th { color: var(--muted); font-weight: 500; }
   #header { left: 52px; right: 12px; }
   #sample-badge { top: auto; bottom: 36px; font-size: 12px; max-width: calc(100% - 32px); text-align: center; }
 }
+
+.route-source { margin: 0 0 6px; padding: 6px 8px; border-radius: 6px; background: #2a2210; border: 1px solid #6b5313; color: #f3d48a; font-size: 12px; }

@@ -6,7 +6,12 @@ import "leaflet/dist/leaflet.css";
 import "./style.css";
 import { loadFrame } from "./frame.js";
 import { drawRoute, checkRoute, routeKind } from "./route.js";
-import { renderNoRoute, renderRouteSummary, renderReadout, renderWindow, renderStops, highlightStop } from "./panel.js";
+import { renderNoRoute, renderRouteSummary, renderReadout, renderWindow } from "./panel.js";
+import { renderStopCards, highlightStopCard, stopsFromCsv } from "./stop-cards.js";
+import stopPhotos from "./stop-photos.json";
+import "./stop-cards.css";
+import { renderProofPanel, initProofToggle, parseWaypointsCsv } from "./proof.js";
+import { initPlannerControl } from "./planner.js";
 
 const DATA = "data/";
 const OVERLAY_OPACITY = 0.6;
@@ -23,6 +28,15 @@ async function getJson(name) {
     const r = await fetch(DATA + name);
     if (!r.ok || !(r.headers.get("content-type") || "").includes("json")) return null;
     return await r.json();
+  } catch { return null; }
+}
+
+// Text files (csv, md). Same index.html-for-missing-files guard as getJson.
+async function getText(name) {
+  try {
+    const r = await fetch(DATA + name);
+    if (!r.ok || (r.headers.get("content-type") || "").includes("html")) return null;
+    return await r.text();
   } catch { return null; }
 }
 
@@ -74,7 +88,7 @@ async function main() {
   if (isSample || !manifest) map.attributionControl.addAttribution("SAMPLE data — synthetic, not NASA data");
 
   const bounds = f.leafletBounds();
-  const fit = () => map.fitBounds(bounds);
+  const fit = () => map.fitBounds(bounds, { paddingTopLeft: [0, 70], paddingBottomRight: [0, 10] }); // keep pins clear of the title box
   fit();
 
   // Base layer: the HiRISE photo on the grid.
@@ -97,48 +111,105 @@ async function main() {
 
   // Perseverance's real path (local metres [x, y] -> Leaflet [lat, lng]).
   const rover = await getJson("rover_path.json");
+  let roverLayer = null;
   if (rover?.features?.length) {
     const lines = rover.features
       .filter((ft) => ft.geometry?.type === "LineString")
       .map((ft) => ft.geometry.coordinates.map(([x, y]) => f.localToLeaflet(x, y)));
-    const roverLayer = L.polyline(lines, { color: "#7cc7ff", weight: 3, opacity: 0.95, interactive: false,
+    roverLayer = L.polyline(lines, { color: "#7cc7ff", weight: 3, opacity: 0.95, interactive: false,
       attribution: attributionFor(manifest, "rover") || "Rover path: NASA/JPL-Caltech" });
     roverLayer.addTo(map);
     overlays["Perseverance path (real, NASA/JPL-Caltech)"] = roverLayer;
   }
 
+  // Science stops from stops.csv (Ramish's grid copy, or Mahida's science/stops.csv until it exists).
+  const stopsCsv = await getText("stops.csv");
+  const csvStops = stopsCsv ? stopsFromCsv(stopsCsv, f).filter((s) => f.inside(s.x, s.y)) : [];
+  const stopsEl = document.getElementById("stops");
+  // Photos were picked for the REAL stops S1–S5; sample stops reuse those ids, so never attach them on sample data.
+  const photos = isSample ? {} : stopPhotos.photos || {};
+  let csvStopLayer = null;
+  const csvStopMarkers = {};
+  if (csvStops.length) {
+    csvStopLayer = L.layerGroup();
+    for (const s of csvStops) {
+      csvStopMarkers[s.id] = L.marker(f.localToLeaflet(s.x, s.y), {
+        icon: L.divIcon({ className: "stop-pin", html: s.id, iconSize: [30, 30] }),
+      }).bindTooltip(s.name).on("click", () => highlightStopCard(stopsEl, s.id)).addTo(csvStopLayer);
+    }
+    overlays["Science stops"] = csvStopLayer;
+  }
+
+  const layersControl = L.control.layers(null, overlays, { collapsed: false, position: "topright" }).addTo(map);
+  const routeSource = document.getElementById("route-source");
+  const resultsMd = await getText("results.md");
+  const wpText = await getText("rover_waypoints.csv");
+  const waypoints = wpText ? parseWaypointsCsv(wpText) : null;
+  let proofToggle = null;
+  const setupProof = (routeOk, layer) => {
+    renderProofPanel(document.getElementById("proof"), { rover, route: routeOk, resultsMd });
+    proofToggle?.destroy();
+    proofToggle = initProofToggle(map, f, { rover, roverLayer, routeLayer: layer, waypoints, onChange: () => {} });
+  };
+
   // Planned route (route.json): drawn only if it belongs to this grid. Numbers come from route.json only.
-  const route = await getJson("route.json");
-  const routeError = route ? checkRoute(route, f) : null;
-  if (!route) {
-    renderNoRoute("No planned route yet. Showing the terrain and Perseverance's real path until the planner's route.json arrives.");
-    renderStops([], () => {});
-  } else if (routeError) {
-    renderNoRoute("Route not drawn: " + routeError);
-    renderStops([], () => {});
-  } else {
+  const slider = document.getElementById("point-slider");
+  let view = null;
+  let current = null;
+  const showPoint = (i) => {
+    if (!view) return;
+    slider.value = i;
+    view.setPoint(i);
+    renderReadout(current, i, view.stops.find((s) => s.vertex >= i) || null);
+  };
+  slider.addEventListener("input", () => showPoint(Number(slider.value)));
+  const showStops = (stops, onSelect) => renderStopCards(stopsEl, stops, photos, { onSelect });
+
+  const showRoute = (route) => {
+    if (view) { layersControl.removeLayer(view.layer); view.layer.remove(); view = null; }
+    current = route;
+    const onStop = (id) => { highlightStopCard(stopsEl, id); view?.focusStop(id); };
+    view = drawRoute(map, f, route, { onPoint: showPoint, onStop });
+    layersControl.addOverlay(view.layer, "Planned route");
+    if (csvStopLayer) csvStopLayer.remove(); // the route's own stop pins replace the stops.csv pins
     const kind = routeKind(route);
     if (kind === "sample") document.getElementById("sample-badge").hidden = false;
-    let view;
-    const slider = document.getElementById("point-slider");
-    const showPoint = (i) => {
-      slider.value = i;
-      view.setPoint(i);
-      const next = view.stops.find((s) => s.vertex >= i) || null;
-      renderReadout(route, i, next);
-    };
-    const onStop = (id) => { highlightStop(id); view.focusStop(id); };
-    view = drawRoute(map, f, route, { onPoint: showPoint, onStop });
-    overlays["Planned route"] = view.layer;
     slider.max = route.geometry.coordinates.length - 1;
-    slider.addEventListener("input", () => showPoint(Number(slider.value)));
     renderRouteSummary(route, kind, view.maxMargin);
-    renderStops(view.stops, onStop);
+    showStops(view.stops.length ? view.stops : csvStops, onStop);
     showPoint(0);
-  }
-  renderWindow(await getJson("window.json"));
+    setupProof(route, view.layer);
+  };
 
-  L.control.layers(null, overlays, { collapsed: false, position: "topright" }).addTo(map);
+  const saved = await getJson("route.json");
+  const savedError = saved ? checkRoute(saved, f) : null;
+  const noRoute = (msg) => {
+    renderNoRoute(msg);
+    csvStopLayer?.addTo(map);
+    showStops(csvStops, (id) => { highlightStopCard(stopsEl, id); const m = csvStopMarkers[id]; if (m) map.panTo(m.getLatLng()); });
+    setupProof(null, null);
+  };
+  if (saved && !savedError) showRoute(saved);
+  else noRoute(saved ? "Route not drawn: " + savedError
+    : "No planned route yet. Showing the terrain, the science stops and Perseverance's real path until the planner's route.json arrives.");
+
+  // Live planner (POST /plan). On failure the saved route (if any) stays: it is the offline demo route.
+  initPlannerControl(map, f, {
+    stops: (csvStops.length ? csvStops : saved?.properties?.stops || []).map((s) => ({ id: s.id, name: s.name })),
+    onRoute: (route, { source, reason }) => {
+      if (source === "planner" && route) {
+        showRoute(route);
+        routeSource.textContent = "Route from the live planner.";
+      } else {
+        routeSource.textContent = saved && !savedError
+          ? `Planner unavailable (${reason}) — showing the saved offline demo route.`
+          : `Planner unavailable (${reason}) — no saved route to fall back to yet.`;
+      }
+      routeSource.hidden = false;
+    },
+  });
+
+  renderWindow(await getJson("window.json"));
   addScaleBar(map, f.cell);
 
   // Re-fit once layout has settled (first-load mis-zoom fix).
