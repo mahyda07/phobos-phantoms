@@ -21,6 +21,11 @@ Quest Browser → `http://localhost:5173` → **Enter mixed reality**. `?lod=256
 - **Pinch and drag** near the model = move. **Pinch with both hands** and pull apart = scale (0.25× – 4×).
 - Buttons in front of the model: **⟲ 15° / ⟳ 15°** rotate, **Height ×1/×2/×4**, **Photo/Slope** layer, **Re-place**.
 
+## Welcome and guidance
+- The page opens on a **welcome screen**: what Marswalk is, live mission numbers from the data files (route length, stops, walk-back margin, EVA window, stand-in marking), the three steps (Place, Explore, Step in), **Enter mixed reality** (enabled only on a headset that supports it) and **Preview on this screen**. `?` in the toolbar reopens it; `i` shows the mission data.
+- In the headset a small guide card floats below your line of sight: step 1 (place) until the hologram is placed, step 2 (explore) for 9 s after placing, step 3 (walk) for 8 s after Step in.
+- Code: `index.html`, `src/ui.css`, `src/onboarding.js` (listens to `phobos:*` events from `src/main.js`).
+
 ## Step-in walk + visor (PLAN D26)
 - **Step in** (last button on the desk panel, or "Step in / out" on the PC) turns the hologram into the real terrain at **1:1** around you, with a Mars sky and haze, and walks the planned route from the start.
 - The ground ribbon is the route coloured by walk-back margin; the tall orange beacons are the science stops.

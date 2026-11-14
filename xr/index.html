@@ -3,33 +3,66 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Phobos Phantoms — Jezero Marswalk (mixed reality)</title>
-  <style>
-    html, body { margin: 0; height: 100%; background: #0b0f14; color: #e8e8e8; font-family: system-ui, sans-serif; overflow: hidden; }
-    #ui { position: fixed; top: 10px; left: 10px; z-index: 2; display: flex; flex-direction: column; gap: 6px; max-width: 360px; }
-    #ui .row { display: flex; gap: 6px; flex-wrap: wrap; }
-    button { background: #1d2733; color: #fff; border: 1px solid #3a4a5c; border-radius: 6px; padding: 8px 12px; font-size: 14px; cursor: pointer; }
-    button.primary { background: #b4512a; border-color: #d76a3d; }
-    button:disabled { opacity: .45; cursor: default; }
-    #status { font: 12px/1.4 ui-monospace, monospace; background: #0008; padding: 6px 8px; border-radius: 6px; white-space: pre; }
-    #credit { position: fixed; bottom: 8px; right: 10px; font-size: 11px; opacity: .7; z-index: 2; }
-  </style>
+  <meta name="theme-color" content="#06090f" />
+  <title>Marswalk · Jezero in mixed reality · Phobos Phantoms</title>
+  <link rel="stylesheet" href="./src/ui.css" />
 </head>
 <body>
-  <div id="ui">
-    <div><b>Phobos Phantoms</b> · Jezero western delta · mixed reality</div>
-    <div class="row">
-      <button id="btn-ar" class="primary" disabled>Enter mixed reality</button>
-      <button id="btn-vr" disabled>Enter VR</button>
+  <!-- ===== Welcome / onboarding ===== -->
+  <section id="welcome" aria-label="Welcome">
+    <div class="stars"></div><div class="stars s2"></div>
+    <div class="planet"></div>
+    <div class="scan"></div>
+    <div class="card">
+      <div class="eyebrow"><span class="dot"></span> NASA Space Apps 2026 · Phobos Phantoms OG 7.66</div>
+      <h1>Mars<span>walk</span></h1>
+      <p class="lead">Rehearse a safe walk on <b>Jezero Crater, Mars</b>, right on your desk. Then step in and walk it at full size.</p>
+
+      <div class="chips" id="chips">
+        <div class="chip skeleton">Loading mission data…</div>
+      </div>
+
+      <ol class="steps">
+        <li><div class="ico">◎</div><div><b>Place</b><span>Look at a table, pinch the white ring. The 1.5 km crater area lands on your desk.</span></div></li>
+        <li><div class="ico">✥</div><div><b>Explore</b><span>Pinch-drag to move, two hands to scale. Switch photo or slope, exaggerate height.</span></div></li>
+        <li><div class="ico">⇲</div><div><b>Step in</b><span>Walk the planned route at 1:1 with a visor showing time margin, slope, AI hazard and the next stop.</span></div></li>
+      </ol>
+
+      <div class="cta">
+        <button id="go-ar" class="btn primary" disabled><span class="pulse"></span>Enter mixed reality</button>
+        <button id="go-preview" class="btn ghost">Preview on this screen</button>
+      </div>
+      <p class="note" id="xr-note">Checking your device…</p>
+      <div class="progress"><div id="bar"></div></div>
     </div>
-    <div class="row">
-      <button id="btn-rotl">⟲ 15°</button><button id="btn-rotr">⟳ 15°</button>
-      <button id="btn-exag">Height ×2</button><button id="btn-layer">Layer: photo</button>
-      <button id="btn-walk">Step in / out</button>
-    </div>
-    <div id="status">loading…</div>
-  </div>
-  <div id="credit">Terrain: USGS Mars 2020 TRN HiRISE DTM + orthomosaic · Rover path: NASA/JPL-Caltech</div>
+    <footer class="foot">Terrain: USGS Mars 2020 TRN HiRISE DTM + orthomosaic · Rover path: NASA/JPL-Caltech · Minerals: CRISM (MRO)</footer>
+  </section>
+
+  <!-- ===== In-app HUD (after the welcome) ===== -->
+  <header id="brand" class="glass hidden">
+    <span class="dot"></span><b>Marswalk</b><em>Jezero western delta</em>
+    <span id="badge" class="badge hidden">STAND-IN ROUTE</span>
+  </header>
+
+  <nav id="ui" class="glass hidden" aria-label="Controls">
+    <button id="btn-ar" class="tool primary" disabled title="Enter mixed reality (Quest)">Enter mixed reality</button>
+    <button id="btn-vr" class="tool" disabled title="Enter VR">Enter VR</button>
+    <span class="sep"></span>
+    <button id="btn-rotl" class="tool" title="Rotate left 15°">⟲ 15°</button>
+    <button id="btn-rotr" class="tool" title="Rotate right 15°">⟳ 15°</button>
+    <button id="btn-exag" class="tool" title="Exaggerate height">Height ×2</button>
+    <button id="btn-layer" class="tool" title="Photo or slope">Layer: photo</button>
+    <button id="btn-walk" class="tool accent" title="Walk the route at full size">Step in / out</button>
+    <span class="sep"></span>
+    <button id="btn-help" class="tool round" title="How it works">?</button>
+    <button id="btn-data" class="tool round" title="Mission data">i</button>
+  </nav>
+
+  <aside id="datapanel" class="glass hidden"><div class="ph">Mission data</div><div id="status">loading…</div></aside>
+  <div id="toasts" aria-live="polite"></div>
+  <div id="credit">Terrain: USGS Mars 2020 HiRISE · Rover path: NASA/JPL-Caltech</div>
+
+  <script type="module" src="./src/onboarding.js"></script>
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>
