@@ -187,3 +187,14 @@ test("nearestS: track distance of the closest point (ghost starts near the walke
   assert.deepEqual(nearestS(t, 10, 9), { s: 20, dist_m: 1 });
   assert.equal(nearestS(t, 104, 1).s, 20);   // first point of the sol-410 segment (jump: no distance added)
 });
+
+// ---------- run 2 Phase 5: sfx recipes ----------
+import { SFX } from "./audio.js";
+test("SFX: five short synthesized sounds, each under 0.6 s", () => {
+  assert.deepEqual(Object.keys(SFX).sort(), ["click", "home", "route", "stop", "warning"]);
+  for (const [name, notes] of Object.entries(SFX)) {
+    const end = Math.max(...notes.map(([, t0, d]) => t0 + d));
+    assert.ok(end < 0.6, name);
+    for (const [f] of notes) assert.ok(f > 100 && f < 2000, name);
+  }
+});

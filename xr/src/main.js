@@ -19,7 +19,7 @@ import { stopVertexIndices, walkState, ltstAt, sunAt, visorFields } from "./walk
 import { drawVisor, VISOR_W, VISOR_H } from "./visor.js";
 import { planHome, homeSummary, reversedWalkedPath } from "./home.js";
 import { initKeys } from "./keys.js";
-import { createAudio, calloutsFor, VOICE_LINES } from "./audio.js";
+import { createAudio, calloutsFor, VOICE_LINES, playSfx, startAmbience, stopAmbience } from "./audio.js";
 import { shouldBuzz, pulseAll, hapticsEnabled, setHapticsEnabled } from "./haptics.js";
 import { makeButton, makePlate, makeRay, T as UI } from "./xrui.js";
 import { roverTrack, roverAt, ghostLabel, nearestS, GHOST_SPEED_MPS, GHOST_WALK_MPS } from "./ghost.js";
@@ -319,12 +319,14 @@ async function enterXR(mode) {
   scene.background = mode === "immersive-ar" ? null : desktopBg;
   placed = false; anchor.visible = false; sessionStart = performance.now();
   emit("session", { mode }); showHint("place");
+  audio.unlock(); startAmbience(audio);           // run 2 Phase 5: real Mars wind, fades in after Enter XR
   if (mode === "immersive-ar") {
     const viewer = await session.requestReferenceSpace("viewer");
     hitSource = await session.requestHitTestSource({ space: viewer });
   }
   session.addEventListener("end", () => {
     if (walking) stopWalk();
+    stopAmbience(audio);
     hitSource = null; scene.background = desktopBg; placed = true; anchor.visible = true;
     anchor.position.set(0, 0, 0); reticle.visible = false; hint.visible = false;
     emit("session-end");
@@ -389,6 +391,7 @@ function pressButton(b, src) {
   if (t - (b.userData.lastPress || 0) < 350) return;   // de-bounce: one press per 350 ms per button
   b.userData.lastPress = t;
   b.userData.setState("press");
+  sfx("click");
   setTimeout(() => b.userData.setState(b === hovered() ? "hover" : "normal"), 140);
   const h = src?.gamepad?.hapticActuators?.[0]; h?.pulse?.(0.15, 18)?.catch?.(() => {});   // tiny tick confirms the press
   b.userData.onPress();
@@ -553,7 +556,7 @@ function startWalk() {
     mult: model.userData.mult ?? 1, camPos: camera.position.clone(), far: camera.far, near: camera.near,
   };
   walking = true; playing = true; simT = 0; lastNow = performance.now();
-  calloutPrev = null; audio.play("walk", { force: true });
+  calloutPrev = null; sfx("route"); audio.play("walk", { force: true });
   bPlay.userData.setText("Pause");
   panel.visible = false; holoTube && (holoTube.visible = false); walkTube && (walkTube.visible = true);
   sky.visible = true; scene.fog = haze; visor.visible = true; walkPanel.visible = true; reticle.visible = false;
@@ -643,6 +646,7 @@ const walkInfo = () => walkNow
 
 // ---------- run 2: voice mission control (Phase 2b; clips + rate limits in audio.js) ----------
 const audio = createAudio();
+const sfx = (name) => { if (!audio.muted && audio.ctx) playSfx(audio.ctx, audio.sfx, name); };
 const CAPTION = { steep: "Steep ground ahead", hazard: "AI hazard ahead", stop: "Stop reached", margin: "Margin under one hour",
   home: "Return route ready", "home-offline": "Planner offline: walked path reversed", waking: "Waking the planner", walk: "Walk started" };
 let calloutPrev = null, caption = null;
@@ -655,7 +659,7 @@ function walkCallouts(st) {
   if (calloutPrev && calloutPrev.i === st.i) return;
   const lines = calloutsFor(routeData, st.i, calloutPrev, stopIdx);
   calloutPrev = { i: st.i, margin: st.margin_min };
-  for (const l of lines) if (audio.say(l)) break;     // say() is rate-limited: first allowed line only
+  for (const l of lines) if (audio.say(l)) { sfx(l === "stop" ? "stop" : l === "steep" || l === "hazard" ? "warning" : "click"); break; }   // say() is rate-limited
 }
 
 // ---------- run 2: "Get me home" (Phase 2a) ----------
@@ -709,7 +713,7 @@ async function goHome() {
     drawHome(out.route.geometry.coordinates);
     const snap = out.req.snapped_m >= 1 ? ` (start snapped ${Math.round(out.req.snapped_m)} m back to the planned route)` : "";
     setHome(["Return route", `${Math.round(sm.length_m)} m · ~${Math.round(sm.time_min)} min · margin ${Math.floor(sm.margin_min)} min`]);
-    homeStatus = sm.text + snap; setStatus(walkInfo()); audio.play("home", { force: true });
+    homeStatus = sm.text + snap; setStatus(walkInfo()); sfx("home"); audio.play("home", { force: true });
     emit("home", { state: "ready", text: sm.text + snap, length_m: sm.length_m, time_min: sm.time_min, margin_min: sm.margin_min });
   } else {
     const fb = reversedWalkedPath(routeData, st.i, pos);

@@ -105,3 +105,41 @@ export function createAudio({ base = "./voice/" } = {}) {
 }
 
 export const VOICE_LINES = ["steep", "hazard", "stop", "margin", "home", "home-offline", "waking", "walk"];
+
+// ---------- run 2 Phase 5: synthesized UI sounds (no downloaded sfx packs) ----------
+/** Note recipes: [frequency Hz, start s, duration s, wave]. Short, soft, distinct. Pure data (tested). */
+export const SFX = {
+  click: [[880, 0, 0.05, "triangle"]],
+  route: [[523.25, 0, 0.12, "sine"], [659.25, 0.1, 0.12, "sine"], [783.99, 0.2, 0.2, "sine"]],
+  stop: [[659.25, 0, 0.18, "sine"], [987.77, 0.12, 0.3, "sine"]],
+  warning: [[440, 0, 0.14, "square"], [440, 0.22, 0.14, "square"]],
+  home: [[392, 0, 0.14, "sine"], [523.25, 0.12, 0.14, "sine"], [659.25, 0.24, 0.32, "sine"]],
+};
+/** Plays a recipe into `dest` (the -18 dB sfx bus). Each note has a 5 ms attack and an exponential release. */
+export function playSfx(ctx, dest, name, at = ctx.currentTime) {
+  for (const [f, t0, d, type] of SFX[name] || []) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, at + t0);
+    g.gain.exponentialRampToValueAtTime(type === "square" ? 0.25 : 0.6, at + t0 + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + t0 + d);
+    o.connect(g).connect(dest); o.start(at + t0); o.stop(at + t0 + d + 0.02);
+  }
+}
+/** Real Mars wind (Perseverance SuperCam sol 4, NASA/JPL-Caltech/LANL/CNES/CNRS/ISAE-Supaero), seamless 37 s loop. */
+export async function startAmbience(bus, url = "./audio/mars-wind-loop.mp3", fadeS = 3) {
+  const ctx = bus.ctx; if (!ctx) return null;
+  if (bus._amb) return bus._amb;
+  try {
+    const buf = await ctx.decodeAudioData(await (await fetch(url)).arrayBuffer());
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, ctx.currentTime); g.gain.exponentialRampToValueAtTime(1, ctx.currentTime + fadeS);
+    src.connect(g).connect(bus.ambience); src.start();
+    bus._amb = { src, g };
+    return bus._amb;
+  } catch { return null; }
+}
+export function stopAmbience(bus, fadeS = 1) {
+  const a = bus._amb; if (!a) return; bus._amb = null;
+  const ctx = bus.ctx; a.g.gain.setTargetAtTime(0.0001, ctx.currentTime, fadeS / 3); a.src.stop(ctx.currentTime + fadeS + 0.1);
+}
