@@ -23,12 +23,18 @@ function panel(g, x, y, w, h) {
   roundRect(g, x, y, w, h, 28); g.fillStyle = C.panel; g.fill();
   g.lineWidth = 2; g.strokeStyle = C.edge; g.stroke();
 }
+// Fit text by shrinking the font, never by squeezing it (fillText maxWidth squashes glyphs).
+function fitFont(g, txt, maxW, weight, size, family = FONT, min = 14) {
+  let s = size; g.font = `${weight} ${s}px ${family}`;
+  while (s > min && g.measureText(txt).width > maxW) { s -= 1; g.font = `${weight} ${s}px ${family}`; }
+  return s;
+}
 function field(g, { x, y, w, h, label, sub, value, unit, big, accent }) {
   panel(g, x, y, w, h);
   g.textBaseline = "alphabetic"; g.textAlign = "left";
-  g.fillStyle = C.label; g.font = `600 30px ${FONT}`; g.fillText(label, x + 26, y + 48);
+  g.fillStyle = C.label; fitFont(g, label, w - 52, 600, 30); g.fillText(label, x + 26, y + 48);
   let vy = y + 48;
-  if (sub) { g.fillStyle = C.muted; g.font = `22px ${FONT}`; g.fillText(sub, x + 26, y + 80); vy = y + 80; }
+  if (sub) { g.fillStyle = C.muted; fitFont(g, sub, w - 52, 400, 22); g.fillText(sub, x + 26, y + 80); vy = y + 80; }
   const vs = big ? 140 : 72;
   g.fillStyle = C.value; g.font = `700 ${vs}px ${MONO}`;
   if (accent) { g.fillStyle = accent; g.fillRect(x, y + 22, 6, h - 44); g.fillStyle = C.value; }
@@ -63,7 +69,7 @@ export function drawVisor(g, f) {
     accent: f.marginT == null ? null : rampColor(f.marginT) });
   field(g, { x: 28, y: 330, w: 520, h: 170, label: "Time out", value: f.timeOut, unit: "min" });
   field(g, { x: 1102, y: 28, w: 470, h: 170, label: "Slope here", value: f.slope, unit: "°" });
-  field(g, { x: 1102, y: 222, w: 470, h: 200, label: "AI hazard here", sub: "AI hazard estimate (validated on held-out terrain)", value: f.hazard, unit: "of 1" });
+  field(g, { x: 1102, y: 222, w: 470, h: 200, label: "AI hazard here", sub: "validated on held-out terrain", value: f.hazard, unit: "of 1" });
   hazardScale(g, 1102 + 270, 222 + 128, 175, 14, parseFloat(f.hazard));
   // next stop (id big, name smaller)
   panel(g, 28, 900 - 66 - 200, 800, 200);
@@ -87,7 +93,7 @@ export function drawVisor(g, f) {
     const [t1, t2] = f.home, x = 905, w = 376, y = f.badge ? 86 : 28;
     roundRect(g, x - w / 2, y, w, 112, 16); g.fillStyle = C.panel; g.fill();
     g.lineWidth = 3; g.strokeStyle = "#7cc4ff"; g.stroke();
-    g.textAlign = "center"; g.fillStyle = "#7cc4ff"; g.font = `700 30px ${FONT}`; g.fillText(t1, x, y + 44);
+    g.textAlign = "center"; g.fillStyle = "#7cc4ff"; fitFont(g, t1, w - 24, 700, 30); g.fillText(t1, x, y + 44);
     g.fillStyle = C.value; g.font = `600 24px ${FONT}`;
     let t = t2; while (t.length > 4 && g.measureText(t).width > w - 24) t = t.slice(0, -2) + "…";
     g.fillText(t, x, y + 86);
@@ -95,9 +101,9 @@ export function drawVisor(g, f) {
   }
   // run 2: caption of the last voice callout (so the callouts can also be read), clear centre below the reticle
   if (f.caption) {
-    g.font = `700 28px ${FONT}`; const cw = Math.min(380, g.measureText(f.caption).width + 40), x = 905;
+    fitFont(g, f.caption, 600, 700, 28); const cw = Math.min(640, g.measureText(f.caption).width + 48), x = 905;
     roundRect(g, x - cw / 2, 520, cw, 52, 26); g.fillStyle = C.panel; g.fill(); g.lineWidth = 2; g.strokeStyle = C.badge; g.stroke();
-    g.fillStyle = C.value; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(f.caption, x, 547, 340);
+    g.fillStyle = C.value; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(f.caption, x, 547);
     g.textBaseline = "alphabetic"; g.textAlign = "left";
   }
   g.strokeStyle = "rgba(255,255,255,0.45)"; g.lineWidth = 2; g.beginPath(); g.arc(800, 450, 12, 0, Math.PI * 2); g.stroke();

@@ -906,8 +906,9 @@ function labelSprite(title, note) {
   const g = c.getContext("2d");
   g.fillStyle = "rgba(12,17,26,0.82)"; g.beginPath(); g.roundRect(4, 4, 1016, 152, 24); g.fill();
   g.strokeStyle = "#e6e8eb"; g.lineWidth = 3; g.stroke();
-  g.fillStyle = "#eef2f6"; g.font = "700 46px system-ui, sans-serif"; g.fillText(title, 32, 66, 960);
-  g.fillStyle = "#9aa8b6"; g.font = "30px system-ui, sans-serif"; g.fillText(note, 32, 120, 960);
+  const fit = (txt, weight, size) => { let z = size; g.font = `${weight} ${z}px ${UI.font}`; while (z > 18 && g.measureText(txt).width > 960) { z -= 1; g.font = `${weight} ${z}px ${UI.font}`; } };
+  g.fillStyle = "#eef2f6"; fit(title, 700, 46); g.fillText(title, 32, 66);   // shrink to fit, never squeeze
+  g.fillStyle = "#9aa8b6"; fit(note, 400, 30); g.fillText(note, 32, 120);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, depthWrite: false, fog: false }));
   sp.renderOrder = 5; sp.userData.aspect = 1024 / 160;
