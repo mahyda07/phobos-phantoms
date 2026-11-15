@@ -8,6 +8,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { XRHandModelFactory } from "three/addons/webxr/XRHandModelFactory.js";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { makeFrame } from "./frame.js";
 import { heightSampler, marginColour, holoScale } from "./terrain.js";
 import { stopVertexIndices, walkState, ltstAt, sunAt, visorFields } from "./walk.js";
@@ -16,6 +17,7 @@ import { planHome, homeSummary, reversedWalkedPath } from "./home.js";
 import { initKeys } from "./keys.js";
 import { createAudio, calloutsFor, VOICE_LINES } from "./audio.js";
 import { shouldBuzz, pulseAll, hapticsEnabled, setHapticsEnabled } from "./haptics.js";
+import { roverTrack, roverAt, ghostLabel, GHOST_SPEED_MPS, GHOST_WALK_MPS } from "./ghost.js";
 
 const DATA = "./data/";
 const HOLO_SIZE = 0.6;            // metres across on the desk (PLAN: 1:2500 for 1.5 km)
@@ -114,6 +116,7 @@ async function init() {
   holo.add(base);
 
   await addRoute();
+  await buildGhost();
   winData = await loadJSON(DATA + "window.json");
   applyScale(1);
   setStatus(info());
@@ -267,6 +270,7 @@ async function enterXR(mode) {
     ? { requiredFeatures: ["hit-test"], optionalFeatures: ["local-floor", "hand-tracking"] }
     : { optionalFeatures: ["local-floor", "hand-tracking"] };
   const session = await navigator.xr.requestSession(mode, opts);
+  window.__xrSession = session;                     // for qa/scripts/quest.py --xr-fps (read-only use)
   await renderer.xr.setSession(session);
   scene.background = mode === "immersive-ar" ? null : desktopBg;
   placed = false; anchor.visible = false; sessionStart = performance.now();
@@ -693,6 +697,7 @@ renderer.setAnimationLoop((time, frame) => {
   } else orbit.update();
   if (walking) updateWalk(now);
   updateHomeDraw(now);
+  updateGhost(now);
   panel.visible = renderer.xr.isPresenting && !walking;   // in-world panel is for the headset; the page has its own toolbar
   renderer.render(scene, camera);
 });
@@ -719,7 +724,80 @@ function zoomView(f) {
   camera.position.sub(orbit.target).multiplyScalar(f).add(orbit.target); orbit.update();
 }
 function togglePause() { if (!walking) return; playing = !playing; bPlay.userData.setText(playing ? "Pause" : "Play"); }
-function toggleGhost() { emit("ghost", {}); }          // replaced in Phase 2d
+// ---------- run 2: ghost rover (Phase 2d; track helpers in ghost.js) ----------
+const GHOST_COLOUR = 0xe6e8eb;                       // docs/DESIGN_DIRECTION.md: ghost rover, 50 % opacity
+const ghost = { root: new THREE.Group(), trailDesk: null, trailWalk: null, marker: null, label: null, track: null, s: 0, text: null, last: 0 };
+ghost.root.visible = false;
+holo.add(ghost.root);
+function mergedTrail(feats, lift, radius) {
+  const geos = [];
+  for (const f of feats) {
+    const c = thin(f.geometry.coordinates, 4);
+    if (c.length < 2) continue;
+    const curve = new THREE.CurvePath();
+    const pts = c.map(([x, y]) => toHolo(x, y, lift));
+    for (let i = 1; i < pts.length; i++) curve.add(new THREE.LineCurve3(pts[i - 1], pts[i]));
+    geos.push(new THREE.TubeGeometry(curve, pts.length - 1, radius, 4, false));
+  }
+  if (!geos.length) return null;
+  const m = new THREE.Mesh(mergeGeometries(geos), new THREE.MeshBasicMaterial({ color: GHOST_COLOUR, transparent: true, opacity: 0.3, depthWrite: false, fog: false }));
+  geos.forEach((g) => g.dispose());
+  return m;
+}
+function roverModel() {                              // simple low-poly shape (no copyrighted model): body, 6 wheels, mast
+  const mat = new THREE.MeshBasicMaterial({ color: GHOST_COLOUR, transparent: true, opacity: 0.5, depthWrite: false, fog: false });
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.9, 3.0), mat); body.position.y = 1.1; g.add(body);
+  const wheel = new THREE.CylinderGeometry(0.26, 0.26, 0.4, 10).rotateZ(Math.PI / 2);
+  for (const x of [-1.35, 1.35]) for (const z of [-1.1, 0, 1.1]) { const w = new THREE.Mesh(wheel, mat); w.position.set(x, 0.26, z); g.add(w); }
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.2, 6), mat); mast.position.set(0.9, 2.15, -1.1); g.add(mast);
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.3, 0.3), mat); head.position.set(0.9, 2.85, -1.1); g.add(head);
+  return g;
+}
+function labelSprite(title, note) {
+  const c = document.createElement("canvas"); c.width = 1024; c.height = 160;
+  const g = c.getContext("2d");
+  g.fillStyle = "rgba(12,17,26,0.82)"; g.beginPath(); g.roundRect(4, 4, 1016, 152, 24); g.fill();
+  g.strokeStyle = "#e6e8eb"; g.lineWidth = 3; g.stroke();
+  g.fillStyle = "#eef2f6"; g.font = "700 46px system-ui, sans-serif"; g.fillText(title, 32, 66, 960);
+  g.fillStyle = "#9aa8b6"; g.font = "30px system-ui, sans-serif"; g.fillText(note, 32, 120, 960);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, depthWrite: false, fog: false }));
+  sp.renderOrder = 5; sp.userData.aspect = 1024 / 160;
+  return sp;
+}
+async function buildGhost() {
+  const rover = await loadJSON(DATA + "rover_path.json");
+  if (!rover?.features?.length) return;
+  ghost.track = roverTrack(rover);
+  ghost.text = ghostLabel(rover);
+  ghost.trailDesk = mergedTrail(rover.features, 3, 2.0);
+  ghost.trailWalk = mergedTrail(rover.features, 0.3, 0.15);
+  if (ghost.trailDesk) ghost.root.add(ghost.trailDesk);
+  if (ghost.trailWalk) { ghost.trailWalk.visible = false; ghost.root.add(ghost.trailWalk); }
+  ghost.marker = roverModel(); ghost.root.add(ghost.marker);
+  ghost.label = labelSprite(ghost.text.title, ghost.text.note); ghost.root.add(ghost.label);
+}
+function updateGhost(now) {
+  if (!ghost.root.visible || !ghost.track) { ghost.last = now; return; }
+  const dt = Math.min(0.1, (now - (ghost.last || now)) / 1000); ghost.last = now;
+  ghost.s += dt * (walking ? GHOST_WALK_MPS : GHOST_SPEED_MPS);
+  const p = roverAt(ghost.track, ghost.s);
+  const at = toHolo(p.x, p.y, 0);
+  ghost.marker.position.copy(at); ghost.marker.rotation.y = -p.heading;
+  const k = walking ? 1 : 25;                          // real size on foot; enlarged on the desk so it can be seen
+  ghost.marker.scale.setScalar(k);
+  const w = walking ? 6 : 420;
+  ghost.label.scale.set(w, w / ghost.label.userData.aspect, 1);
+  ghost.label.position.set(at.x, at.y + (walking ? 5 : 170), at.z);
+  if (ghost.trailDesk) ghost.trailDesk.visible = !walking;
+  if (ghost.trailWalk) ghost.trailWalk.visible = walking;
+}
+function toggleGhost() {
+  if (!ghost.track) { emit("ghost", { on: false, missing: true }); return; }
+  ghost.root.visible = !ghost.root.visible;
+  emit("ghost", { on: ghost.root.visible, title: ghost.text.title, note: ghost.text.note });
+}
 function toggleMute() { audio.toggleMute(); }
 function repeatCallout() { audio.repeat(); }
 initKeys({

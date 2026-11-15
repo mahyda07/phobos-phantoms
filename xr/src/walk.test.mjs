@@ -157,3 +157,27 @@ test("pulseAll: feature-detects pulse() and vibrationActuator, skips the rest", 
   assert.equal(pulseAll(session), 2);
   assert.deepEqual(calls, [["pulse", 0.4, 60], ["dual-rumble", 60]]);
 });
+
+// ---------- run 2: ghost rover (src/ghost.js) ----------
+import { roverTrack, roverAt, ghostLabel } from "./ghost.js";
+const rover = { features: [
+  { properties: { sol: 410, length_m: 10 }, geometry: { coordinates: [[100, 0], [110, 0]] } },
+  { properties: { sol: 405, length_m: 20 }, geometry: { coordinates: [[0, 0], [10, 0], [10, 10]] } },
+] };
+test("roverTrack sorts by sol and accumulates distance (a gap between sols is a jump, not distance)", () => {
+  const t = roverTrack(rover);
+  assert.deepEqual(t.pts.map((p) => p.sol), [405, 405, 405, 410, 410]);
+  assert.equal(t.pts[3].jump, true);
+  assert.equal(t.length, 30);
+});
+test("roverAt interpolates, wraps, keeps the sol of the segment", () => {
+  const t = roverTrack(rover);
+  assert.deepEqual(roverAt(t, 5), { x: 5, y: 0, heading: Math.PI / 2, sol: 405 });
+  assert.equal(roverAt(t, 15).y, 5);
+  assert.equal(roverAt(t, t.length + 5).x, 5);       // wraps
+});
+test("ghostLabel takes sols from the file, says the speed is a display speed", () => {
+  assert.equal(ghostLabel(rover).title, "Perseverance's real path (sols 405–410)");
+  assert.match(ghostLabel(rover).note, /fixed display speed/);
+  assert.equal(ghostLabel({ features: [] }).title, "Perseverance's real path");
+});
