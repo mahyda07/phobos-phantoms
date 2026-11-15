@@ -2,6 +2,7 @@
 """Planner web service (PLAN.md D17, D21). Track [P5].
 
 Endpoints
+  GET  /            -> short JSON pointing to /docs and the endpoints
   GET  /health      -> {"status": "ok", "planner": ..., "model_version": ..., "hazard": <hazard layer in use>}
   GET  /layers      -> terrain/out/layers.manifest.json (every layer with source + licence)
   GET  /stops       -> the science stops on the grid (terrain/out/stops.csv as JSON)
@@ -54,6 +55,13 @@ def warm_up():
             planner.plan(start, start, list(planner.stops))
     except Exception as e:  # warm-up must never stop the service
         print("warm-up skipped:", e)
+
+
+@app.get("/")
+def root():
+    """Landing reply for people who open the bare service URL (README "Try it")."""
+    return {"service": "Phobos Phantoms Marswalk planner", "docs": "/docs",
+            "endpoints": ["/health", "/layers", "/stops", "/route/demo", "/window", "/results", "POST /plan"]}
 
 
 @app.get("/health")

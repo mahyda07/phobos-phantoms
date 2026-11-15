@@ -29,3 +29,9 @@ def test_fallback_route_is_the_ai_demo_route():
     assert fb["model_version"] == "ai-hazard-v1"
     for k in ("length_m", "margin_min", "slope_max_deg", "hazard_mean"):
         assert fb[k] == ai[k], k
+
+
+def test_root_points_to_docs():
+    code = "import json; from pipeline.api import root; print(json.dumps(root()))"
+    out = subprocess.run([sys.executable, "-c", code], cwd=ROOT, capture_output=True, text=True, check=True)
+    assert json.loads(out.stdout.strip().splitlines()[-1])["docs"] == "/docs"

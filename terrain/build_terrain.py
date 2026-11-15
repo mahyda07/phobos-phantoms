@@ -222,7 +222,7 @@ def main():
         photo_info = f"{shape[1]} x {shape[0]} px at {res} m -> photo.png {n} x {n}; full-res copy in {big / 'photo_25cm.tif'}"
 
     log("5/5 layers.manifest.json")
-    lic = "USGS data release (U.S. Government work, public domain) — confirm on the DOI page"
+    lic = "CC0 1.0 Universal (USGS data release Rights field, checked 14 Nov 2026; see SOURCES.md)"
     layers = [
         {"id": "dem", "name": "Elevation", "file": "dem.bin", "kind": "raster", "units": "m", "cell_m": CELL,
          "source": "USGS Mars 2020 TRN HiRISE DTM mosaic, 1 m, averaged to 2 m", "licence": lic, "citation": DTM_DOI},
