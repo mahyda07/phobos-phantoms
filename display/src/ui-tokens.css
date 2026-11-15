@@ -1,0 +1,52 @@
+/* Written with AI assistance (Claude). Run 2 Phase 6: design tokens + type from docs/DESIGN_DIRECTION.md, shared with the
+   headset page. Fonts are self-hosted (SIL OFL 1.1, licence files next to them in /fonts) so the map works offline. */
+@font-face { font-family: "Host Grotesk"; src: url("/fonts/host-grotesk-latin.woff2") format("woff2"); font-weight: 400 700; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url("/fonts/jetbrains-mono-latin.woff2") format("woff2"); font-weight: 400 700; font-display: swap; }
+:root {
+  --bg-0: #06090f; --panel-solid: #0c111a; --text-0: #eef2f6; --muted-0: #9aa8b6;
+  --mars: #ff7a3d; --mars-2: #ffb26b; --on-mars: #06090f; --ok: #5ee2a0; --warn: #f0aa28; --danger: #ff6b5e;
+  --font-ui: "Host Grotesk", system-ui, "Segoe UI", sans-serif; --font-num: "JetBrains Mono", ui-monospace, monospace;
+  --r-chip: 999px; --r-control: 8px; --r-card: 12px; --r-panel: 16px;
+  --ease-out: cubic-bezier(.2,.8,.2,1);
+}
+html, body, button, input, select, textarea { font-family: var(--font-ui); }
+/* sentence case, no tracked ALL-CAPS labels (DESIGN_DIRECTION "Type") */
+#panel h2 { text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 600; color: var(--mars-2); }
+#mw-welcome .mw-eyebrow { text-transform: none; letter-spacing: 0; font-size: 13px; }
+/* live numbers in mono, tabular */
+.stat .value, #hud .v, .feed-val, #v3d-exag-label { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.stat .value small, #hud .v small { font-family: var(--font-ui); }
+/* one focus style everywhere */
+:where(button, a, input, select, summary, [tabindex]):focus-visible { outline: 2px solid var(--mars); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+}
+
+/* taste-skill browser check fixes (qa/run2/taste/consistency-map.txt) */
+#map .planner-toggle, .planner-control button.planner-toggle, .mw-pill.hot {
+  background: var(--mars) !important; color: var(--on-mars) !important; border: 0 !important; }        /* 7.69:1, no gradient */
+#map .planner-toggle:hover, .mw-pill.hot:hover { background: var(--mars-2) !important; }
+.mm-ring-label { background: rgba(6,9,15,.82); color: var(--text-0); padding: 1px 6px; border-radius: 999px; text-shadow: none; }
+.field-label, .mm-speed-label { display: block; font-size: 12px; color: var(--muted-0); margin: 2px 0 4px; }
+.mm-speed-label { display: inline-block; margin: 0 4px 0 6px; }
+#panel:focus-visible { outline: 2px solid var(--mars); outline-offset: -2px; }
+@media (max-width: 640px) {
+  /* one compact header row on phones: 2D | 3D | Sound + headset link; targets >= 36 px with 6 px gaps (WCAG 2.2 target size) */
+  #header { gap: 6px; padding: 4px 6px 4px 10px; }
+  #header .mw-brand em, .view-toggle .keys-chip { display: none; }
+  .view-toggle { margin-top: 0; gap: 2px; }
+  .view-toggle button { min-height: 36px; padding: 0 8px; white-space: nowrap; }
+  #header .mw-links { gap: 6px; }
+  #header .mw-links a, #header .mw-links button { min-height: 36px; display: inline-flex; align-items: center; white-space: nowrap; }
+  .leaflet-control-attribution { white-space: normal; max-width: calc(100vw - 24px); }
+}
+@media (max-width: 480px) {
+  #header { right: 62px; flex-wrap: wrap; row-gap: 4px; }               /* never under the layers button */
+  body #map .leaflet-top.leaflet-left { top: 104px; }                     /* below the two-row header (beats responsive.css) */
+  #header .mw-links .mw-pill.hot { font-size: 12px; padding: 0 10px; }
+}
+#panel:focus { outline: 2px solid var(--mars); outline-offset: -2px; }   /* the skip link focuses the panel: show where focus went */
+@media (max-width: 640px) { #map .leaflet-control-attribution { white-space: normal !important; max-width: calc(100vw - 24px) !important; } }
+/* panel section folds were 20 px tall: comfortable targets (32 px, 44 px on touch screens) */
+#panel h2 > button.a11y-fold { min-height: 32px; display: inline-flex; align-items: center; width: 100%; }
+@media (pointer: coarse) { #panel h2 > button.a11y-fold { min-height: 44px; } }
