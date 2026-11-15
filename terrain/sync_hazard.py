@@ -22,12 +22,10 @@ def hazard_entry(meta, grid):
     return {
         "id": "hazard", "name": "AI hazard estimate (model, not validated)", "file": meta["file"], "kind": "raster",
         "units": "0-1 relative", "cell_m": grid["cell_m"],
-        "source": (f"{meta['model']}; {meta['version']}; held-out test mIoU {m['miou']:.3f} "
-                   f"(baselines {m['baseline_majority_miou']:.3f} / {m['baseline_photo_stats_miou']:.3f}); "
-                   "see model/MODEL_CARD.md"),
+        "source": f"HazardNet ({meta['version']}), team model on the USGS HiRISE 25 cm photo; held-out test mIoU {m['miou']:.3f} (model/MODEL_CARD.md)",
         "licence": "Derived from USGS HiRISE orthomosaic + DTM (U.S. Government work, public domain); model by the team",
         "citation": "model/MODEL_CARD.md",
-        "colormap": "0-1 green-amber-red",
+        "colormap": "0-1 clear-yellow-red (model/hazard/infer.py)",
     }
 
 

@@ -91,10 +91,10 @@
       "kind": "raster",
       "units": "0-1 relative",
       "cell_m": 2,
-      "source": "hazardnet-v1 (U-Net style, trained from scratch on HiRISE 25 cm photo; labels from the USGS 1 m DTM); ai-hazard-v1; held-out test mIoU 0.465 (baselines 0.287 / 0.291); see model/MODEL_CARD.md",
+      "source": "HazardNet (ai-hazard-v1), team model on the USGS HiRISE 25 cm photo; held-out test mIoU 0.465 (model/MODEL_CARD.md)",
       "licence": "Derived from USGS HiRISE orthomosaic + DTM (U.S. Government work, public domain); model by the team",
       "citation": "model/MODEL_CARD.md",
-      "colormap": "0-1 green-amber-red"
+      "colormap": "0-1 clear-yellow-red (model/hazard/infer.py)"
     }
   ]
 }
