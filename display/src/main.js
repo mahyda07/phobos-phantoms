@@ -35,6 +35,8 @@ import { initShare, readInitialState } from "./share.js";
 import "./share.css";
 import { initLocator, MARS_GLOBAL } from "./locator.js";
 import "./locator.css";
+import { initLiveFeeds, MEDA_URL } from "./live-feeds.js";
+import "./live-feeds.css";
 import { initA11y } from "./a11y.js";
 import "./a11y.css"; // after theme.css: focus rings, contrast fixes
 import "./responsive.css"; // keep last: phone/tablet overrides
@@ -195,8 +197,11 @@ async function main() {
   let routeLL = [];   // current route in Leaflet coordinates (for the moving-map control)
   let mm = null;      // moving-map control: play along the route, follow, distance rings
   let profile = null; // elevation profile chart in the side panel
+  let posIndex = 0; // the position (arrow). Hover only previews; click / slider / Play / keys move the position.
   const showPoint = (i) => {
     if (!view) return;
+    posIndex = i;
+    view.clearGhost();
     slider.value = i;
     slider.setAttribute("aria-valuetext", `Point ${i + 1} of ${Number(slider.max) + 1}`);
     view.setPoint(i);
@@ -206,6 +211,19 @@ async function main() {
     renderReadout(current, i, next);
     renderHud(current, i, next);
   };
+  const nextStopAt = (i) => view?.stops.find((s) => s.vertex >= i) || null;
+  const previewPoint = (i) => {
+    if (!view) return;
+    view.setGhost(i);
+    renderReadout(current, i, nextStopAt(i), { preview: true, pos: posIndex });
+    renderHud(current, i, nextStopAt(i), { preview: true });
+  };
+  const endPreview = () => {
+    if (!view) return;
+    view.clearGhost();
+    renderReadout(current, posIndex, nextStopAt(posIndex));
+    renderHud(current, posIndex, nextStopAt(posIndex));
+  };
   slider.addEventListener("input", () => showPoint(Number(slider.value)));
   const showStops = (stops, onSelect) => renderStopCards(stopsEl, stops, photos, { onSelect });
 
@@ -213,7 +231,7 @@ async function main() {
     if (view) { layersControl.removeLayer(view.layer); view.layer.remove(); view = null; }
     current = route;
     const onStop = (id) => { highlightStopCard(stopsEl, id); view?.focusStop(id); };
-    view = drawRoute(map, f, route, { onPoint: showPoint, onStop });
+    view = drawRoute(map, f, route, { onPoint: showPoint, onPreview: previewPoint, onPreviewEnd: endPreview, onStop });
     routeLL = route.geometry.coordinates.map(([x, y]) => f.localToLeaflet(x, y));
     mm?.setPointCount(routeLL.length);
     layersControl.addOverlay(view.layer, "Planned route");
@@ -224,7 +242,7 @@ async function main() {
     renderRouteSummary(route, kind, view.maxMargin);
     showStops(view.stops.length ? view.stops : csvStops, onStop);
     const profileEl = document.getElementById("profile");
-    profile = renderProfile(profileEl, route, { stops: view.stops, onPoint: showPoint });
+    profile = renderProfile(profileEl, route, { stops: view.stops, onPoint: showPoint, onPreview: previewPoint, onPreviewEnd: endPreview });
     profileEl.hidden = false;
     showPoint(0);
     setupProof(route, view.layer);
@@ -309,7 +327,9 @@ async function main() {
   renderSources(document.getElementById("sources"), isSample ? null : manifest, {
     extra: isSample ? [] : [{ name: "Perseverance raw images (stop photos)", source: "NASA/JPL-Caltech",
       licence: "NASA media guidelines", citation: "https://mars.nasa.gov/mars2020/multimedia/raw-images/" },
-    { name: "Where on Mars? inset (global map)", source: MARS_GLOBAL.credit, licence: MARS_GLOBAL.licence, citation: MARS_GLOBAL.source }],
+    { name: "Where on Mars? inset (global map)", source: MARS_GLOBAL.credit, licence: MARS_GLOBAL.licence, citation: MARS_GLOBAL.source },
+    { name: "Live card: Perseverance MEDA weather feed", source: "NASA/JPL-Caltech public weather feed (last updated sol 1133, 2024-04-27)", licence: "NASA data, public", citation: MEDA_URL },
+    { name: "Live card: space-weather notifications", source: "NASA CCMC DONKI via api.nasa.gov (public DEMO_KEY)", licence: "NASA data, public", citation: "https://api.nasa.gov/" }],
   });
 
   const win = await getJson("window.json");
@@ -330,6 +350,7 @@ async function main() {
     slopeLimit, manifest: isSample ? null : manifest, isSample,
   }));
   addScaleBar(map, f.cell);
+  initLiveFeeds(document.getElementById("live")); // online-only context cards; not awaited, never blocks the map
   initLocator(map, { L, grid: gridRaw, isSample }); // after the scale bar so it stacks above it
 
   // Re-fit once layout has settled (first-load mis-zoom fix).
