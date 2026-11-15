@@ -3,25 +3,50 @@
 **Challenge:** Interplanetary Survival Guide: Martian Map — NASA Space Apps Challenge 2026
 
 ## One-line summary
-An integrated Martian route-planning concept that combines terrain and mission data into a cell-level traversability estimate and a science-aware path for a crew-facing map.
+Real NASA terrain of Jezero Crater becomes a safety map: an AI hazard estimate and a least-cost planner give a walking route through five science stops with the time left to walk back at every step, checked against Perseverance's real path and shown on a web map and as a mixed-reality hologram you can step into.
+
+## Try it (no login)
+- Headset app (Meta Quest 3 browser, also runs on a PC): https://phantom-phobos.vercel.app
+- Web map: https://phobos-display.vercel.app
+- Planner web service: https://phobos-planner.onrender.com (interactive docs at `/docs`; free hosting, the first request after a quiet spell is slow)
+- Code: https://github.com/mahyda07/phobos-phantoms
 
 ## The problem
-Future Mars explorers will need detailed, local information about the ground they cross—not just a planetary map. Elevation, slope, imagery, geology, environmental observations, and science targets can live in separate datasets. This makes it harder to compare route options and understand the trade-offs between a practical path and a scientifically valuable destination.
+Future Mars explorers will need detailed, local information about the ground they cross, not just a planetary map. Elevation, slope, imagery, mineral signals and weather live in separate datasets, which makes it hard to see the trade-off between a safe path and a scientifically valuable one, and how much time is left to get back.
 
 ## Our solution
-Marswalk’s Safe-Path Engine is built around one idea: transform relevant map layers into a shared view of traversability. The system aligns available terrain and mission data, assigns each map cell a model-defined traversal cost or class, and uses those costs to plan a route toward selected science stops. The crew-facing interface is designed to show the proposed route alongside hazards and the evidence used to inform it.
+1. **Terrain:** USGS Mars 2020 HiRISE elevation (1 m) and photo (25 cm) of a 1.5 × 1.5 km area of Jezero's western delta (18.45–18.47° N, 77.40–77.42° E), turned into a 2 m grid (750 × 750 cells) of elevation, slope and roughness.
+2. **Science:** carbonate, clay and olivine signals from CRISM (MRO, product FRT000047A3) pick five science stops. These are relative signals from browse products, not mineral amounts.
+3. **AI hazard estimate (model, not validated):** HazardNet, a U-Net trained from scratch on the HiRISE photo with go / careful / avoid labels computed from the elevation model, scores every 2 m cell. The walking area was held out of training. On held-out test areas it reaches a mean IoU of 0.465, against 0.287 and 0.291 for two simple baselines.
+4. **Planner:** least-cost route through the stops. Ground steeper than 25° is blocked; the AI hazard only adds cost (weight 4.0) and never blocks a cell; walking time comes from Tobler's hiking function × 0.6 for a suit in Mars gravity. Every point on the route carries time out, time back and the walk-back margin within a 240-minute EVA. All of these limits are labelled assumptions.
+5. **Time window:** sun height per hour (NASA GISS Mars24) and dust and temperature from Perseverance's MEDA instrument give the EVA hours: **11:00–15:00 local solar time** on a typical sol (not a forecast).
+6. **Show it:** the web map colours the route by walk-back margin and shows the hazard layer, stops, time window and proof. The headset app puts the area on your desk as a hologram; **Step in** walks the route at full size with a visor showing margin, slope, AI hazard, sun height and the next stop.
 
-## Why Jezero Crater?
-Jezero Crater provides a compelling study area because it has been explored by NASA’s Perseverance rover and has terrain products and rover context that can support a grounded demonstration. The final submission should identify the exact map products, spatial coverage, coordinate system, resolution, and licences actually used by the team.
+## Demo walk (from the repository files)
+- 4383.4 m through 5 stops, back to the start
+- Smallest walk-back margin: 136.1 min of a 240 min EVA
+- Steepest ground on the route: 22.3° (limit 25°)
+- Mean AI hazard under the route: 0.034 (0 to 1)
 
-## What makes it useful?
-Instead of asking a crew member to mentally combine separate layers, Marswalk aims to make the route decision inspectable in one place: what path is proposed, which cells contribute higher traversal cost, which science stops are included, and what data supports the recommendation. Missing data and uncertainty should remain visible.
+## Checked against Perseverance
+Perseverance's real track in the walking area (6.69 km, sols 405–717) was cut into 13 stretches. For each stretch our planner planned between the rover's real start and end:
+- Median distance from the rover's track: **16.0 m** for our planner, 20.0 m for a straight line
+- Ground with AI hazard over 0.5: **0.6%** for our planner, 2.7% for a straight line, 0.9% for the rover
+- Ground steeper than 15°: 1.0% for our planner, 4.0% for a straight line, 1.4% for the rover
+
+A rover is not an astronaut, and the rover drivers did not use our hazard layer, so this checks our terrain and hazard model; it is not proof of astronaut safety.
 
 ## Current status and limitations
-Describe only what is implemented in the final repository. Label prototype behavior and SAMPLE outputs clearly. Do not claim calibrated safety probabilities, validated astronaut walking limits, forecast accuracy, or mission readiness unless those claims have been tested and documented. Marswalk is a planning-aid concept, not a certified safety system.
+- Built during the hackathon, 14–15 Nov 2026. Everything above is implemented and live.
+- Slope limit, walking speed, EVA length, hazard weight and cost weights are assumptions, not suit or mission limits.
+- The AI hazard layer is a model estimate, not validated against astronaut walking; its "careful" and "avoid" classes are much harder for it than "go" (per-class IoU in `model/MODEL_CARD.md`).
+- The time window is for a typical sol, not a forecast.
+- Marswalk is a planning aid concept, not a certified safety system.
 
 ## Future work
-Potential next steps include broader validation against comparable rover traverses, improved uncertainty estimates, more complete environmental data integration, and user testing with mission-planning scenarios.
+Validation of the hazard estimate against more rover traverses and field analogues, calibrated uncertainty, real suit and EVA limits from mission planners, live weather instead of a typical sol, and user testing with mission-planning scenarios.
 
 ## Credits and data
-List each dataset, software library, model, and image in `SOURCES.md` with its source and licence. Disclose AI-assisted work in `AI_USAGE.md` as required by the team README.
+Every dataset, library, model and image is listed in `SOURCES.md` with its source and licence (USGS HiRISE products CC0 1.0; NASA/JPL-Caltech rover path; CRISM via NASA PDS; MEDA via NASA PDS). AI-assisted work is listed in `AI_USAGE.md`.
+
+Numbers on this page come from `model/out/route.json`, `model/out/window.json`, `model/out/hazard.meta.json`, `model/out/results.md`, `pipeline/planner_basic.py`, `model/planner.py` and `terrain/out/grid.json`.

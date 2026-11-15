@@ -1,0 +1,29 @@
+1
+00:00:00,000 --> 00:00:04,000
+Marswalk: a safety map for a walk
+on Jezero Crater, Mars.
+
+2
+00:00:04,000 --> 00:00:09,000
+Real NASA terrain, 1.5 by 1.5 km,
+on a 2-metre grid.
+
+3
+00:00:09,000 --> 00:00:14,500
+An AI hazard estimate and a planner
+find a 4.4 km route through five science stops.
+
+4
+00:00:14,500 --> 00:00:19,500
+At every step: time left to walk back.
+The smallest margin is 136 minutes.
+
+5
+00:00:19,500 --> 00:00:24,500
+Checked against Perseverance's real path:
+our route stays closer than a straight line.
+
+6
+00:00:24,500 --> 00:00:30,000
+Put it on your desk in a Quest 3,
+then step in and walk it.
