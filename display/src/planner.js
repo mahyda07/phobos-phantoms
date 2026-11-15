@@ -78,14 +78,14 @@ export const STATUS = {
   done: "New route from planner",
   outside: "Click inside the map area",
   fallback: (reason) => (reason === "timeout" || reason === "network"
-    ? "The planner is waking up (free server, can take up to a minute). Showing the saved demo route; try again shortly."
+    ? "The planner is waking up (free server, can take a little while). Showing the saved demo route; try again shortly."
     : `Planner unavailable (${reason}) — showing the saved demo route`),
 };
 
 /** Fire-and-forget GET /health on page load so the free server is awake by the time someone plans. Never throws. */
 export function wakePlanner({ url = import.meta.env?.VITE_PLANNER_URL, fetchImpl = globalThis.fetch } = {}) {
   if (!url || typeof fetchImpl !== "function") return false;
-  try { fetchImpl(url.replace(/\/+$/, "") + "/health", { method: "GET", mode: "cors" }).catch(() => {}); } catch { return false; }
+  try { fetchImpl(url.replace(/\/+$/, "") + "/health", { method: "GET", mode: "no-cors" }).catch(() => {}); } catch { return false; }
   return true;
 }
 
