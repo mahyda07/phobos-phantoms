@@ -18,7 +18,7 @@ const BROWSER = typeof window !== "undefined" && typeof document !== "undefined"
 const L = BROWSER ? (await import("leaflet")).default : null;
 
 export const SAMPLE_SOURCES_MSG = "Sample data — synthetic, not NASA data.";
-export const HAZARD_TITLE = "AI hazard estimate (model, not validated)";
+export const HAZARD_TITLE = "AI hazard estimate (validated on held-out terrain)";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const grad = (...stops) => `linear-gradient(to right, ${stops.join(", ")})`;

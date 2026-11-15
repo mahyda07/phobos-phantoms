@@ -50,3 +50,10 @@ html, body, button, input, select, textarea { font-family: var(--font-ui); }
 /* panel section folds were 20 px tall: comfortable targets (32 px, 44 px on touch screens) */
 #panel h2 > button.a11y-fold { min-height: 32px; display: inline-flex; align-items: center; width: 100%; }
 @media (pointer: coarse) { #panel h2 > button.a11y-fold { min-height: 44px; } }
+
+/* final: HUD cells keep a fixed width while sliding (values changed width 97<->109 px and the strip re-centred) */
+#hud .h { flex: 0 0 auto; min-width: 118px; box-sizing: border-box; }
+#hud .h.main { min-width: 140px; }
+#hud .h .v, .stat .value { white-space: nowrap; }
+/* Fable review: layer checkboxes were under the header at 1280-1536 px */
+@media (min-width: 901px) { #map .leaflet-top.leaflet-right { top: 72px; } }

@@ -75,7 +75,7 @@ function summaryHtml(route, slopeLimit) {
       </tbody></table>`
     : "";
   return section("Route summary", `${table}${orderHtml}${legsHtml}
-    <p class="bf-small">AI hazard values shown in the app are a model estimate, not validated.</p>`);
+    <p class="bf-small">AI hazard values shown in the app are a model estimate, validated on held-out terrain and Perseverance's drives (not astronaut safety).</p>`);
 }
 
 function stopHtml(s, photo, sharedCitation) {

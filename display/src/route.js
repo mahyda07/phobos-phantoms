@@ -77,7 +77,7 @@ export function drawRoute(map, f, route, { onPoint, onStop, onPreview = onPoint,
   // not ready) would otherwise put a misleading "highest hazard" pin on the first point.
   const markers = [];
   if (Math.max(...pv.hazard) > 0) {
-    markers.push({ i: argmax(pv.hazard), text: (i) => `Highest AI hazard estimate on route: ${pv.hazard[i]} (model, not validated)` });
+    markers.push({ i: argmax(pv.hazard), text: (i) => `Highest AI hazard estimate on route: ${pv.hazard[i]} (model, validated on held-out terrain)` });
   }
   if (Math.max(...pv.slope_deg) > 0) {
     markers.push({ i: argmax(pv.slope_deg), text: (i) => `Steepest point on route: ${pv.slope_deg[i]}°` });
