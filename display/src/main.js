@@ -43,6 +43,8 @@ import { initA11y } from "./a11y.js";
 import "./view3d.css";
 import "./a11y.css"; // after theme.css: focus rings, contrast fixes
 import "./ui-tokens.css"; // run 2 Phase 6: tokens, fonts, sentence case, mono numbers
+import "./console.css"; // console skin: left sidebar, monospace mission-console look (after the tokens, before responsive)
+import { initDock } from "./dock.js";
 import "./responsive.css"; // keep last: phone/tablet overrides
 
 const DATA = "data/";
@@ -118,6 +120,7 @@ async function main() {
   const map = L.map("map", { crs: L.CRS.Simple, minZoom: -3, maxZoom: 4, zoomSnap: 0.25, attributionControl: true });
   map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
   if (isSample || !manifest) map.attributionControl.addAttribution("SAMPLE data — synthetic, not NASA data");
+  initDock(map); // console layout: sidebar header height, tool controls docked in the sidebar on desktop
 
   const bounds = f.leafletBounds();
   const fit = () => map.fitBounds(bounds, { paddingTopLeft: [0, 70], paddingBottomRight: [0, 10] }); // keep pins clear of the title box

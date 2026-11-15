@@ -1,0 +1,288 @@
+/* Written with AI assistance (Claude).
+   Console skin: left sidebar + monospace mission-console look for the web map. Loaded after ui-tokens.css and before
+   responsive.css (phone/tablet overrides still win). Track [P3].
+   Parts: 1 tokens · 2 desktop layout (sidebar on the left, wider than 900 px) · 3 sidebar skin · 4 callouts ·
+          5 buttons · 6 docked tool controls (dock.js) · 7 panel content · 8 header · 9 map overlays ·
+          10 welcome, tour, help dialog · 11 phone/tablet values that must survive this file.
+   Contrast on --side-bg #080b10 (WCAG, computed): --text-0 17.5, body #cfd8e3 13.7, --ui-blue-text 11.0,
+   --mars-2 11.1, --muted-0 8.1, --mars 7.6, --ui-blue 5.95 (borders); callout text #c8d6e8 on the callout fill 12.1;
+   pressed button text --mars-2 on its fill 8.6. Locked data colours (margin ramp, AI hazard, rover and return blue)
+   are not touched here. */
+
+/* ---------- 1. tokens ---------- */
+:root {
+  --side-bg: #080b10; --side-bg-2: #0d131c; --side-line: rgba(255,255,255,.10);
+  --ui-blue: #3d8bff; --ui-blue-hi: #6ea8ff; --ui-blue-soft: rgba(61,139,255,.10); --ui-blue-text: #9cc4ff;
+  --ui-btn: #0c1420; --ui-on: rgba(255,122,61,.14); --r-console: 6px;
+  --pin-start: #2e9e4f; --pin-end: #d7302a; /* the planner's A / B pins (planner.css) */
+}
+
+/* ---------- 2. desktop layout: sidebar on the left ---------- */
+@media screen and (min-width: 901px) {
+  :root { --panel-w: 360px; }
+  #map { left: var(--panel-w); right: 0; }
+  #panel { top: var(--hdr-h, 138px); left: 0; right: auto; border-left: 0; border-right: 1px solid var(--side-line); }
+  /* header = top block of the sidebar (dock.js publishes its height as --hdr-h) */
+  #header {
+    top: 0; left: 0; right: auto; width: var(--panel-w); box-sizing: border-box; z-index: 1001;
+    display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 16px 12px;
+    background: var(--side-bg); border: 0; border-right: 1px solid var(--side-line); border-bottom: 1px solid var(--side-line);
+    border-radius: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  #header .mw-brand { font: 700 21px/1.15 var(--font-num); letter-spacing: -.01em; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+  #header .mw-brand .mw-dot { align-self: center; }
+  #header .mw-brand em { font: 400 12px/1.3 var(--font-num); letter-spacing: 0; }
+  #header .view-toggle { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 0; }
+  #header .view-toggle button { flex: 1 1 auto; font-family: var(--font-num); font-size: 12px; padding: 0 8px; }
+  #header .mw-links { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  #header .mw-pill { font: 600 12px/1.1 var(--font-num); min-height: 32px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; text-align: center; padding: 4px 8px; }
+  /* overlays sit over the map area, which now starts at --panel-w */
+  #hud, #sample-badge { left: calc(var(--panel-w) + (100% - var(--panel-w)) / 2); }
+  #error { left: calc(var(--panel-w) + 12px); }
+  #mw-help { right: 14px; }
+  #map .leaflet-top.leaflet-right { top: 0; } /* ui-tokens moved it under the old floating header */
+}
+@media screen and (min-width: 1400px) { :root { --panel-w: 400px; } }
+/* Narrower desktops: the HUD strip does not fit between the "Where on Mars?" inset (left) and the help button
+   (right) when centred on the map, so centre it in the free space between them and tighten the cells. */
+@media screen and (min-width: 901px) and (max-width: 1559px) {
+  #hud { left: calc(var(--panel-w) + 236px + (100% - var(--panel-w) - 236px - 64px) / 2); max-width: calc(100% - var(--panel-w) - 300px); gap: 4px; }
+  #hud .h { min-width: 100px; padding: 4px 8px; }
+  #hud .h.main { min-width: 128px; }
+  #hud .h .v { font-size: 18px; }
+  #hud .h.main .v { font-size: 24px; }
+}
+@media screen and (min-width: 901px) and (max-width: 1239px) {
+  #hud { flex-wrap: wrap; justify-content: center; }
+}
+@media (pointer: coarse) and (min-width: 901px) {
+  #header .view-toggle button, #header .mw-pill { min-height: 44px; }
+}
+
+/* ---------- 3. sidebar skin (all widths) ---------- */
+#panel {
+  background: var(--side-bg); backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0 0 48px;
+  font: 13px/1.5 var(--font-num); color: #cfd8e3; color-scheme: dark; scrollbar-width: thin; scrollbar-color: #2b3644 var(--side-bg);
+}
+#panel button, #panel input, #panel select, #panel summary, #panel textarea { font-family: var(--font-num); }
+#panel section { border: 0; border-bottom: 1px solid var(--side-line); border-radius: 0; margin: 0; padding: 12px 16px 14px; background: none; }
+#panel section.mw-collapsed { padding-bottom: 12px; }
+#panel section > h2 { font: 600 13px/1.3 var(--font-num); color: var(--mars-2); }
+#panel section > h2::after { font-size: 12px; }
+#panel h3 { font-family: var(--font-num); font-size: 13px; font-weight: 600; color: var(--text-0); }
+#panel a { color: var(--ui-blue-text); }
+#panel .muted, .muted { font-size: 12px; }
+#panel p, #panel li { overflow-wrap: anywhere; }
+#panel summary { color: var(--ui-blue-text); font-size: 12px; min-height: 24px; }
+#panel details.ps > summary { color: var(--ui-blue-text); }
+#panel summary:hover { color: #fff; }
+
+/* ---------- 4. callouts: explanatory and notice text, blue left border ---------- */
+#panel > .route-source, .route-source, .preview-note,
+#panel section > p.muted, #panel .lf-card > p.muted, #panel details > p.muted, #panel details.conditions .src,
+#panel .ps-note, #panel .ps-source, #panel .export-note, #panel .briefing-note, #panel .proof-pending,
+#panel .dock-hint, #panel .planner-status, #assumptions {
+  background: var(--ui-blue-soft); border: 0; border-left: 3px solid var(--ui-blue); border-radius: 0 4px 4px 0;
+  padding: 8px 10px; margin: 8px 0 0; color: #c8d6e8; font-size: 12px; line-height: 1.5; opacity: 1;
+}
+#panel > .route-source { margin: 12px 16px; }
+.preview-note { margin: 0 0 8px; }
+#assumptions { padding-left: 28px; }
+#assumptions li + li { margin-top: 4px; }
+#panel .planner-status:empty { display: none; }
+/* metadata line under the route numbers: plain, not a callout */
+#route-summary > p.muted { background: none; border: 0; padding: 0; color: var(--muted-0); }
+
+/* ---------- 5. buttons: dark fill, thin blue border; on = orange outline + orange text ---------- */
+.briefing-btn, .share-btn, .export-btn, .planner-control button, .mm-control button, .mm-control select,
+.demo-control .demo-btn, .view-toggle button, .a11y-help-close, #panel .proof-toggle button {
+  color: var(--text-0); background: var(--ui-btn); border: 1px solid var(--ui-blue); border-radius: var(--r-console);
+  box-shadow: none; cursor: pointer; transition: border-color .12s, background-color .12s, color .12s;
+}
+.briefing-btn, .share-btn, .export-btn, #panel .planner-control button, #panel .mm-control button, #panel .mm-control select,
+#panel .demo-control .demo-btn, #panel .proof-toggle button {
+  font: 600 13px/1.2 var(--font-num); min-height: 32px; box-sizing: border-box; padding: 6px 10px;
+}
+.briefing-btn:hover:not(:disabled), .share-btn:hover, .export-btn:hover:not(:disabled), .planner-control button:hover,
+.mm-control button:hover:not(:disabled), .mm-control select:hover, .demo-control .demo-btn:hover:not(:disabled),
+.view-toggle button:hover:not([aria-pressed="true"]), .a11y-help-close:hover, #panel .proof-toggle button:hover {
+  border-color: var(--ui-blue-hi); background: #132238; color: #fff;
+}
+.mm-control button.active, .mm-control button[aria-pressed="true"], .demo-control .demo-btn.active,
+.view-toggle button[aria-pressed="true"] {
+  background: var(--ui-on); border-color: var(--mars); color: var(--mars-2); box-shadow: inset 0 0 0 1px var(--mars);
+}
+/* theme.css / a11y.css paint .leaflet-bar buttons with !important: same weight needed here */
+#panel .leaflet-bar.proof-toggle button, .leaflet-bar.proof-toggle button {
+  background: var(--ui-btn) !important; color: var(--text-0) !important; border: 1px solid var(--ui-blue) !important; border-radius: var(--r-console);
+}
+#panel .leaflet-bar.proof-toggle button:hover, .leaflet-bar.proof-toggle button:hover { border-color: var(--ui-blue-hi) !important; background: #132238 !important; color: #fff !important; }
+#panel .leaflet-bar.proof-toggle button.on, .leaflet-bar.proof-toggle button.on {
+  background: var(--ui-on) !important; border-color: var(--mars) !important; color: var(--mars-2) !important; box-shadow: inset 0 0 0 1px var(--mars);
+}
+/* primary action: "Plan a route" stays the one filled orange button (dark text, 7.69:1); while picking it is "on" */
+.planner-control button.planner-toggle { border-radius: var(--r-console); font-weight: 700; }
+.planner-control button.planner-toggle:hover { background: var(--mars-2) !important; color: var(--on-mars) !important; }
+.planner-control button.planner-toggle[aria-pressed="true"] {
+  background: var(--ui-on) !important; color: var(--mars-2) !important; border: 1px solid var(--mars) !important; box-shadow: inset 0 0 0 1px var(--mars);
+}
+/* small secondary actions: orange outline */
+.planner-control button.planner-clear, #compare .cmp-hide, #header .mw-pill, #header .mw-links .mw-pill.hot {
+  background: transparent !important; color: var(--mars-2) !important; border: 1px solid var(--mars) !important;
+  border-radius: var(--r-console); box-shadow: none;
+}
+.planner-control button.planner-clear:hover, #compare .cmp-hide:hover, #compare .cmp-hide:focus-visible,
+#header .mw-pill:hover, #header .mw-links .mw-pill.hot:hover {
+  background: rgba(255,122,61,.16) !important; color: #fff !important; border-color: var(--mars-2) !important;
+}
+#compare .cmp-hide { font: 600 12px/1.2 var(--font-num); min-height: 32px; padding: 4px 10px; }
+.briefing-btn:disabled, .export-btn:disabled, .mm-control button:disabled, .demo-control .demo-btn:disabled { opacity: .45; }
+.briefing-btn, .share-btn { text-align: left; }
+.share-url { font: 12px/1.3 var(--font-num); background: var(--side-bg-2); border: 1px solid var(--side-line); border-radius: var(--r-console); color: var(--text-0); }
+@media (pointer: coarse) {
+  .briefing-btn, .share-btn, .export-btn, #compare .cmp-hide, #panel .planner-control button, #panel .mm-control button,
+  #panel .mm-control select, #panel .demo-control .demo-btn, #panel .proof-toggle button { min-height: 44px; }
+}
+
+/* ---------- 6. tool controls docked in the sidebar by dock.js (desktop) ---------- */
+#tools-dock[hidden], #layers-dock[hidden] { display: none; }
+#panel section.dock { animation: none; }
+#panel .dock-hint { margin: 0; }
+.dock-keys { display: flex; gap: 14px; margin-top: 4px; color: var(--text-0); }
+.dock-key { display: inline-flex; align-items: center; gap: 6px; }
+.dock-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(255,255,255,.75); }
+.dock-dot.start { background: var(--pin-start); }
+.dock-dot.end { background: var(--pin-end); }
+.dock-slot { margin-top: 8px; }
+.dock-slot:empty { display: none; }
+.dock-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#panel .dock-slot > .leaflet-control, #panel .dock-slot > .leaflet-bar {
+  float: none; clear: none; position: static; z-index: auto; margin: 0; width: auto; padding: 0; display: block;
+  background: none !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+  backdrop-filter: none; -webkit-backdrop-filter: none; font: 13px/1.5 var(--font-num); color: inherit !important;
+}
+/* demo.css hides the planner and the layer list while the demo runs (they covered the map); in the sidebar they
+   cover nothing, and hiding them would make the sidebar jump during the recording */
+body.demo-running #panel .dock-slot > .planner-control, body.demo-running #panel .dock-slot > .leaflet-control-layers { display: block !important; }
+#panel .dock-slot > .leaflet-control-layers.is-hidden { display: none !important; }
+/* planner */
+#panel .planner-control button.planner-toggle { width: 100%; min-height: 38px; font-size: 14px; }
+#panel .planner-options { border: 1px solid var(--side-line); border-radius: var(--r-console); margin: 8px 0 6px; padding: 4px 10px 8px; }
+#panel .planner-options legend { font-size: 12px; color: var(--muted-0); }
+#panel .planner-check { display: flex; align-items: flex-start; gap: 8px; padding: 3px 0; font-size: 12px; line-height: 1.5; cursor: pointer; }
+#panel .planner-check input { margin: 3px 0 0; flex: none; accent-color: var(--mars); }
+#panel .planner-control button.planner-clear { width: 100%; margin-top: 8px; }
+#panel .planner-control:not(.expanded) .planner-status { margin-bottom: 0; }
+/* play / follow / rings: one row */
+#panel .dock-slot > .mm-control { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+#panel .mm-control .mm-play { flex: 1.3 1 auto; min-width: 84px; }
+#panel .mm-control .mm-follow, #panel .mm-control .mm-rings { flex: 1 1 auto; }
+#panel .mm-control .mm-speed { padding: 4px; }
+#panel .mm-control .mm-speed-label { margin: 0 0 0 2px; font: 12px/1 var(--font-num); color: var(--muted-0); }
+/* proof view + demo: two halves of one row */
+#panel .proof-toggle button, #panel .demo-control .demo-btn { display: block; width: 100%; white-space: nowrap; }
+/* layer list */
+#panel .dock-slot > .leaflet-control-layers .leaflet-control-layers-toggle { display: none; }
+#panel .dock-slot > .leaflet-control-layers .leaflet-control-layers-list { display: block; height: auto !important; overflow: visible; padding: 0; }
+#panel .leaflet-control-layers label { display: block; margin: 0; padding: 4px 6px; border-radius: 4px; font: 12px/1.45 var(--font-num); color: #cfd8e3; cursor: pointer; }
+#panel .leaflet-control-layers label > span { display: flex; align-items: flex-start; gap: 8px; }
+#panel .leaflet-control-layers label:hover { background: var(--ui-blue-soft); color: #fff; }
+#panel .leaflet-control-layers-selector { margin: 2px 0 0; top: 0; flex: none; accent-color: var(--mars); }
+#panel .leaflet-control-layers-separator { margin: 4px 0; }
+@media (pointer: coarse) { #panel .leaflet-control-layers label, #panel .planner-check { min-height: 44px; box-sizing: border-box; align-items: center; } }
+
+/* ---------- 7. panel content: tiles, tables, cards (flat, thin borders, radius <= 8 px) ---------- */
+.stats { gap: 6px; }
+.stat { background: var(--side-bg-2); border: 1px solid var(--side-line); border-radius: var(--r-console); padding: 7px 9px; }
+.stat .label { font-size: 12px; color: var(--muted-0); }
+#panel .stat .value { color: var(--text-0); white-space: normal; }
+#panel .stat .value small { font-family: var(--font-num); font-size: 12px; }
+#panel .stat .stop-name { font-size: 12px; }
+#panel .badge { font-family: var(--font-num); font-size: 12px; border-radius: 4px; }
+.legend { font-size: 12px; }
+.legend .muted { display: block; margin-top: 4px; }
+#point-slider { accent-color: var(--mars); }
+.field-label { font-family: var(--font-num); }
+table.hours, table.proof-results, #compare .cmp-table, table.ps-table { font: 12px/1.45 var(--font-num); font-variant-numeric: tabular-nums; }
+table.hours th, table.hours td, table.proof-results th, table.proof-results td, #compare .cmp-table th, #compare .cmp-table td,
+table.ps-table th, table.ps-table td { border-bottom-color: var(--side-line); }
+table.hours th, table.proof-results th { color: var(--ui-blue-text); font-weight: 600; }
+table.ps-table thead th, table.ps-table tbody th { background: var(--side-bg); }
+table.ps-table tbody tr:hover td, table.ps-table tbody tr:hover th { background: var(--side-bg-2); }
+#panel button.ps-sort { font-size: 12px; }
+.ps-scroll { border-color: var(--side-line); border-radius: var(--r-console); }
+#panel :is(.cmp-meta, .cmp-table small, .cmp-table thead th) { font-size: 12px; }
+.sc-card, .stop-card { background: var(--side-bg-2); border: 1px solid var(--side-line); border-radius: var(--r-console); }
+.sc-card:hover, .sc-card:focus-visible, .sc-card.active, .stop-card:hover, .stop-card.active { border-color: var(--mars); }
+.stop-card:hover { transform: none; }
+#panel .sc-card h3 { font-size: 13px; }
+#panel .sc-card p { font-size: 12px; line-height: 1.5; }
+#panel .sc-card a { color: var(--ui-blue-text); }
+#panel .sc-card .stop-photo img { border-radius: 4px; border-color: var(--side-line); }
+#panel .sc-card .stop-photo figcaption, #panel .sc-card .stop-photo-note, #panel .sc-card .stop-nophoto { font-size: 12px; }
+#panel .sc-card .stop-signal strong { color: var(--mars-2); }
+#live .lf-card { background: var(--side-bg-2); border-color: var(--side-line); border-radius: var(--r-console); }
+#live .lf-age, #live .lf-list { font-size: 12px; }
+.feeds-card { border-top-color: var(--side-line); }
+.feeds-card p, #panel .feeds-card p { font-size: 12px; }
+.src-row { background: var(--side-bg-2); border-color: var(--side-line); border-radius: var(--r-console); }
+#panel .src-k, #panel .src-cite-text { font: 12px/1.4 var(--font-num); }
+#panel .src-k { color: var(--ui-blue-text); min-width: 68px; }
+.proof-legend { font-size: 12px; }
+#panel .proof-fact, #panel .proof-text { font-size: 12px; line-height: 1.5; color: #cfd8e3; }
+#panel .proof-warn { border-radius: 0 4px 4px 0; border-left: 3px solid var(--danger); }
+#panel h3.proof-results-title { font-size: 13px; }
+.pf-stop circle { stroke: var(--side-bg); }
+.pf-tip { background: var(--side-bg); border-color: var(--side-line); border-radius: 4px; font: 12px/1.4 var(--font-num); }
+
+/* ---------- 8. header (all widths): orange title, console buttons ---------- */
+#header { background: rgba(8,11,16,.92); border-color: var(--side-line); border-radius: 8px; }
+#header .mw-brand { color: var(--mars); font-weight: 700; }
+#header .mw-brand em { color: var(--muted-0); font-weight: 400; }
+.view-toggle { padding: 0; border: 0; border-radius: 0; background: none; }
+.view-toggle button { font-weight: 600; }
+.view-toggle .keys-chip { border-left: 1px solid var(--ui-blue); border-radius: var(--r-console); }
+.view-toggle kbd { border-color: rgba(255,255,255,.28); border-radius: 4px; font-family: var(--font-num); }
+.mw-pill { border-radius: var(--r-console); }
+
+/* ---------- 9. overlays that stay on the map: dark panels, thin borders ---------- */
+.leaflet-control-layers, .leaflet-bar, .planner-control, .mm-control, .src-legend-control, .scale-bar {
+  background: rgba(8,11,16,.90) !important; border: 1px solid rgba(255,255,255,.14) !important; border-radius: 8px !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.4) !important;
+}
+.leaflet-bar a:hover { background: #132238 !important; color: #fff !important; }
+#map .locator-control { background: rgba(8,11,16,.90); border: 1px solid rgba(255,255,255,.14); border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,.4); }
+.locator-frame { border-radius: 4px; }
+#hud .h { background: rgba(8,11,16,.90); border-color: rgba(255,255,255,.14); border-radius: var(--r-console); }
+#hud .h.tag { background: #0f1a2b; border-color: var(--ui-blue); }
+#hud .h.tag .v { color: var(--ui-blue-text); }
+.leaflet-control-attribution { background: rgba(8,11,16,.80) !important; }
+#sample-badge, #error { border-radius: var(--r-console); }
+#mw-help { border-radius: 8px; border: 1px solid var(--ui-blue); background: rgba(8,11,16,.92); box-shadow: 0 4px 14px rgba(0,0,0,.4); font-family: var(--font-num); }
+.demo-caption { border-radius: 10px; }
+.mm-ring-label { border-radius: 4px; }
+
+/* ---------- 10. welcome, guided tour, shortcut dialog: same colours, layout unchanged ---------- */
+#mw-welcome .mw-card { border-radius: 12px; background: rgba(8,11,16,.84); border-color: rgba(255,255,255,.14); }
+#mw-welcome .mw-eyebrow, #mw-welcome .mw-foot { font-family: var(--font-num); }
+#mw-welcome .mw-chip { border-radius: var(--r-console); font-family: var(--font-num); font-size: 12px; }
+#mw-welcome .mw-steps li { border-radius: 0 var(--r-console) var(--r-console) 0; border: 0; border-left: 3px solid var(--ui-blue); background: var(--ui-blue-soft); color: #c8d6e8; }
+.mw-btn { border-radius: var(--r-console); border-color: var(--ui-blue); background: var(--ui-btn); }
+.mw-btn:hover { background: #132238; border-color: var(--ui-blue-hi); }
+.mw-btn.primary { background: var(--mars); border-color: transparent; box-shadow: none; }
+.mw-btn.primary:hover { background: var(--mars-2); }
+#mw-tour-ring { border-radius: var(--r-console); }
+#mw-tour-tip { border-radius: 8px; background: rgba(8,11,16,.97); border-color: rgba(255,255,255,.14); }
+.a11y-help { border-radius: 8px; background: rgba(8,11,16,.98); }
+.a11y-help kbd { font-family: var(--font-num); border-radius: 4px; }
+.a11y-skip { border-radius: var(--r-console); }
+
+/* ---------- 11. phones and tablets: values from view3d.css / ui-tokens.css that the rules above would override ---------- */
+@media (max-width: 900px) {
+  /* floating header chip and on-map controls keep the UI font, so their widths stay as they were */
+  .view-toggle { gap: 4px; }
+}
+@media (max-width: 640px) {
+  .view-toggle { margin-top: 0; gap: 4px; }
+  .view-toggle button { min-height: 36px; padding: 0 8px; white-space: nowrap; font-size: 12px; }
+}
