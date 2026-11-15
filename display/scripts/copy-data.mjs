@@ -35,7 +35,7 @@ if (set === "samples") {
 } else {
   const dir = join(repo, "terrain", "out");
   const required = ["grid.json", "terrain.meta.json", "layers.manifest.json", "photo.png", "slope.png", "rough.png", "dem.png", "rover_path.json", "rover_waypoints.csv"];
-  const optional = ["hazard.png", "science.png", "hazard.meta.json", "stops.csv", "window.json"];
+  const optional = ["hazard.png", "science.png", "hazard.meta.json", "stops.csv", "window.json", "dem_lod256.bin", "dem_lod512.bin"];   // run 2: DEM for the 3D view
   for (const f of [...required, ...optional]) {
     const src = join(dir, f);
     if (existsSync(src)) copy(src, f);
@@ -48,6 +48,12 @@ if (set === "samples") {
     else missing.push(`(optional) ${name} (${candidates.join(", ")})`);
   };
   firstOf("route.json", ["model/out/route.json", "pipeline/fallback/route.json"]);
+  // run 2: build-time context feeds (pipeline/fetch_feeds.py) -> public/data/feeds/ (optional; the map works without them)
+  const feedsDir = join(repo, "pipeline", "feeds");
+  if (existsSync(feedsDir)) {
+    mkdirSync(join(out, "feeds"), { recursive: true });
+    for (const fn of readdirSync(feedsDir).filter((x) => x.endsWith(".json"))) { copyFileSync(join(feedsDir, fn), join(out, "feeds", fn)); copied.push("feeds/" + fn); }
+  }
   if (!copied.includes("window.json")) firstOf("window.json", ["model/out/window.json", "pipeline/fallback/window.json"]);
   firstOf("results.md", ["model/out/results.md", "model/results.md", "results.md"]);
   firstOf("results.json", ["model/out/results.json", "pipeline/fallback/results.json"]); // per-stretch proof numbers

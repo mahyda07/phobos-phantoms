@@ -1,0 +1,31 @@
+{
+ "source": "JPL Horizons API (NASA/JPL Solar System Dynamics)",
+ "url_without_key": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&COMMAND=%27499%27&CENTER=%27500%40399%27&EPHEM_TYPE=%27OBSERVER%27&START_TIME=%272026-11-15%27&STOP_TIME=%272026-11-16%27&STEP_SIZE=%271d%27&QUANTITIES=%2720%2C21%27&OBJ_DATA=%27NO%27",
+ "fetched_utc": "2026-11-15T07:05:05Z",
+ "licence": "NASA/JPL public data service; no restrictions stated for ephemeris output",
+ "data": {
+  "target": "Mars (499)",
+  "observer": "Earth geocentre (500@399)",
+  "quantities": "20 (range), 21 (one-way light time)",
+  "rows": [
+   {
+    "utc": "2026-Nov-15 00:00",
+    "delta_au": 1.31585436923142,
+    "deldot_km_s": -14.7502717,
+    "one_way_light_time_min": 10.94362708
+   },
+   {
+    "utc": "2026-Nov-16 00:00",
+    "delta_au": 1.30732526492742,
+    "deldot_km_s": -14.7864734,
+    "one_way_light_time_min": 10.87269269
+   }
+  ],
+  "today": {
+   "utc": "2026-Nov-15 00:00",
+   "delta_au": 1.31585436923142,
+   "deldot_km_s": -14.7502717,
+   "one_way_light_time_min": 10.94362708
+  }
+ }
+}

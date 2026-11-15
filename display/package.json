@@ -12,11 +12,12 @@
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1 --port 5174 --strictPort",
     "mock-planner": "node scripts/mock-planner.mjs",
-    "test": "node --test src/planner.test.mjs src/stop-cards.test.mjs src/proof.test.mjs src/moving-map.test.mjs src/sources.test.mjs src/profile.test.mjs src/cost-model.test.mjs src/proof-stretches.test.mjs src/demo.test.mjs src/a11y.test.mjs src/compare.test.mjs src/export.test.mjs src/briefing.test.mjs src/share.test.mjs src/locator.test.mjs src/live-feeds.test.mjs",
+    "test": "node --test src/planner.test.mjs src/stop-cards.test.mjs src/proof.test.mjs src/moving-map.test.mjs src/sources.test.mjs src/profile.test.mjs src/cost-model.test.mjs src/proof-stretches.test.mjs src/demo.test.mjs src/a11y.test.mjs src/compare.test.mjs src/export.test.mjs src/briefing.test.mjs src/share.test.mjs src/locator.test.mjs src/live-feeds.test.mjs src/view3d.test.mjs src/feeds.test.mjs src/sound.test.mjs",
     "screenshot": "node scripts/screenshot.mjs"
   },
   "dependencies": {
-    "leaflet": "1.9.4"
+    "leaflet": "1.9.4",
+    "three": "0.187.0"
   },
   "devDependencies": {
     "vite": "8.3.8"
