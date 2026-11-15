@@ -57,7 +57,7 @@ export async function createView3D(host, { f, data, meta, route, rover, stops = 
   controls.enableDamping = true; controls.dampingFactor = 0.08; controls.maxPolarAngle = Math.PI * 0.48;
   controls.minDistance = 80; controls.maxDistance = extent * 3;
 
-  // light: sun from the south-east, as in the headset (window.json values are not needed for a static overview)
+  // light: a fixed sun from the south-east for a readable overview (the headset uses window.json's EVA-start sun)
   scene.add(new THREE.HemisphereLight(0xfff1e0, 0x241a14, 0.55));
   const sun = new THREE.DirectionalLight(0xfff0dc, 3.0);
   sun.position.set(extent * 1.2, extent * 1.1, extent * 1.6); scene.add(sun);
@@ -81,8 +81,8 @@ export async function createView3D(host, { f, data, meta, route, rover, stops = 
   base.position.set(extent / 2, -40, extent / 2); world.add(base);
 
   const at = (x, y, lift = 0) => { const [tx, ty, tz] = f.localToThree(x, y, sample(x, y)); return new THREE.Vector3(tx, ty + lift, tz); };
-  const tube = (coords, radius, lift) => {
-    const pts = thin(coords, 4).map(([x, y]) => at(x, y, lift));
+  const tube = (coords, radius, lift, doThin = true) => {
+    const pts = (doThin ? thin(coords, 4) : coords).map(([x, y]) => at(x, y, lift));
     if (pts.length < 2) return null;
     const curve = new THREE.CurvePath();
     for (let i = 1; i < pts.length; i++) curve.add(new THREE.LineCurve3(pts[i - 1], pts[i]));
@@ -101,7 +101,7 @@ export async function createView3D(host, { f, data, meta, route, rover, stops = 
     const step = Math.max(1, Math.floor(routeCoords.length / 600));
     const coords = routeCoords.filter((_, i) => i % step === 0 || i === routeCoords.length - 1);
     const idx = coords.map((c) => routeCoords.indexOf(c));
-    const core = tube(coords, 3.2, 3);
+    const core = tube(coords, 3.2, 3, false);   // coords already sampled: ring s = coords[s] (colours stay on their vertices)
     if (core) {
       const col = new Float32Array(core.g.attributes.position.count * 3);
       const radial = 7;
@@ -112,7 +112,7 @@ export async function createView3D(host, { f, data, meta, route, rover, stops = 
       }
       core.g.setAttribute("color", new THREE.BufferAttribute(col, 3));
       routeGroup.add(new THREE.Mesh(core.g, new THREE.MeshBasicMaterial({ vertexColors: true })));
-      const glow = tube(coords, 8, 3);
+      const glow = tube(coords, 8, 3, false);
       routeGroup.add(new THREE.Mesh(glow.g, new THREE.MeshBasicMaterial({ color: 0xffb26b, transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false })));
     }
     marker = new THREE.Mesh(new THREE.SphereGeometry(9, 20, 14), new THREE.MeshBasicMaterial({ color: 0xffffff }));

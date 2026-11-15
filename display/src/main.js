@@ -343,7 +343,7 @@ async function main() {
     if (switching) return null;
     const want3d = mode === "3d";
     toggleEl.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === mode)));
-    if (!want3d) { v3d?.hide(); document.body.classList.remove("view-3d"); return "2D map"; }
+    if (!want3d) { v3d?.hide(); v3dHost.hidden = true; document.body.classList.remove("view-3d"); return "2D map"; }
     document.body.classList.add("view-3d"); v3dHost.hidden = false;
     if (!v3d) {
       switching = true; v3dHost.classList.add("loading");
@@ -356,7 +356,7 @@ async function main() {
         v3d.setPoint(posIndex);
         window.__v3d = v3d;   // read by qa scripts (lod / draw calls)
       } catch (e) {
-        console.error(e); setView("2d"); { const er = document.getElementById("error"); er.textContent = `3D view could not load: ${e.message}`; er.hidden = false; } switching = false; v3dHost.classList.remove("loading"); return "3D view could not load";
+        console.error(e); switching = false; setView("2d"); { const er = document.getElementById("error"); er.textContent = `3D view could not load: ${e.message}`; er.hidden = false; } switching = false; v3dHost.classList.remove("loading"); return "3D view could not load";
       }
       switching = false; v3dHost.classList.remove("loading");
     }
@@ -385,12 +385,12 @@ async function main() {
   v3dHost.querySelector("#v3d-reset").addEventListener("click", () => v3d?.reset());
   const layersEl = () => document.querySelector(".leaflet-control-layers");
   const actions = {
-    view2: () => setView("2d"),
+    view2: () => { setView("2d"); return "2D map"; },
     view3: () => { setView("3d"); return "Loading the 3D terrain view"; },
     plan: () => { if (v3d?.visible) setView("2d"); document.querySelector(".planner-toggle")?.click(); return "Planner: click a start point, then an end point"; },
     hazard: toggleHazard,
     ghost: toggleRover,
-    layers: () => { const el = layersEl(); if (!el) return null; el.classList.toggle("is-hidden"); const open = !el.classList.contains("is-hidden"); if (open) el.querySelector("input")?.focus(); return `Layers list ${open ? "open" : "closed"}`; },
+    layers: () => { const el = layersEl(); if (!el) return null; el.classList.toggle("is-hidden"); const open = !el.classList.contains("is-hidden"); if (open) el.querySelector("input")?.focus(); return `Layers list ${open ? "shown" : "hidden"}`; },
     reset: () => { if (v3d?.visible) v3d.reset(); else fit(); return "View reset"; },
     zoomIn: () => { if (v3d?.visible) v3d.zoom(0.85); else map.zoomIn(); return null; },
     zoomOut: () => { if (v3d?.visible) v3d.zoom(1.15); else map.zoomOut(); return null; },
