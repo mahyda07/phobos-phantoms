@@ -137,3 +137,23 @@ test("Limiter: >= 8 s between lines, >= 30 s before the same line", () => {
   assert.equal(L.allow("steep", 20000), false);   // same line within 30 s
   assert.equal(L.allow("steep", 30000), true);
 });
+
+// ---------- run 2: haptic hazard (src/haptics.js) ----------
+import { shouldBuzz, pulseAll } from "./haptics.js";
+test("shouldBuzz: hazard > 0.5 or slope > 20, at most every 700 ms, off switch", () => {
+  assert.equal(shouldBuzz({ hazard: 0.6, slope_deg: 5 }, 1000, 0), true);
+  assert.equal(shouldBuzz({ hazard: 0.1, slope_deg: 21 }, 1000, 0), true);
+  assert.equal(shouldBuzz({ hazard: 0.5, slope_deg: 20 }, 1000, 0), false);    // thresholds are strict
+  assert.equal(shouldBuzz({ hazard: 0.9, slope_deg: 30 }, 1000, 400), false);  // 600 ms since last
+  assert.equal(shouldBuzz({ hazard: 0.9 }, 1000, 0, false), false);
+});
+test("pulseAll: feature-detects pulse() and vibrationActuator, skips the rest", () => {
+  const calls = [];
+  const session = { inputSources: [
+    { gamepad: { hapticActuators: [{ pulse: (s, d) => { calls.push(["pulse", s, d]); return Promise.resolve(); } }] } },
+    { gamepad: { vibrationActuator: { playEffect: (t, o) => { calls.push([t, o.duration]); return Promise.resolve(); } } } },
+    { gamepad: {} }, { hand: {} },
+  ] };
+  assert.equal(pulseAll(session), 2);
+  assert.deepEqual(calls, [["pulse", 0.4, 60], ["dual-rumble", 60]]);
+});

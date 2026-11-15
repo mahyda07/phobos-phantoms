@@ -15,6 +15,7 @@ import { drawVisor, VISOR_W, VISOR_H } from "./visor.js";
 import { planHome, homeSummary, reversedWalkedPath } from "./home.js";
 import { initKeys } from "./keys.js";
 import { createAudio, calloutsFor, VOICE_LINES } from "./audio.js";
+import { shouldBuzz, pulseAll, hapticsEnabled, setHapticsEnabled } from "./haptics.js";
 
 const DATA = "./data/";
 const HOLO_SIZE = 0.6;            // metres across on the desk (PLAN: 1:2500 for 1.5 km)
@@ -422,6 +423,11 @@ const bSpeed = addWalkButton(`Speed ${SPEEDS[speedIdx]}×`, -0.04, () => {
 addWalkButton("Restart", 0.04, () => { clearHome(); simT = 0; playing = true; bPlay.userData.setText("Pause"); });
 addWalkButton("Step out", 0.12, () => stopWalk());
 addWalkButton("Home", 0.20, () => goHome());
+// haptic hazard on/off (remembered); only meaningful with controllers
+let buzzOn = hapticsEnabled(), lastBuzz = 0;
+const bBuzz = addWalkButton(buzzOn ? "Buzz on" : "Buzz off", -0.20, () => {
+  buzzOn = !buzzOn; setHapticsEnabled(buzzOn); bBuzz.userData.setText(buzzOn ? "Buzz on" : "Buzz off");
+});
 
 function viewPose() {   // world position + quaternion of the eyes (headset or desktop camera)
   const cam = renderer.xr.isPresenting ? renderer.xr.getCamera() : camera;
@@ -514,6 +520,7 @@ function updateWalk(now) {
   f.home = homeLine;
   if (caption && performance.now() < caption.until) f.caption = caption.text;
   if (playing) walkCallouts(st);
+  if (playing && renderer.xr.isPresenting && shouldBuzz(st, now, lastBuzz, buzzOn)) { lastBuzz = now; pulseAll(renderer.xr.getSession()); }
   const key = JSON.stringify(f);
   if (key !== lastVisorKey) { drawVisor(visorCanvas.getContext("2d"), f); visorTex.needsUpdate = true; lastVisorKey = key; }
 }
