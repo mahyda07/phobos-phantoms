@@ -1,5 +1,7 @@
 # Proof vs Perseverance (stand-in, standin-basic-v1)
 
+> The current proof uses the AI hazard planner: see `model/out/results.md`. This file is the no-AI stand-in baseline.
+
 Stand-in check by the pipeline track until the planner team's results are published. Perseverance's real track in the walking area (sols 405–717, 6.69 km) is cut into 13 stretches of about 500 m. For each stretch our planner plans a route between the rover's real start and end, and we compare it with the rover's track and with a straight line between the same points. A rover is not an astronaut: this checks our terrain model, not astronaut safety.
 
 | Measure | Our planner | Straight line | Perseverance |

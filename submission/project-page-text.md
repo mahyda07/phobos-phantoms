@@ -1,4 +1,4 @@
-# Marswalk: Safe-Path Engine
+# Marswalk Safe-Path Engine
 **Team:** Phobos Phantoms OG 7.66  
 **Challenge:** Interplanetary Survival Guide: Martian Map — NASA Space Apps Challenge 2026
 
@@ -37,9 +37,9 @@ Perseverance's real track in the walking area (6.69 km, sols 405–717) was cut 
 A rover is not an astronaut, and the rover drivers did not use our hazard layer, so this checks our terrain and hazard model; it is not proof of astronaut safety.
 
 ## Current status and limitations
-- Built during the hackathon, 14–15 Nov 2026. Everything above is implemented and live.
-- Slope limit, walking speed, EVA length, hazard weight and cost weights are assumptions, not suit or mission limits.
-- The AI hazard layer is a model estimate, not validated against astronaut walking; its "careful" and "avoid" classes are much harder for it than "go" (per-class IoU in `model/MODEL_CARD.md`).
+- Built during the hackathon, 14–15 Nov 2026. Everything above is implemented and live; the hosted planner service switches to the AI planner once its server setting is changed (until then it plans with the no-AI baseline).
+- Slope limit, walking speed, EVA length, hazard weight and cost weights are assumptions, not suit or mission limits. Time spent working at the stops is not counted in the walk-back margin.
+- The AI hazard layer is a model estimate, not validated against astronaut walking; its "careful" and "avoid" classes are much harder for it than "go" (per-class IoU in `model/MODEL_CARD.md`). Its classes are mostly slope classes learned from the photo, so lower AI hazard under our route is expected (the planner is penalised by that layer): a sanity check, not proof.
 - The time window is for a typical sol, not a forecast.
 - Marswalk is a planning aid concept, not a certified safety system.
 

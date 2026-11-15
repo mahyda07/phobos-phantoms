@@ -92,7 +92,7 @@
       "units": "0-1 relative",
       "cell_m": 2,
       "source": "HazardNet (ai-hazard-v1), team model on the USGS HiRISE 25 cm photo; held-out test mIoU 0.465 (model/MODEL_CARD.md)",
-      "licence": "Derived from USGS HiRISE orthomosaic + DTM (U.S. Government work, public domain); model by the team",
+      "licence": "Derived from USGS HiRISE orthomosaic + DTM (CC0 1.0 Universal); model by the team (Apache-2.0, LICENSE)",
       "citation": "model/MODEL_CARD.md",
       "colormap": "0-1 clear-yellow-red (model/hazard/infer.py)"
     }

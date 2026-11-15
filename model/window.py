@@ -77,7 +77,7 @@ def build():
                   f"an hour is good when the sun is >= {MIN_SUN_ELEVATION_DEG:g} deg and dust opacity is <= {MAX_DUST_OPACITY:g}; good hours here: "
                   f"{', '.join(f'LTST {a}-{b}' for a, b in windows)}. EVA window = the {WALK_HOURS} h block with the highest average sun inside the good hours "
                   f"(average sun {best['avg_sun_deg']} deg). {tie_note}Sun: NASA GISS Mars24 algorithm (Allison & McEwen 2000) for Jezero {wb.LAT} N {wb.LON_E} E on "
-                  f"Perseverance sol {wb.SOL} ({utc:%Y-%m-%d}, Ls {ls:.1f} deg). Dust opacity {min(dust):g}-{max(dust):g}, temperature and pressure: "
+                  f"Perseverance sol {wb.SOL} ({utc:%Y-%m-%d}, Ls {ls:.1f} deg). Dust opacity {min(dust):g}{'' if min(dust) == max(dust) else f'-{max(dust):g}'} every hour, temperature and pressure: "
                   f"science/conditions.csv (MEDA). Temperature is not part of Maryam's rule (only the tie-break): air is {t_lo:g} to {t_hi:g} C during the window. "
                   f"Light time from low-precision orbits (about +/-1 min)."),
     }

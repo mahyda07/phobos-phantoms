@@ -52,11 +52,11 @@ async function buildWelcome() {
       <ol class="mw-steps">
         <li><b><i>1</i>Read the route</b>Its colour is your walk-back margin: green is plenty of time, red is little.</li>
         <li><b><i>2</i>Walk it</b>Scrub the slider or press Play: slope, hazard and next stop at every point.</li>
-        <li><b><i>3</i>Plan your own</b>Click a start and an end. The planner service answers in about a second.</li>
+        <li><b><i>3</i>Plan your own</b>Click a start and an end. The planner service plans the route for you.</li>
       </ol>
       <div class="mw-cta">
         <button class="mw-btn primary" id="mw-go" type="button">Explore the map</button>
-        <button class="mw-btn" id="mw-tour" type="button">Take the 30-second tour</button>
+        <button class="mw-btn" id="mw-tour" type="button">Take the guided tour</button>
         <a class="mw-btn" href="${HEADSET_URL}" target="_blank" rel="noopener">Open in headset ↗</a>
       </div>
       <p class="mw-foot">Every number on screen comes from a file in the project repo. Stand-in results are labelled.</p>
@@ -85,7 +85,7 @@ function openWelcome() { welcome?.classList.remove("out"); }
 
 // ---------- guided tour ----------
 const STEPS = [
-  { sel: "#route-summary", title: "The plan at a glance", text: "Length, walk out and back times, steepest slope, and the walk-back margin: the time left to get home safely at the worst point." },
+  { sel: "#route-summary", title: "The plan at a glance", text: "Length, walk out and back times, steepest slope, and the walk-back margin: the time left to walk back at the worst point." },
   { sel: "#readout-section", title: "Walk it point by point", text: "Drag the slider along the route. The map marker, margin, slope, hazard and next stop follow." },
   { sel: ".mm-control", title: "Play the walk", text: "Play animates the walker; Follow keeps it centred; Rings show how far you could still go." },
   { sel: ".planner-control", title: "Plan your own route", text: "Press Plan a route, then click a start and an end on the map. Choose stops; the live planner answers." },
