@@ -22,6 +22,7 @@ export const SHORTCUTS = [
   { keys: "L", action: "Open / close the layers list", ids: ["layers"] },
   { keys: "R", action: "Reset the view to the whole walking area", ids: ["reset"] },
   { keys: "+ / −", action: "Zoom in / out", ids: ["zoomIn", "zoomOut"] },
+  { keys: "M", action: "Sound on / off (Mars wind + UI sounds; off by default)", ids: ["sound"] },
   { keys: "F", action: "Follow the current point on the map", ids: ["follow"] },
   { keys: "O", action: "Show / hide distance rings", ids: ["rings"] },
   { keys: "V", action: "Proof view: compare with Perseverance's real path", ids: ["proof"] },
@@ -72,6 +73,7 @@ export function keyAction(e) {
     case "l": case "L": action = "layers"; break;
     case "+": case "=": action = "zoomIn"; break;
     case "-": case "_": action = "zoomOut"; break;
+    case "m": case "M": action = "sound"; break;
     case "v": case "V": action = "proof"; break;
     case "?": action = "help"; break;
     case "Escape": case "Esc": action = "close"; break;

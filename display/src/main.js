@@ -37,6 +37,7 @@ import { initLocator, MARS_GLOBAL } from "./locator.js";
 import "./locator.css";
 import { initLiveFeeds, MEDA_URL } from "./live-feeds.js";
 import { loadFeeds, feedsCardHtml, lightToday } from "./feeds.js";
+import { initSound } from "./sound.js";
 import "./live-feeds.css";
 import { initA11y } from "./a11y.js";
 import "./view3d.css";
@@ -194,6 +195,7 @@ async function main() {
   let view = null;
   let current = null;
   let v3d = null;      // run 2: 3D terrain view (view3d.js, loaded on first switch)
+  let sound = null;    // run 2 Phase 5: map sound (sound.js), created below
   let lastPlanRequest = null; // set only while the drawn route came from the live planner (for share links)
   let exporter = null; // route downloads (created further down, refreshed whenever the route changes)
   const compare = initCompare(map, { L, f, container: document.getElementById("compare") }); // previous vs new planner route
@@ -235,6 +237,7 @@ async function main() {
     if (view) { layersControl.removeLayer(view.layer); view.layer.remove(); view = null; }
     current = route;
     v3d?.setRoute(route);
+    sound?.play("route");
     const onStop = (id) => { highlightStopCard(stopsEl, id); view?.focusStop(id); };
     view = drawRoute(map, f, route, { onPoint: showPoint, onPreview: previewPoint, onPreviewEnd: endPreview, onStop });
     routeLL = route.geometry.coordinates.map(([x, y]) => f.localToLeaflet(x, y));
@@ -385,7 +388,9 @@ async function main() {
   v3dHost.querySelector("#v3d-rover").addEventListener("click", toggleRover);
   v3dHost.querySelector("#v3d-reset").addEventListener("click", () => v3d?.reset());
   const layersEl = () => document.querySelector(".leaflet-control-layers");
+  sound = initSound({ button: document.getElementById("sound-toggle") });   // run 2 Phase 5: off by default
   const actions = {
+    sound: () => `Sound ${sound.toggle() ? "on" : "off"}`,
     view2: () => { setView("2d"); return "2D map"; },
     view3: () => { setView("3d"); return "Loading the 3D terrain view"; },
     plan: () => { if (v3d?.visible) setView("2d"); document.querySelector(".planner-toggle")?.click(); return "Planner: click a start point, then an end point"; },
