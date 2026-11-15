@@ -9,6 +9,9 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { XRHandModelFactory } from "three/addons/webxr/XRHandModelFactory.js";
 import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFactory.js";
+import { OculusHandPointerModel } from "three/addons/webxr/OculusHandPointerModel.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { makeFrame } from "./frame.js";
 import { heightSampler, marginColour, holoScale, rampRGB } from "./terrain.js";
@@ -51,9 +54,9 @@ camera.position.set(0, 0.55, 0.75);
 const orbit = new OrbitControls(camera, renderer.domElement);
 orbit.target.set(0, 0, 0);
 orbit.update();
-const hemi = new THREE.HemisphereLight(0xfff1e0, 0x3a2a20, 0.9);   // run 2: lit terrain (was unlit MeshBasic)
+const hemi = new THREE.HemisphereLight(0xfff1e0, 0x241a14, 0.45);   // run 2: lit terrain (was unlit MeshBasic)
 scene.add(hemi);
-const sun = new THREE.DirectionalLight(0xfff0dc, 2.4);            // direction set from window.json in init()
+const sun = new THREE.DirectionalLight(0xfff0dc, 3.4);            // direction set from window.json in init()
 
 // anchor = where the hologram sits (moved by hands / placement); model = rotation + scale; holo = terrain metres
 const anchor = new THREE.Group();
@@ -310,6 +313,8 @@ async function enterXR(mode) {
     : { optionalFeatures: ["local-floor", "hand-tracking"] };
   const session = await navigator.xr.requestSession(mode, opts);
   window.__xrSession = session;                     // for qa/scripts/quest.py --xr-fps (read-only use)
+  // run 2 perf: fix the refresh at 72 Hz (VrApi showed a 90->72 switch right before each half-rate drop)
+  if (session.updateTargetFrameRate && session.supportedFrameRates?.includes?.(72)) session.updateTargetFrameRate(72).catch(() => {});
   await renderer.xr.setSession(session);
   scene.background = mode === "immersive-ar" ? null : desktopBg;
   placed = false; anchor.visible = false; sessionStart = performance.now();
@@ -380,18 +385,23 @@ function rayHit(ctrl) {
   return ray.intersectObjects(buttons.filter(shown), false)[0] || null;
 }
 function pressButton(b, src) {
+  const t = performance.now();
+  if (t - (b.userData.lastPress || 0) < 350) return;   // de-bounce: one press per 350 ms per button
+  b.userData.lastPress = t;
   b.userData.setState("press");
   setTimeout(() => b.userData.setState(b === hovered() ? "hover" : "normal"), 140);
   const h = src?.gamepad?.hapticActuators?.[0]; h?.pulse?.(0.15, 18)?.catch?.(() => {});   // tiny tick confirms the press
   b.userData.onPress();
 }
 const hovered = () => ctrls.find((c) => c.hover)?.hover || null;
+const rayHoverOf = (hand) => ctrls.find((c) => c.src?.hand && c.hover && hands.find((s) => s.h === hand))?.hover || null;
 const tmpQ2 = new THREE.Quaternion();
 function updatePointers() {                         // hover state + ray length + cursor ring, once per frame
   const was = new Set(ctrls.map((c) => c.hover).filter(Boolean));
   for (const c of ctrls) {
     c.hover = null;
-    if (!c.src || c.src.hand || !c.line.visible) { c.cursor.visible = false; continue; }
+    if (!c.src) { c.cursor.visible = false; continue; }
+    c.line.visible = !c.src.hand;                  // hands draw the Meta pointer instead of the line
     const hit = rayHit(c.ctrl);
     if (hit) {
       c.hover = hit.object; c.line.scale.z = hit.distance;
@@ -406,11 +416,29 @@ function updatePointers() {                         // hover state + ray length 
 
 // hands: pinch to place, press buttons, grab-move (one hand) and scale (two hands)
 const handFactory = new XRHandModelFactory();
+const handPointers = [];
+// Translucent "Meta" look for the hand mesh: light tint, fresnel rim, no depth write (applied once the GLB has loaded).
+const HAND_MAT = new THREE.MeshStandardMaterial({ color: 0xdfe8f2, roughness: 0.35, metalness: 0, transparent: true, opacity: 0.5, depthWrite: false });
+HAND_MAT.onBeforeCompile = (sh) => {
+  sh.fragmentShader = sh.fragmentShader.replace("#include <dithering_fragment>", `#include <dithering_fragment>
+    float rim = 1.0 - abs(dot(normalize(vNormal), normalize(vViewPosition)));
+    gl_FragColor.rgb += vec3(0.55, 0.75, 1.0) * pow(rim, 2.0) * 0.6;
+    gl_FragColor.a = clamp(opacity * (0.35 + 1.1 * pow(rim, 1.5)), 0.0, 0.95);`);
+};
+function styleHands() {   // cheap: only walks the hand subtrees until both hand meshes are restyled
+  for (const s of hands) {
+    if (s.styled) continue;
+    s.h.traverse((o) => { if (o.isSkinnedMesh || (o.isMesh && o.parent?.type !== "Group")) { if (o.isSkinnedMesh) { o.material = HAND_MAT; o.renderOrder = 6; s.styled = true; } } });
+  }
+}
 const hands = [0, 1].map((i) => {
   const h = renderer.xr.getHand(i);
   let handModel = null;
   try { handModel = handFactory.createHandModel(h, "mesh"); } catch { handModel = handFactory.createHandModel(h, "spheres"); }
   h.add(handModel);
+  const pointer = new OculusHandPointerModel(h, renderer.xr.getController(i));   // Meta-style pinch ray for hands
+  h.add(pointer);
+  handPointers.push(pointer);
   scene.add(h);
   return { h, pinching: false, grabbing: false, pos: new THREE.Vector3(), last: new THREE.Vector3() };
 });
@@ -435,8 +463,7 @@ function updateHands() {
     s.pinching = was ? d < PINCH_OFF : d < PINCH_ON;
     if (s.pinching && !was) {                       // pinch started
       if (!placed) { if (reticle.visible) placeAt(new THREE.Vector3().setFromMatrixPosition(reticle.matrix)); else placeInFront(); continue; }
-      const b = nearButton(s.pos);
-      if (b) { pressButton(b, null); continue; }
+      if (rayHoverOf(s.h)) continue;                 // pinch on a button: the select event presses it (no double press)
       if (walking) continue;
       box.setFromObject(model).expandByScalar(0.08);
       s.grabbing = box.containsPoint(s.pos);
@@ -784,6 +811,8 @@ renderer.setAnimationLoop((time, frame) => {
     updateHint(now);
     pollGamepads(now);
     updatePointers();
+    styleHands();
+    for (const hp of handPointers) hp.setCursor?.(ctrls.find((c) => c.src?.hand)?.hover ? 0.5 : 1.5);
   } else orbit.update();
   if (walking) updateWalk(now);
   updateHomeDraw(now);
@@ -852,6 +881,19 @@ function roverModel() {                              // simple low-poly shape (n
   const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.3, 0.3), mat); head.position.set(0.9, 2.85, -1.1); g.add(head);
   return g;
 }
+// NASA/JPL-Caltech Perseverance 3D model (science.nasa.gov/resource/mars-perseverance-rover-3d-model, 25042_Perseverance.glb),
+// reduced for Quest with gltf-transform (join, simplify, meshopt): ~47k triangles, 3.5 MB. Real size in metres.
+function loadRoverModel() {
+  const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
+  loader.load("./models/perseverance.glb", (g) => {
+    const m = g.scene;
+    m.traverse((o) => { if (o.isMesh) { o.material.fog = false; o.frustumCulled = true; } });
+    const old = ghost.marker; ghost.root.remove(old);
+    ghost.marker = m; ghost.root.add(m);
+    renderer.compile(scene, camera);                  // compile its programs now, not on first sight
+    mwlog("rover-model", { ok: true });
+  }, undefined, (e) => mwlog("rover-model", { ok: false, error: String(e?.message || e) }));
+}
 function labelSprite(title, note) {
   const c = document.createElement("canvas"); c.width = 1024; c.height = 160;
   const g = c.getContext("2d");
@@ -874,6 +916,7 @@ async function buildGhost() {
   if (ghost.trailDesk) ghost.root.add(ghost.trailDesk);
   if (ghost.trailWalk) { ghost.trailWalk.visible = false; ghost.root.add(ghost.trailWalk); }
   ghost.marker = roverModel(); ghost.root.add(ghost.marker);
+  loadRoverModel();
   ghost.label = labelSprite(ghost.text.title, ghost.text.note); ghost.root.add(ghost.label);
 }
 function updateGhost(now) {
