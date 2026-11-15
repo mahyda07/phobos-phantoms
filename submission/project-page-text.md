@@ -22,6 +22,8 @@ Future Mars explorers will need detailed, local information about the ground the
 5. **Time window:** sun height per hour (NASA GISS Mars24) and dust and temperature from Perseverance's MEDA instrument give the EVA hours: **11:00–15:00 local solar time** on a typical sol (not a forecast).
 6. **Show it:** the web map colours the route by walk-back margin and shows the hazard layer, stops, time window and proof. The headset app puts the area on your desk as a hologram; **Step in** walks the route at full size with a visor showing margin, slope, AI hazard, sun height and the next stop.
 
+7. **Run 2 additions (15 Nov, all live):** in the headset, hold A for a **live return route home** (planner response shown on the visor; offline it reverses the walked path), **voice callouts** for steep ground, AI hazard ahead and stops (Quest Browser has no speech engine, so these are recorded clips), **haptics** on rough ground, and **Perseverance's real path** replayed with the NASA rover model. The web map gains a **3D terrain view** and a full keyboard map. A **data feeds** card shows today's Earth–Mars light delay (10.9 min on 15 Nov 2026, JPL Horizons, `pipeline/feeds/horizons.json`) next to the planning date's 10.1 min, recent Sun activity (measured near Earth) and IAU-named features near the area. Real Mars wind recorded by Perseverance plays as ambience.
+
 ## Demo walk (from the repository files)
 - 4383.4 m through 5 stops, back to the start
 - Smallest walk-back margin: 136.1 min of a 240 min EVA
