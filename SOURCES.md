@@ -5,8 +5,8 @@ Rule: nothing gets used until it has a row here with its licence. Non-NASA sourc
 ## NASA and space-agency data
 | Name | Used for | Link | Licence | Added by |
 |---|---|---|---|---|
-| USGS Mars 2020 TRN HiRISE DTM mosaic, 1 m (Jezero) | Elevation, slope, roughness, hologram | https://doi.org/10.5066/P9REJ9JN | CC0 (per USGS data release) — confirm | Ramish |
-| USGS Mars 2020 TRN HiRISE orthomosaic, 25 cm (Jezero) | Photo layer, hazard model input | https://doi.org/10.5066/P9QJDP48 · file: https://planetarymaps.usgs.gov/mosaic/mars2020_trn/HiRISE/JEZ_hirise_soc_006_orthoMosaic_25cm_Eqc_latTs0_lon0_first.tif | USGS data release (public domain) — confirm | Ramish |
+| USGS Mars 2020 TRN HiRISE DTM mosaic, 1 m (Jezero) | Elevation, slope, roughness, hologram | https://doi.org/10.5066/P9REJ9JN | CC0 1.0 Universal (checked 14 Nov 2026, see the AI-model row below) | Ramish |
+| USGS Mars 2020 TRN HiRISE orthomosaic, 25 cm (Jezero) | Photo layer, hazard model input | https://doi.org/10.5066/P9QJDP48 · file: https://planetarymaps.usgs.gov/mosaic/mars2020_trn/HiRISE/JEZ_hirise_soc_006_orthoMosaic_25cm_Eqc_latTs0_lon0_first.tif | CC0 1.0 Universal (checked 14 Nov 2026, see the AI-model row below) | Ramish |
 | Perseverance traverse and waypoints (Where is Perseverance?) | Proof check, rover path on map | https://mars.nasa.gov/mmgis-maps/M20/Layers/json/M20_traverse.json · https://mars.nasa.gov/mmgis-maps/M20/Layers/json/M20_waypoints.json | NASA/JPL-Caltech, public | Ramish |
 | Mars Perseverance raw images | Stop-card photos on the web map: 5 Navcam images hotlinked, not copied (sols 405, 436, 709, 715, 716; IDs in display/src/stop-photos.json); credit NASA/JPL-Caltech | https://mars.nasa.gov/mars2020/multimedia/raw-images/ | NASA media guidelines | Kashif |
 | USGS Astrogeology Mars Viking Global Color Mosaic 925m (browse JPG, 1024×512, Simple Cylindrical, −180..180 E) | "Where on Mars?" locator inset on the web map: hotlinked, not copied | https://astrogeology.usgs.gov/search/map/mars_viking_global_color_mosaic_925m | Public domain (USGS product page: access constraints "public domain", use constraints "None"); originator NASA Planetary Data System | Kashif |
@@ -18,8 +18,8 @@ Rule: nothing gets used until it has a row here with its licence. Non-NASA sourc
 |---|---|---|---|---|
 | uv (Astral), Python 3.12 | Python tooling and environment | https://github.com/astral-sh/uv · https://www.python.org | uv: MIT or Apache-2.0; Python: PSF License | Ramish |
 | NumPy, SciPy, scikit-image | Grids, least-cost routes (MCP), filters | https://numpy.org · https://scipy.org · https://scikit-image.org | BSD-3-Clause (all three) | Ramish |
-| rasterio, pyproj | Reading the HiRISE GeoTIFFs, map projections | https://rasterio.readthedocs.io · https://pyproj4.github.io | BSD-3-Clause; MIT | Ramish |
-| FastAPI, uvicorn, jsonschema | Planner web service and contract checks | https://fastapi.tiangolo.com · https://www.uvicorn.org · https://python-jsonschema.readthedocs.io | MIT; BSD-3-Clause; MIT | Ramish |
+| rasterio, pyproj | Reading the HiRISE GeoTIFFs, map projections | https://rasterio.readthedocs.io · https://pyproj4.github.io/pyproj/ | BSD-3-Clause; MIT | Ramish |
+| FastAPI, uvicorn, jsonschema | Planner web service and contract checks | https://fastapi.tiangolo.com · https://github.com/encode/uvicorn · https://python-jsonschema.readthedocs.io | MIT; BSD-3-Clause; MIT | Ramish |
 | three.js 0.187 | Headset 3D / WebXR | https://threejs.org | MIT | Ramish |
 | Vite 8 | Build tool for xr/ | https://vitejs.dev | MIT | Ramish |
 | PyTorch 2.11.0 (CUDA 12.8 build from download.pytorch.org) | Training and running the AI hazard network HazardNet (model/hazard/) on the RTX 5070 | https://pytorch.org · https://github.com/pytorch/pytorch/blob/main/LICENSE | BSD-3-Clause (checked 14 Nov 2026). The GPU build bundles NVIDIA CUDA libraries under NVIDIA's own licence terms (not reviewed line by line); they are used on the training PC only and nothing from them is in this repo | Maryam |
