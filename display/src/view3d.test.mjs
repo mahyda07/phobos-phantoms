@@ -18,7 +18,7 @@ test("pixel ratio capped lower on phones", () => {
   assert.equal(pixelRatioFor(3, 390), 1.25); assert.equal(pixelRatioFor(3, 1440), 2); assert.equal(pixelRatioFor(1, 390), 1);
 });
 test("exaggeration: 1x-3x, default 1.5x, labelled", () => {
-  assert.equal(EXAG_DEFAULT, 1.5); assert.equal(clampExag(9), 3); assert.equal(clampExag(0.2), 1); assert.equal(clampExag("x"), 1.5);
+  assert.equal(EXAG_DEFAULT, 1.5); assert.equal(clampExag(9), 4); assert.equal(clampExag(0.2), 1); assert.equal(clampExag("x"), 1.5);
   assert.equal(exagLabel(2), "Vertical exaggeration 2.0×");
 });
 test("cameras look at the centre; ease is monotonic 0..1", () => {

@@ -1,7 +1,7 @@
 // Written with AI assistance (Claude).
 // 3D terrain view for the web map (run 2, Phase 3a; console look 15 Nov). Loaded on demand (dynamic import), so the 2D
 // map stays as fast as before. Terrain mesh logic follows xr/src/main.js (PlaneGeometry rotated -90 deg, row 0 = north,
-// heights - zRef). Shows: DEM heights with a vertical exaggeration slider (1x-3x, default 1.5x) as a red "Relief"
+// heights - zRef). Shows: DEM heights with a vertical exaggeration slider (1x-4x, default 1.5x) as a red "Relief"
 // surface (a display tint of the real heights, with its own legend) or the untinted HiRISE "Photo"; the active route as
 // a thin line with the same margin ramp as the 2D map; Start / End markers; stops as labelled pins; the raster layers
 // draped as textures (never smoothed); Perseverance's real path; the previous route (compare) as a dashed grey line;
@@ -135,59 +135,118 @@ export async function createView3D(host, { f, data, meta, route, rover, stops = 
     world.add(new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0x1c0c08, side: THREE.DoubleSide })));
   }
 
-  // backdrop (decoration only, never picked or measured): a dusk sky dome with a dusty horizon glow, stars, and a
-  // dark plain under the terrain block that fades into the horizon, so the block no longer floats in black.
+  // backdrop (decoration only, never picked or measured): a Mars dusk sky (butterscotch dust near the horizon, the
+  // blue glow Mars has around a low sun), twinkling stars, Phobos and Deimos, a distant crater-rim silhouette and a
+  // warm plain under the terrain block, so the block sits in a scene instead of floating in black.
+  const backdrop = { tick: () => {} };
   {
     const c = extent / 2, R = extent * 3.6;
-    const sky = new THREE.Mesh(new THREE.SphereGeometry(R, 48, 24), new THREE.ShaderMaterial({
-      side: THREE.BackSide, depthWrite: false, fog: false,
-      uniforms: { zen: { value: new THREE.Color(0x03050b) }, mid: { value: new THREE.Color(0x0c1426) }, hor: { value: new THREE.Color(0x5a2a17) }, sun: { value: new THREE.Vector3(1.2, 0.18, 1.6).normalize() } },
+    const sunDir = new THREE.Vector3(1.2, 0.10, 1.6).normalize();
+    const skyU = { zen: { value: new THREE.Color(0x060a1c) }, mid: { value: new THREE.Color(0x24284a) }, hor: { value: new THREE.Color(0xb0643a) },
+      sun: { value: sunDir }, t: { value: 0 } };
+    const sky = new THREE.Mesh(new THREE.SphereGeometry(R, 64, 32), new THREE.ShaderMaterial({
+      side: THREE.BackSide, depthWrite: false, fog: false, uniforms: skyU,
       vertexShader: "varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-      fragmentShader: `uniform vec3 zen, mid, hor, sun; varying vec3 vDir;
+      fragmentShader: `uniform vec3 zen, mid, hor, sun; uniform float t; varying vec3 vDir;
+        float hash(vec3 p){ return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
+        float noise(vec3 p){ vec3 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+          return mix(mix(mix(hash(i), hash(i+vec3(1,0,0)), f.x), mix(hash(i+vec3(0,1,0)), hash(i+vec3(1,1,0)), f.x), f.y),
+                     mix(mix(hash(i+vec3(0,0,1)), hash(i+vec3(1,0,1)), f.x), mix(hash(i+vec3(0,1,1)), hash(i+vec3(1,1,1)), f.x), f.y), f.z); }
         void main(){
-          float h = vDir.y;
-          vec3 col = mix(hor, mid, smoothstep(-0.02, 0.22, h));
-          col = mix(col, zen, smoothstep(0.22, 0.75, h));
-          float glow = pow(max(dot(normalize(vec3(vDir.x, 0.0, vDir.z)), normalize(vec3(sun.x, 0.0, sun.z))), 0.0), 6.0) * (1.0 - smoothstep(0.0, 0.35, abs(h)));
-          col += vec3(0.55, 0.24, 0.10) * glow * 0.55;
-          if (h < -0.02) col = mix(hor * 0.55, vec3(0.03, 0.02, 0.02), smoothstep(-0.02, -0.3, h));
+          vec3 d = normalize(vDir); float h = d.y;
+          vec3 col = mix(hor, mid, smoothstep(-0.03, 0.28, h));
+          col = mix(col, zen, smoothstep(0.28, 0.85, h));
+          float sd = max(dot(d, sun), 0.0);
+          col += vec3(0.35, 0.55, 0.95) * pow(sd, 18.0) * 0.9;              // blue sunset halo
+          col += vec3(1.0, 0.55, 0.28) * pow(sd, 3.0) * 0.35 * (1.0 - smoothstep(0.0, 0.45, h));
+          col += vec3(1.0, 0.95, 0.85) * smoothstep(0.9993, 0.9998, sd);   // small sun disc
+          // milky-way band: soft noisy stripe across the sky
+          vec3 axis = normalize(vec3(0.3, 0.8, -0.5));
+          float band = exp(-pow(dot(d, axis) / 0.16, 2.0));
+          float n = noise(d * 9.0) * 0.6 + noise(d * 23.0) * 0.4;
+          col += vec3(0.55, 0.50, 0.75) * band * n * 0.22 * smoothstep(0.08, 0.4, h);
+          // drifting dust haze near the horizon
+          col += vec3(0.30, 0.14, 0.07) * noise(vec3(d.x * 6.0 + t * 0.01, h * 18.0, d.z * 6.0)) * (1.0 - smoothstep(0.0, 0.2, abs(h))) * 0.5;
+          if (h < -0.03) col = mix(hor * 0.6, vec3(0.05, 0.025, 0.02), smoothstep(-0.03, -0.35, h));
           gl_FragColor = vec4(col, 1.0);
         }`,
     }));
     sky.position.set(c, 0, c); sky.renderOrder = -10; sky.raycast = () => {};
     scene.add(sky);
 
-    const N = 1400, sp = new Float32Array(N * 3), sc = new Float32Array(N * 3);
+    // stars: twinkle slowly (shader), brighter and more numerous than a plain point cloud
+    const N = 2600, sp = new Float32Array(N * 3), sa = new Float32Array(N * 2);
     let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
     for (let i = 0; i < N; i++) {
-      const u = rnd(), v = 0.12 + rnd() * 0.88, th = u * Math.PI * 2, y = v, r = Math.sqrt(1 - y * y);
-      sp.set([c + Math.cos(th) * r * R * 0.97, y * R * 0.97, c + Math.sin(th) * r * R * 0.97], i * 3);
-      const b = (0.35 + rnd() * 0.65) * Math.min(1, (y - 0.12) * 4);
-      sc.set([b * 0.9, b * 0.93, b], i * 3);
+      const th = rnd() * Math.PI * 2, y = 0.06 + Math.pow(rnd(), 0.8) * 0.94, r = Math.sqrt(1 - y * y);
+      sp.set([c + Math.cos(th) * r * R * 0.96, y * R * 0.96, c + Math.sin(th) * r * R * 0.96], i * 3);
+      sa.set([0.25 + Math.pow(rnd(), 3) * 0.75, rnd() * 6.283], i * 2);
     }
     const sg = new THREE.BufferGeometry();
-    sg.setAttribute("position", new THREE.BufferAttribute(sp, 3)); sg.setAttribute("color", new THREE.BufferAttribute(sc, 3));
-    const stars = new THREE.Points(sg, new THREE.PointsMaterial({ size: 2, sizeAttenuation: false, vertexColors: true, fog: false, depthWrite: false, transparent: true }));
+    sg.setAttribute("position", new THREE.BufferAttribute(sp, 3)); sg.setAttribute("aStar", new THREE.BufferAttribute(sa, 2));
+    const starU = { t: { value: 0 }, px: { value: Math.min(devicePixelRatio || 1, 2) } };
+    const stars = new THREE.Points(sg, new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, fog: false, blending: THREE.AdditiveBlending, uniforms: starU,
+      vertexShader: `attribute vec2 aStar; uniform float t, px; varying float vB;
+        void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv;
+          float hgt = clamp(position.y / ${(R * 0.96).toFixed(1)}, 0.0, 1.0);
+          vB = aStar.x * (0.65 + 0.35 * sin(t * (0.6 + aStar.y * 0.3) + aStar.y * 10.0)) * smoothstep(0.06, 0.3, hgt);
+          gl_PointSize = (1.2 + aStar.x * 3.0) * px; }`,
+      fragmentShader: `varying float vB; void main(){ vec2 q = gl_PointCoord - 0.5; float a = smoothstep(0.5, 0.0, length(q));
+          gl_FragColor = vec4(vec3(0.92, 0.94, 1.0) * vB * a, 1.0); }`,
+    }));
     stars.renderOrder = -9; stars.raycast = () => {};
     scene.add(stars);
 
-    const plain = new THREE.Mesh(new THREE.CircleGeometry(extent * 3.4, 64), new THREE.ShaderMaterial({
-      transparent: true, depthWrite: false,
-      uniforms: { near: { value: new THREE.Color(0x3d1c0f) }, far: { value: new THREE.Color(0x5a2a17) }, ext: { value: extent } },
+    // Phobos and Deimos: two small soft moons (decoration)
+    const moonTex = (() => { const cv = document.createElement("canvas"); cv.width = cv.height = 64; const g = cv.getContext("2d");
+      const gr = g.createRadialGradient(28, 28, 2, 32, 32, 30); gr.addColorStop(0, "rgba(235,225,210,1)"); gr.addColorStop(0.55, "rgba(170,150,130,.95)"); gr.addColorStop(0.7, "rgba(120,100,90,.35)"); gr.addColorStop(1, "rgba(0,0,0,0)");
+      g.fillStyle = gr; g.fillRect(0, 0, 64, 64); const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; return tx; })();
+    for (const [az, el, size] of [[-0.9, 0.42, 110], [2.3, 0.62, 55]]) {
+      const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: moonTex, fog: false, depthWrite: false, transparent: true }));
+      const r = Math.cos(el) * R * 0.93; m.position.set(c + Math.cos(az) * r, Math.sin(el) * R * 0.93, c + Math.sin(az) * r);
+      m.scale.set(size, size, 1); m.renderOrder = -8; m.raycast = () => {}; scene.add(m);
+    }
+
+    // distant crater-rim silhouette all around (procedural, not real topography)
+    {
+      const seg = 360, rr = extent * 2.9, pos = [], idx = [];
+      for (let i = 0; i <= seg; i++) {
+        const a = (i / seg) * Math.PI * 2;
+        const hgt = extent * (0.05 + 0.035 * Math.sin(a * 3 + 1.3) + 0.025 * Math.sin(a * 7 + 0.4) + 0.012 * Math.sin(a * 17 + 2.1) + 0.006 * Math.sin(a * 41));
+        const x = c + Math.cos(a) * rr, z = c + Math.sin(a) * rr;
+        pos.push(x, -40, z, x, Math.max(10, hgt), z);
+        if (i < seg) { const o = i * 2; idx.push(o, o + 2, o + 1, o + 1, o + 2, o + 3); }
+      }
+      const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx);
+      const rim = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0x3a1a10, side: THREE.DoubleSide, fog: true }));
+      rim.renderOrder = -7; rim.raycast = () => {}; scene.add(rim);
+    }
+
+    // plain under the terrain: warm near the block, dusty toward the rim, faint distance rings
+    const plain = new THREE.Mesh(new THREE.CircleGeometry(extent * 3.2, 96), new THREE.ShaderMaterial({
+      depthWrite: false,
+      uniforms: { near: { value: new THREE.Color(0x5a2914) }, far: { value: new THREE.Color(0x8a4826) }, ext: { value: extent } },
       vertexShader: "varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
       fragmentShader: `uniform vec3 near, far; uniform float ext; varying vec2 vP;
+        float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         void main(){
           float d = length(vP) / ext;
-          vec3 col = mix(near * 1.25, far, smoothstep(0.4, 3.2, d));
-          float ring = (1.0 - smoothstep(0.0, 0.06, abs(fract(d * 2.0) - 0.5) - 0.44)) * 0.06 * (1.0 - smoothstep(0.8, 2.6, d));
-          col += vec3(ring);
-          gl_FragColor = vec4(col, 1.0 - smoothstep(2.6, 3.4, d) * 0.0);
+          vec3 col = mix(near, far, smoothstep(0.5, 3.0, d));
+          col *= 0.85 + 0.15 * hash(floor(vP / 18.0));                     // dusty grain
+          float ring = (1.0 - smoothstep(0.0, 0.05, abs(fract(d * 2.0) - 0.5) - 0.45)) * 0.10 * (1.0 - smoothstep(0.8, 2.4, d));
+          col += vec3(1.0, 0.6, 0.35) * ring;
+          col += vec3(0.5, 0.22, 0.1) * (1.0 - smoothstep(0.55, 1.1, d)) * 0.35;   // light pool under the block
+          gl_FragColor = vec4(col, 1.0);
         }`,
     }));
     plain.rotation.x = -Math.PI / 2; plain.position.set(c, -30.5, c); plain.raycast = () => {};
     world.add(plain);
+
+    backdrop.tick = (now) => { const s = now / 1000; starU.t.value = s; skyU.t.value = s; };
   }
-  scene.fog.color.set(0x2a1710);
+  scene.fog.color.set(0x6a3520);
+  scene.fog.near = extent * 2.2; scene.fog.far = extent * 4.2;
 
   // surface: "relief" (default) or "photo" (the HiRISE photo, untinted, loaded on first use)
   let surface = "relief", photoLoading = null;
@@ -479,6 +538,7 @@ export async function createView3D(host, { f, data, meta, route, rover, stops = 
   renderer.setAnimationLoop(() => {
     if (!visible) return;
     const now = performance.now(), raw = (now - last) / 1000, dt = Math.min(0.1, raw); last = now;
+    if (!reduceMotion()) backdrop.tick(now);
     if (raw > 0 && raw < 1) fps = fps ? fps * 0.9 + (1 / raw) * 0.1 : 1 / raw;
     if (anim) {
       const k = Math.min(1, (now - anim.t0) / anim.ms), e = easeInOut(k);

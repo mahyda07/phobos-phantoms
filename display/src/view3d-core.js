@@ -26,7 +26,7 @@ export function pickLod(lods, viewportW) {
 /** Device pixel ratio for the 3D canvas: capped lower on small screens (phone performance, brief 3c). */
 export const pixelRatioFor = (dpr, viewportW) => Math.min(dpr || 1, viewportW < 700 ? 1.25 : 2);
 
-export const EXAG_MIN = 1, EXAG_MAX = 3, EXAG_DEFAULT = 1.5;
+export const EXAG_MIN = 1, EXAG_MAX = 4, EXAG_DEFAULT = 1.5;
 export const clampExag = (v) => Math.min(EXAG_MAX, Math.max(EXAG_MIN, Number.isFinite(+v) ? +v : EXAG_DEFAULT));
 export const exagLabel = (v) => `Vertical exaggeration ${clampExag(v).toFixed(1)}×`;
 
@@ -38,7 +38,7 @@ export function defaultCamera(extentM, aspect = 1.6) {
   const c = extentM / 2;
   const a = Number.isFinite(aspect) && aspect > 0 ? aspect : 1.6;
   const back = Math.min(2.2, Math.max(1, 1.45 / a));
-  return { target: [c, 0, c], position: [c + extentM * 0.55 * back, extentM * 0.75 * back, c + extentM * 0.95 * back] };
+  return { target: [c, 0, c], position: [c + extentM * 0.55 * back, extentM * 0.52 * back, c + extentM * 1.05 * back] };
 }
 
 /** Top-down camera that roughly matches the 2D map framing (start of the 0.5 s switch animation). */

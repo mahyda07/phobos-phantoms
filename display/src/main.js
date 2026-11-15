@@ -340,7 +340,7 @@ async function main() {
   v3dHost.id = "view3d"; v3dHost.hidden = true;
   v3dHost.innerHTML = `<div class="v3d-bar glass" role="group" aria-label="3D view controls">
       <label class="v3d-exag"><span id="v3d-exag-label">Vertical exaggeration 1.5×</span>
-        <input id="v3d-exag" type="range" min="1" max="3" step="0.1" value="1.5" aria-describedby="v3d-exag-label"></label>
+        <input id="v3d-exag" type="range" min="1" max="4" step="0.1" value="1.5" aria-describedby="v3d-exag-label"></label>
       <span class="v3d-surf" role="group" aria-label="Terrain surface">
         <button type="button" class="chip" id="v3d-relief" aria-pressed="true">Relief</button>
         <button type="button" class="chip" id="v3d-photo" aria-pressed="false">Photo</button></span>
