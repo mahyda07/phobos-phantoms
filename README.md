@@ -9,9 +9,21 @@ Real NASA terrain at Jezero Crater becomes a safety map. A least-cost walking ro
 ## Try it (public links, no login)
 | What | Link | Notes |
 |---|---|---|
-| Headset app (Meta Quest 3 browser, also runs on a PC) | https://phantom-phobos.vercel.app | Hologram of the walking area on your desk; **Step in** to walk the planned route at full size with the visor |
-| Web map | https://phobos-display.vercel.app | Route coloured by walk-back margin, science stops with rover photos, proof view, time window |
+| Headset app (Meta Quest 3 browser, also runs on a PC) | https://phantom-phobos.vercel.app | Hologram of the walking area on your desk; **Step in** to walk the planned route at full size with the visor. Hold **A** for a live **return route home**; **B** shows Perseverance's real path with the NASA rover model; voice callouts, haptics on rough ground, real Mars wind |
+| Web map | https://phobos-display.vercel.app | Route coloured by walk-back margin, science stops with rover photos, proof view, time window; **2D / 3D terrain view**, data feeds (light delay today, Sun activity, IAU names), optional Mars wind sound |
 | Planner web service | https://phobos-planner.onrender.com | `GET /health`, `GET /stops`, `GET /window`, `GET /results`, `POST /plan`; interactive docs at `/docs`. Free hosting: the first request after a quiet spell is slow |
+
+### Keyboard and controllers
+| Web map | | Headset (desktop preview / Quest controllers) | |
+|---|---|---|---|
+| `2` / `3` | 2D map / 3D terrain | `W` `S` / ↑ ↓ · right stick | walk forward / back (zoom on the desk) |
+| `P` | plan a route | `A` `D` / ← → | turn the view / rotate the hologram |
+| `H` / `G` | AI hazard layer / Perseverance path | `Space` | pause the walk |
+| `L` / `R` | layers list / reset view | `H` · hold **A** 1 s | get me home |
+| `+` / `-` | zoom | `G` · **B** | Perseverance's path (ghost rover) |
+| `Space` / ← → | play / step along the route | `M` · **X** | sound on/off |
+| `M` | sound (off by default) | `V` · **Y** | repeat the last callout |
+| `?` / `Esc` | shortcuts / close | `?` / `Esc` | help (keyboard + controller) / close |
 
 ## How it works
 1. **Terrain** (`terrain/`): USGS Mars 2020 HiRISE elevation (1 m) and photo (25 cm) of a 1.5 × 1.5 km area of Jezero's western delta, turned into a 2 m grid of elevation, slope and roughness.
