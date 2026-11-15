@@ -87,3 +87,9 @@ h1 span { background: linear-gradient(90deg, var(--mars), var(--mars2)); -webkit
 @keyframes tin { from { transform: translateX(30px); opacity:0; } } @keyframes tout { to { transform: translateX(30px); opacity:0; } }
 #credit { position:fixed; bottom:4px; right:10px; font-size:10px; color:var(--mut); opacity:.7; z-index:4; }
 @media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
+
+/* Phase B polish (15 Nov): keyboard focus ring like the web map (display/src/a11y.css), and the welcome card
+   scrolls on short phones instead of cutting off the buttons (body is overflow:hidden for the 3D canvas). */
+button:focus-visible, a:focus-visible, [tabindex]:focus-visible { outline:2px solid var(--mars); outline-offset:2px; }
+#welcome { overflow-y:auto; }
+@media (max-height: 760px) { #welcome { place-items:start center; padding: 16px 0; } }
