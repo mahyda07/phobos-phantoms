@@ -77,7 +77,7 @@ A mixed-reality Marswalk planner. Real NASA terrain at Jezero Crater becomes a s
 Check-ins in the group: 13:00, 19:00, 01:00 — done / next / blocked.
 
 ## 5. Changelog
-- Sun ~03:30: AI layer wired in everywhere (D28): hazard layer in `terrain/out/` + manifest, AI fallback route, Render copy stages the AI planner (`PLANNER=model`), `/health` shows the hazard layer. Time window tie-break → EVA LTST 11–15 (D29). PRs #26, #27, #28.
+- Sun ~03:30: AI layer wired in everywhere (D28): hazard layer in `terrain/out/` + manifest, AI fallback route, Render copy stages the AI planner (`PLANNER=model`), `/health` shows the hazard layer. Time window tie-break → EVA LTST 11–15 (D29). PRs #26, #27, #28, #29.
 - Sat ~21:45: planner service moved to Render (https://phobos-planner.onrender.com): Hugging Face's free plan now only offers ZeroGPU for Gradio/Docker Spaces (CPU basic needs PRO) and the ZeroGPU start-up check kept failing. Render deploys a public hosting copy (aprettymess/phobos-planner) because it can't read the private team repo. `pipeline/hf/` removed; `pipeline/render/make_render.ps1` added.
 - Sat ~21:00: headset step-in walk + visor (D26); stand-in time window + proof vs Perseverance (D27); planner service on Hugging Face Spaces (Gradio SDK on ZeroGPU: Docker Spaces are paid, CPU basic not offered; Render can't read the private repo), files in `pipeline/hf/`; Vercel deploys run from `F:\SpaceApps2026\deploy\` outside git (Vercel blocks merge commits by the GitHub no-reply author); SOURCES.md completed (licences, DOIs, Mars24, hosting).
 - Sat ~16:30: science layer + stops on grid (D24); stand-in planner + service with demo route (D25).

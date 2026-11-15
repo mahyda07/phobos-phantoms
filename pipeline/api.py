@@ -60,7 +60,7 @@ def warm_up():
 def health():
     return {"status": "ok", "planner": PLANNER_NAME,
             "model_version": getattr(__import__(planner.__class__.__module__, fromlist=["x"]), "MODEL_VERSION", "unknown"),
-            "hazard": getattr(planner, "hazard_source", "terrain/out/hazard.bin (weight 0 in the stand-in)"
+            "hazard": getattr(planner, "hazard_source", f"{DATA / 'hazard.bin'} (weight 0 in the stand-in)"
                               if (DATA / "hazard.bin").exists() else "none"),
             "grid": {"width": planner.grid["width"], "height": planner.grid["height"], "cell_m": planner.grid["cell_m"]},
             "stops": list(planner.stops)}
