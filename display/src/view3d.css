@@ -10,22 +10,37 @@
 #view3d { position: absolute; inset: 0; z-index: 450; background: #06090f; }
 #view3d[hidden] { display: none; }
 #view3d canvas { display: block; width: 100%; height: 100%; touch-action: none; }
-#view3d .v3d-bar { position: absolute; left: 12px; right: 12px; bottom: 14px; margin: 0 auto; width: fit-content; max-width: calc(100% - 24px);
-  display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 16px;
-  background: rgba(12,17,26,.82); border: 1px solid rgba(255,255,255,.10); backdrop-filter: blur(12px); }
-#view3d .v3d-exag { display: flex; align-items: center; gap: 8px; color: #eef2f6; font-size: 13px; }
-#view3d .v3d-exag input { width: 120px; accent-color: #ff7a3d; }
-#view3d .chip { min-height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.14); background: transparent; color: #eef2f6; font: 600 13px system-ui, sans-serif; cursor: pointer; }
-#view3d .chip[aria-pressed="true"] { border-color: #ff7a3d; color: #ffb26b; }
-#view3d .chip:hover { background: rgba(255,255,255,.06); }
-#view3d .chip:focus-visible, #view3d input:focus-visible { outline: 2px solid #ff7a3d; outline-offset: 2px; }
-#view3d .v3d-hint { position: absolute; bottom: 76px; right: 14px; padding: 6px 10px; border-radius: 10px; background: rgba(12,17,26,.7); color: #9aa8b6; font-size: 12px; pointer-events: none; }
-#view3d .v3d-loading { display: none; position: absolute; inset: 0; place-items: center; color: #9aa8b6; font-size: 14px; }
+#view3d .v3d-bar { position: absolute; left: 12px; right: 12px; top: 12px; margin: 0 auto; width: fit-content; max-width: calc(100% - 24px);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px;
+  background: rgba(8,11,16,.86); border: 1px solid var(--ui-blue, #3d8bff); }
+#view3d .v3d-surf { display: inline-flex; gap: 6px; }
+#view3d .v3d-exag { display: flex; align-items: center; gap: 8px; color: #eef2f6; font: 13px var(--font-num, ui-monospace, monospace); }
+#view3d .v3d-exag input { width: 120px; accent-color: var(--mars, #ff7a3d); }
+#view3d .chip { min-height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--ui-blue, #3d8bff); background: transparent; color: #eef2f6; font: 600 13px var(--font-num, ui-monospace, monospace); cursor: pointer; }
+#view3d .chip[aria-pressed="true"] { border-color: var(--mars, #ff7a3d); color: var(--mars, #ff7a3d); }
+#view3d .chip:hover { background: var(--ui-blue-soft, rgba(61,139,255,.10)); }
+#view3d .chip:focus-visible, #view3d input:focus-visible { outline: 2px solid var(--mars, #ff7a3d); outline-offset: 2px; }
+@media (pointer: coarse) { #view3d .chip { min-height: 44px; } }
+#view3d .v3d-hint { position: absolute; top: 64px; right: 14px; padding: 6px 10px; border-radius: 8px; background: rgba(8,11,16,.7); color: #b4c0cc; font: 12px var(--font-num, ui-monospace, monospace); pointer-events: none; }
+#view3d .v3d-loading { display: none; position: absolute; inset: 0; place-items: center; color: #b4c0cc; font-size: 14px; }
 #view3d.loading .v3d-loading { display: grid; }
-body.view-3d #map .leaflet-control-container, body.view-3d #hud { display: none; }
+#view3d .v3d-legend { position: absolute; left: 14px; bottom: 150px; width: 210px; padding: 8px 10px; border-radius: 8px; background: rgba(8,11,16,.86);
+  border: 1px solid rgba(255,255,255,.12); color: #eef2f6; font: 11px/1.4 var(--font-num, ui-monospace, monospace); pointer-events: none; }
+#view3d .v3d-legend[hidden] { display: none; }
+#view3d .v3d-legend-title { font-weight: 600; margin-bottom: 4px; }
+#view3d .v3d-legend-bar { height: 8px; border-radius: 3px; }
+#view3d .v3d-legend-ends { display: flex; justify-content: space-between; margin-top: 3px; }
+#view3d .v3d-legend-note { color: #b4c0cc; margin-top: 4px; }
+/* 3D shows: keep HUD, attribution, legends and the locator; hide only zoom buttons and the scale bar */
+body.view-3d #map .leaflet-control-zoom, body.view-3d #map .scale-bar { display: none; }
 .leaflet-control-layers.is-hidden { display: none; }
-@media (max-width: 640px) {
+@media (max-width: 900px) {
+  #view3d .v3d-bar { top: auto; bottom: 14px; }
   #view3d .v3d-hint { display: none; }
+  #view3d .v3d-legend { bottom: 120px; }
+  body.view-3d #map .leaflet-top { display: none; }
+}
+@media (max-width: 640px) {
   #view3d .v3d-exag input { width: 90px; }
   .view-toggle button { padding: 0 10px; font-size: 12px; }
   .view-toggle .long { display: none; }

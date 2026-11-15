@@ -45,7 +45,7 @@ export function metresToMapUnits(m, f) {
  * opts: { L (the Leaflet module), getPointLatLng(i) -> [lat, lng], pointCount, onIndex(i) }.
  * Returns { setIndex(i), setPointCount(n), destroy() }.
  */
-export function initMovingMap(map, f, { L, getPointLatLng, pointCount = 0, onIndex = () => {} } = {}) {
+export function initMovingMap(map, f, { L, getPointLatLng, pointCount = 0, onIndex = () => {}, onFollow = () => {} } = {}) {
   if (!L) throw new TypeError("initMovingMap: pass the Leaflet module as opts.L");
   let n = pointCount;
   let index = 0;
@@ -153,13 +153,13 @@ export function initMovingMap(map, f, { L, getPointLatLng, pointCount = 0, onInd
 
   const onPlay = () => (timer !== null ? stop() : play());
   const onSpeed = () => { speed = Number(speedSel.value) || 1; };
-  const onFollow = () => { follow = !follow; syncButtons(); followPoint(); };
+  const onFollowBtn = () => { follow = !follow; syncButtons(); followPoint(); onFollow(follow); };
   const onRings = () => { ringsOn = !ringsOn; syncButtons(); placeRings(); };
-  const onDragStart = () => { if (follow) { follow = false; syncButtons(); } }; // the user takes the map back
+  const onDragStart = () => { if (follow) { follow = false; syncButtons(); onFollow(false); } }; // the user takes the map back
 
   L.DomEvent.on(playBtn, "click", onPlay);
   L.DomEvent.on(speedSel, "change", onSpeed);
-  L.DomEvent.on(followBtn, "click", onFollow);
+  L.DomEvent.on(followBtn, "click", onFollowBtn);
   L.DomEvent.on(ringsBtn, "click", onRings);
   map.on("dragstart", onDragStart);
   map.on("zoomend", updateLabelVisibility);
@@ -194,7 +194,7 @@ export function initMovingMap(map, f, { L, getPointLatLng, pointCount = 0, onInd
       map.getContainer().classList.remove("mm-labels-hidden");
       L.DomEvent.off(playBtn, "click", onPlay);
       L.DomEvent.off(speedSel, "change", onSpeed);
-      L.DomEvent.off(followBtn, "click", onFollow);
+      L.DomEvent.off(followBtn, "click", onFollowBtn);
       L.DomEvent.off(ringsBtn, "click", onRings);
       ringLayer.remove();
       control.remove();
