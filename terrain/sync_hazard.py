@@ -23,7 +23,7 @@ def hazard_entry(meta, grid):
         "id": "hazard", "name": "AI hazard estimate (model, not validated)", "file": meta["file"], "kind": "raster",
         "units": "0-1 relative", "cell_m": grid["cell_m"],
         "source": f"HazardNet ({meta['version']}), team model on the USGS HiRISE 25 cm photo; held-out test mIoU {m['miou']:.3f} (model/MODEL_CARD.md)",
-        "licence": "Derived from USGS HiRISE orthomosaic + DTM (U.S. Government work, public domain); model by the team",
+        "licence": "Derived from USGS HiRISE orthomosaic + DTM (CC0 1.0 Universal); model by the team (Apache-2.0, LICENSE)",
         "citation": "model/MODEL_CARD.md",
         "colormap": "0-1 clear-yellow-red (model/hazard/infer.py)",
     }
