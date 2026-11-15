@@ -54,6 +54,6 @@ Panels are world-locked (never head-locked). The visor uses the same tokens rend
 ## What Phase 6 changes (from the before screenshots, qa/run2/before/)
 1. White text on the orange buttons → `--on-mars` (2.59:1 → 7.69:1).
 2. The map's tracked ALL-CAPS panel titles ("ROUTE", "AT THIS POINT ON THE ROUTE") and the welcome kicker → sentence case.
-3. The headset preview draws the route in plain mint green, while the map colours it by margin → both use the margin ramp.
+3. The headset colours the route with a 3-step margin scale (`xr/src/terrain.js` `marginColour`: green ≥ 60 min, amber ≥ 15 min, red below). On this route every margin is ≥ 60 min, so it looks all green. The map uses a continuous ramp scaled to the route's largest margin → both use the map's `RAMP`, the same way.
 4. Two apps, two token sets (`--muted`/`--mut`, `--accent`/`--mars`) → the names above in both apps.
-5. Radii (4/6/10/12/14/24 px in use) → the 4 role radii above.
+5. Radii (3, 4, 5, 6, 8, 10, 12, 14, 16, 22, 24 px and 1 mm are in use) → the 4 role radii above.
