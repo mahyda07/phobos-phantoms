@@ -42,6 +42,7 @@ import "./live-feeds.css";
 import { initA11y } from "./a11y.js";
 import "./view3d.css";
 import "./a11y.css"; // after theme.css: focus rings, contrast fixes
+import "./ui-tokens.css"; // run 2 Phase 6: tokens, fonts, sentence case, mono numbers
 import "./responsive.css"; // keep last: phone/tablet overrides
 
 const DATA = "data/";

@@ -105,7 +105,10 @@ export function initMovingMap(map, f, { L, getPointLatLng, pointCount = 0, onInd
     return b;
   };
   const playBtn = btn("mm-play", "▶ Play", "Play route");
+  const speedLab = L.DomUtil.create("label", "mm-speed-label", root);   // run 2: visible label (taste-skill field-label)
+  speedLab.textContent = "Speed"; speedLab.htmlFor = "mm-speed";
   const speedSel = L.DomUtil.create("select", "mm-speed", root);
+  speedSel.id = "mm-speed";
   speedSel.setAttribute("aria-label", "Playback speed");
   for (const s of SPEEDS) {
     const o = L.DomUtil.create("option", "", speedSel);
