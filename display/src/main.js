@@ -5,7 +5,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "./style.css";
 import { loadFrame } from "./frame.js";
-import { drawRoute, checkRoute, routeKind } from "./route.js";
+import { drawRoute, checkRoute, routeKind, rampColor } from "./route.js";
 import { renderNoRoute, renderRouteSummary, renderReadout, renderWindow, renderHud, renderConditions, setSlopeLimit } from "./panel.js";
 import { costModelRow } from "./cost-model.js";
 import { renderStopCards, highlightStopCard, stopsFromCsv, parseCsv } from "./stop-cards.js";
@@ -38,6 +38,7 @@ import "./locator.css";
 import { initLiveFeeds, MEDA_URL } from "./live-feeds.js";
 import "./live-feeds.css";
 import { initA11y } from "./a11y.js";
+import "./view3d.css";
 import "./a11y.css"; // after theme.css: focus rings, contrast fixes
 import "./responsive.css"; // keep last: phone/tablet overrides
 
@@ -191,6 +192,7 @@ async function main() {
   const slider = document.getElementById("point-slider");
   let view = null;
   let current = null;
+  let v3d = null;      // run 2: 3D terrain view (view3d.js, loaded on first switch)
   let lastPlanRequest = null; // set only while the drawn route came from the live planner (for share links)
   let exporter = null; // route downloads (created further down, refreshed whenever the route changes)
   const compare = initCompare(map, { L, f, container: document.getElementById("compare") }); // previous vs new planner route
@@ -205,6 +207,7 @@ async function main() {
     slider.value = i;
     slider.setAttribute("aria-valuetext", `Point ${i + 1} of ${Number(slider.max) + 1}`);
     view.setPoint(i);
+    v3d?.setPoint(i);
     mm?.setIndex(i);
     profile?.setPoint(i);
     const next = view.stops.find((s) => s.vertex >= i) || null;
@@ -230,6 +233,7 @@ async function main() {
   const showRoute = (route) => {
     if (view) { layersControl.removeLayer(view.layer); view.layer.remove(); view = null; }
     current = route;
+    v3d?.setRoute(route);
     const onStop = (id) => { highlightStopCard(stopsEl, id); view?.focusStop(id); };
     view = drawRoute(map, f, route, { onPoint: showPoint, onPreview: previewPoint, onPreviewEnd: endPreview, onStop });
     routeLL = route.geometry.coordinates.map(([x, y]) => f.localToLeaflet(x, y));
@@ -319,7 +323,79 @@ async function main() {
     const b = el && (el.matches("button") ? el : el.querySelector("button"));
     b?.click();
   };
-  initA11y({ getIndex: () => Number(slider.value), setIndex: showPoint, pointCount: () => (view ? routeLL.length : 0), clickByClass });
+  // ---- run 2 (Phase 3): 2D / 3D switch + keyboard actions (a11y.js keyAction: 2 3 P H G L R + -) ----
+  const v3dHost = document.createElement("div");
+  v3dHost.id = "view3d"; v3dHost.hidden = true;
+  v3dHost.innerHTML = `<div class="v3d-bar glass" role="group" aria-label="3D view controls">
+      <label class="v3d-exag"><span id="v3d-exag-label">Vertical exaggeration 1.5×</span>
+        <input id="v3d-exag" type="range" min="1" max="3" step="0.1" value="1.5" aria-describedby="v3d-exag-label"></label>
+      <button type="button" class="chip" id="v3d-hazard" aria-pressed="false">AI hazard</button>
+      <button type="button" class="chip" id="v3d-rover" aria-pressed="true">Perseverance path</button>
+      <button type="button" class="chip" id="v3d-reset">Reset view</button>
+    </div>
+    <div class="v3d-hint">Drag to orbit · scroll to zoom · W A S D pan · Q / E rotate</div>
+    <div class="v3d-loading" role="status">Loading 3D terrain…</div>`;
+  document.getElementById("map").appendChild(v3dHost);
+  const toggleEl = document.getElementById("view-toggle");
+  const setPressed = (id, on) => document.getElementById(id)?.setAttribute("aria-pressed", String(!!on));
+  let switching = false;
+  async function setView(mode) {
+    if (switching) return null;
+    const want3d = mode === "3d";
+    toggleEl.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === mode)));
+    if (!want3d) { v3d?.hide(); v3dHost.hidden = true; document.body.classList.remove("view-3d"); return "2D map"; }
+    document.body.classList.add("view-3d"); v3dHost.hidden = false;
+    if (!v3d) {
+      switching = true; v3dHost.classList.add("loading");
+      try {
+        const [{ createView3D }, meta] = await Promise.all([import("./view3d.js"), getJson("terrain.meta.json")]);
+        const roverJson = await getJson("rover_path.json");
+        const stops3d = (current?.properties?.stops?.length ? current.properties.stops : csvStops).map((st) => ({ id: st.id, name: st.name, x: st.x, y: st.y }));
+        v3d = await createView3D(v3dHost, { f, data: DATA, meta, route: current, rover: roverJson, stops: stops3d, rampColor });
+        v3d.setRover(!!roverLayer && map.hasLayer(roverLayer));
+        v3d.setPoint(posIndex);
+        window.__v3d = v3d;   // read by qa scripts (lod / draw calls)
+      } catch (e) {
+        console.error(e); switching = false; setView("2d"); { const er = document.getElementById("error"); er.textContent = `3D view could not load: ${e.message}`; er.hidden = false; } switching = false; v3dHost.classList.remove("loading"); return "3D view could not load";
+      }
+      switching = false; v3dHost.classList.remove("loading");
+    }
+    v3d.show();
+    setPressed("v3d-hazard", v3d.hazard); setPressed("v3d-rover", v3d.rover);
+    return "3D terrain view";
+  }
+  toggleEl.addEventListener("click", (e) => { const b = e.target.closest("button[data-view]"); if (b) setView(b.dataset.view); });
+  v3dHost.querySelector("#v3d-exag").addEventListener("input", (e) => { const t = v3d?.setExag(e.target.value); if (t) document.getElementById("v3d-exag-label").textContent = t; });
+  const hazardName = Object.keys(rasterInfo).find((k) => rasterInfo[k].id === "hazard");
+  const toggleHazard = () => {
+    if (v3d?.visible) { const on = v3d.setHazard(!v3d.hazard); setPressed("v3d-hazard", on); return `AI hazard layer ${on ? "on" : "off"}`; }
+    const lay = hazardName && overlays[hazardName]; if (!lay) return "No AI hazard layer in this data set";
+    if (map.hasLayer(lay)) map.removeLayer(lay); else lay.addTo(map);
+    return `AI hazard layer ${map.hasLayer(lay) ? "on" : "off"}`;
+  };
+  const toggleRover = () => {
+    if (!roverLayer) return "No Perseverance path in this data set";
+    const on = !map.hasLayer(roverLayer);
+    if (on) roverLayer.addTo(map); else map.removeLayer(roverLayer);
+    v3d?.setRover(on); setPressed("v3d-rover", on);
+    return `Perseverance path ${on ? "on" : "off"}`;
+  };
+  v3dHost.querySelector("#v3d-hazard").addEventListener("click", toggleHazard);
+  v3dHost.querySelector("#v3d-rover").addEventListener("click", toggleRover);
+  v3dHost.querySelector("#v3d-reset").addEventListener("click", () => v3d?.reset());
+  const layersEl = () => document.querySelector(".leaflet-control-layers");
+  const actions = {
+    view2: () => { setView("2d"); return "2D map"; },
+    view3: () => { setView("3d"); return "Loading the 3D terrain view"; },
+    plan: () => { if (v3d?.visible) setView("2d"); document.querySelector(".planner-toggle")?.click(); return "Planner: click a start point, then an end point"; },
+    hazard: toggleHazard,
+    ghost: toggleRover,
+    layers: () => { const el = layersEl(); if (!el) return null; el.classList.toggle("is-hidden"); const open = !el.classList.contains("is-hidden"); if (open) el.querySelector("input")?.focus(); return `Layers list ${open ? "shown" : "hidden"}`; },
+    reset: () => { if (v3d?.visible) v3d.reset(); else fit(); return "View reset"; },
+    zoomIn: () => { if (v3d?.visible) v3d.zoom(0.85); else map.zoomIn(); return null; },
+    zoomOut: () => { if (v3d?.visible) v3d.zoom(1.15); else map.zoomOut(); return null; },
+  };
+  initA11y({ getIndex: () => Number(slider.value), setIndex: showPoint, pointCount: () => (view ? routeLL.length : 0), clickByClass, actions });
 
   // Legends for the raster overlays that are switched on, and the data sources list.
   const hazardMeta = await getJson("hazard.meta.json");

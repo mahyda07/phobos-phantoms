@@ -14,10 +14,18 @@ export const SHORTCUTS = [
   { keys: "← / →", action: "Move one point along the route", ids: ["prev", "next"] },
   { keys: "Shift + ← / →", action: "Move ten points along the route", ids: ["prev10", "next10"] },
   { keys: "Home / End", action: "Jump to the start / end of the route", ids: ["first", "last"] },
-  { keys: "Space or P", action: "Play / pause the walk", ids: ["play"] },
+  { keys: "Space", action: "Play / pause the walk", ids: ["play"] },
+  { keys: "2 / 3", action: "Map view (2D) / terrain view (3D)", ids: ["view2", "view3"] },
+  { keys: "P", action: "Plan a route (click start, then end)", ids: ["plan"] },
+  { keys: "H", action: "Show / hide the AI hazard layer", ids: ["hazard"] },
+  { keys: "G", action: "Show / hide Perseverance's real path", ids: ["ghost"] },
+  { keys: "L", action: "Open / close the layers list", ids: ["layers"] },
+  { keys: "R", action: "Reset the view to the whole walking area", ids: ["reset"] },
+  { keys: "+ / −", action: "Zoom in / out", ids: ["zoomIn", "zoomOut"] },
   { keys: "F", action: "Follow the current point on the map", ids: ["follow"] },
-  { keys: "R", action: "Show / hide distance rings", ids: ["rings"] },
+  { keys: "O", action: "Show / hide distance rings", ids: ["rings"] },
   { keys: "V", action: "Proof view: compare with Perseverance's real path", ids: ["proof"] },
+  { keys: "W A S D, Q / E", action: "3D view: pan, rotate", ids: [] },
   { keys: "?", action: "Show this list of shortcuts", ids: ["help"] },
   { keys: "Esc", action: "Close this dialog", ids: ["close"] },
 ];
@@ -53,9 +61,17 @@ export function keyAction(e) {
     case "Home": action = "first"; break;
     case "End": action = "last"; break;
     case " ": case "Spacebar": action = "play"; break;
-    case "p": case "P": action = "play"; break;
+    case "p": case "P": action = "plan"; break;           // run 2: P = plan (brief); play stays on Space
     case "f": case "F": action = "follow"; break;
-    case "r": case "R": action = "rings"; break;
+    case "o": case "O": action = "rings"; break;          // run 2: rings moved from R to O (R = reset view)
+    case "r": case "R": action = "reset"; break;
+    case "2": action = "view2"; break;
+    case "3": action = "view3"; break;
+    case "h": case "H": action = "hazard"; break;
+    case "g": case "G": action = "ghost"; break;
+    case "l": case "L": action = "layers"; break;
+    case "+": case "=": action = "zoomIn"; break;
+    case "-": case "_": action = "zoomOut"; break;
     case "v": case "V": action = "proof"; break;
     case "?": action = "help"; break;
     case "Escape": case "Esc": action = "close"; break;
@@ -107,7 +123,7 @@ function defaultClickByClass(cls) {
  * clickByClass gets a class name without the dot: "mm-play", "mm-follow", "mm-rings", "proof-toggle".
  * Returns { destroy() }.
  */
-export function initA11y({ getIndex, setIndex, pointCount, clickByClass = defaultClickByClass, focusWelcome = true } = {}) {
+export function initA11y({ getIndex, setIndex, pointCount, clickByClass = defaultClickByClass, focusWelcome = true, actions = {} } = {}) {
   const cleanups = [];
   const on = (target, type, fn, opt) => { target.addEventListener(type, fn, opt); cleanups.push(() => target.removeEventListener(type, fn, opt)); };
   const addedAttrs = []; // [el, name] we set, removed again on destroy
@@ -273,7 +289,12 @@ export function initA11y({ getIndex, setIndex, pointCount, clickByClass = defaul
       e.preventDefault();
       clickByClass(tg.cls);
       announce(tg.say(b));
+      return;
     }
+    // run 2: view / layer / plan actions provided by main.js; each returns the text to announce (or nothing)
+    if ((action === "zoomIn" || action === "zoomOut") && mapEl && e.target === mapEl) return;   // Leaflet zooms itself there
+    const fn = actions[action];
+    if (typeof fn === "function") { e.preventDefault(); const said = fn(); if (said) announce(said); }
   };
   on(document, "keydown", onKeyDown);
 

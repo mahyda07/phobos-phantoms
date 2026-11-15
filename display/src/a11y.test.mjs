@@ -12,8 +12,9 @@ test("every key mapping", () => {
     ["ArrowRight", {}, "next"], ["ArrowLeft", {}, "prev"],
     ["ArrowRight", { shiftKey: true }, "next10"], ["ArrowLeft", { shiftKey: true }, "prev10"],
     ["Home", {}, "first"], ["End", {}, "last"],
-    [" ", {}, "play"], ["p", {}, "play"], ["P", { shiftKey: true }, "play"],
-    ["f", {}, "follow"], ["r", {}, "rings"], ["v", {}, "proof"],
+    [" ", {}, "play"], ["p", {}, "plan"], ["P", { shiftKey: true }, "plan"],
+    ["f", {}, "follow"], ["o", {}, "rings"], ["r", {}, "reset"], ["v", {}, "proof"],
+    ["2", {}, "view2"], ["3", {}, "view3"], ["h", {}, "hazard"], ["g", {}, "ghost"], ["l", {}, "layers"], ["+", {}, "zoomIn"], ["-", {}, "zoomOut"],
     ["?", { shiftKey: true }, "help"], ["?", {}, "help"],
     ["Escape", {}, "close"],
   ];
@@ -21,7 +22,7 @@ test("every key mapping", () => {
 });
 
 test("unmapped keys and bad input -> null", () => {
-  for (const k of ["a", "Enter", "Tab", "ArrowUp", "ArrowDown", "+", "-", "x"]) assert.equal(keyAction(ev(k)), null, k);
+  for (const k of ["a", "Enter", "Tab", "ArrowUp", "ArrowDown", "x"]) assert.equal(keyAction(ev(k)), null, k);
   assert.equal(keyAction(null), null);
   assert.equal(keyAction({}), null);
   assert.equal(keyAction({ key: "f" }), "follow"); // no target / modifier fields: treated as page focus
@@ -53,7 +54,7 @@ test("range slider keeps its arrows / Home / End, other shortcuts still work", (
   for (const [k, extra] of [["ArrowRight", {}], ["ArrowLeft", {}], ["ArrowRight", { shiftKey: true }], ["Home", {}], ["End", {}]]) {
     assert.equal(keyAction(ev(k, extra, range)), null, k);
   }
-  assert.equal(keyAction(ev("p", {}, range)), "play");
+  assert.equal(keyAction(ev("p", {}, range)), "plan");
   assert.equal(keyAction(ev("f", {}, range)), "follow");
   assert.equal(keyAction(ev("?", {}, range)), "help");
   assert.equal(keyAction(ev("Escape", {}, range)), "close");
@@ -67,7 +68,7 @@ test("Space is left to buttons, links, summaries and ARIA buttons; letters still
   ];
   for (const t of targets) {
     assert.equal(keyAction(ev(" ", {}, t)), null, JSON.stringify(t));
-    assert.equal(keyAction(ev("p", {}, t)), "play");
+    assert.equal(keyAction(ev("p", {}, t)), "plan");
     assert.equal(keyAction(ev("ArrowRight", {}, t)), "next");
   }
 });
