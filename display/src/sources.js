@@ -27,8 +27,11 @@ const grad = (...stops) => `linear-gradient(to right, ${stops.join(", ")})`;
 // so a CSS gradient through these stops reproduces them exactly.
 const GREY = grad("rgb(0,0,0)", "rgb(255,255,255)");                       // rgb = (g, g, g)
 // model/hazard/infer.py:104-105 hazard.png: rgb = (255, 220(1-h), 30), alpha = min(1.6h, 1) x 200/255.
-// Alpha is piecewise linear with a knee at h = 0.625; the stops below reproduce it (same scale as the headset visor).
-export const HAZARD_STOPS = [[0, "rgba(255,220,30,0)"], [0.625, "rgba(255,82,30,0.784)"], [1, "rgba(255,0,30,0.784)"]];
+// Alpha is piecewise linear with a knee at h = 0.625 (same scale as the headset visor, xr/src/visor.js).
+// Stops every 0.125 up to the knee (h = 0.625), because CSS blends in premultiplied alpha: with only the end stops the
+// transparent yellow at h = 0 would never show. Computed from the formula: G = floor(220(1-h)), alpha = min(1.6h, 1) x 200/255.
+export const HAZARD_STOPS = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 1].map((h) =>
+  [h, `rgba(255,${Math.floor(220 * (1 - h))},30,${+(Math.min(1.6 * h, 1) * 200 / 255).toFixed(3)})`]);
 const HAZARD_REAL = grad(...HAZARD_STOPS.map(([h, c]) => `${c} ${h * 100}%`));
 // build_terrain.py:52-53 "slope": (clip(2g), clip(2-2g), 0) -> green, yellow at g = 0.5, red
 const SLOPE_GYR = grad("rgb(0,255,0)", "rgb(255,255,0)", "rgb(255,0,0)");

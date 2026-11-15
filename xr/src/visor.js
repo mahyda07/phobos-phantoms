@@ -32,7 +32,10 @@ function field(g, { x, y, w, h, label, sub, value, unit, big }) {
 
 // Same colour scale as the web map's hazard layer and legend (model/hazard/infer.py:104-105 hazard.png:
 // rgb = (255, 220(1-h), 30), alpha = min(1.6h, 1) x 200/255). A scale only: the number itself stays white.
-export const HAZARD_STOPS = [[0, "rgba(255,220,30,0)"], [0.625, "rgba(255,82,30,0.784)"], [1, "rgba(255,0,30,0.784)"]];
+// Stops every 0.125 up to the knee (h = 0.625), because CSS blends in premultiplied alpha: with only the end stops the
+// transparent yellow at h = 0 would never show. Computed from the formula: G = floor(220(1-h)), alpha = min(1.6h, 1) x 200/255.
+export const HAZARD_STOPS = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 1].map((h) =>
+  [h, `rgba(255,${Math.floor(220 * (1 - h))},30,${+(Math.min(1.6 * h, 1) * 200 / 255).toFixed(3)})`]);
 function hazardScale(g, x, y, w, h, v) {
   const gr = g.createLinearGradient(x, 0, x + w, 0);
   for (const [t, c] of HAZARD_STOPS) gr.addColorStop(t, c);
