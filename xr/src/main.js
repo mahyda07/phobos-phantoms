@@ -14,6 +14,7 @@ import { stopVertexIndices, walkState, ltstAt, sunAt, visorFields } from "./walk
 import { drawVisor, VISOR_W, VISOR_H } from "./visor.js";
 import { planHome, homeSummary, reversedWalkedPath } from "./home.js";
 import { initKeys } from "./keys.js";
+import { createAudio, calloutsFor, VOICE_LINES } from "./audio.js";
 
 const DATA = "./data/";
 const HOLO_SIZE = 0.6;            // metres across on the desk (PLAN: 1:2500 for 1.5 km)
@@ -436,6 +437,7 @@ function startWalk() {
     mult: model.userData.mult ?? 1, camPos: camera.position.clone(), far: camera.far, near: camera.near,
   };
   walking = true; playing = true; simT = 0; lastNow = performance.now();
+  calloutPrev = null; audio.play("walk", { force: true });
   bPlay.userData.setText("Pause");
   panel.visible = false; holoTube && (holoTube.visible = false); walkTube && (walkTube.visible = true);
   sky.visible = true; scene.fog = haze; visor.visible = true; walkPanel.visible = true; reticle.visible = false;
@@ -510,12 +512,30 @@ function updateWalk(now) {
   const sun = sunAt(winData, ltstAt(winData, st.t_min));
   const f = visorFields(st, sun, String(routeData.properties.plan_id || "").startsWith("standin-"));
   f.home = homeLine;
+  if (caption && performance.now() < caption.until) f.caption = caption.text;
+  if (playing) walkCallouts(st);
   const key = JSON.stringify(f);
   if (key !== lastVisorKey) { drawVisor(visorCanvas.getContext("2d"), f); visorTex.needsUpdate = true; lastVisorKey = key; }
 }
 const walkInfo = () => walkNow
   ? `Step-in walk · ${SPEEDS[speedIdx]}× · ${playing ? "walking" : "paused"} · t ${walkNow.t_min.toFixed(1)} min · point ${walkNow.i + 1}/${routeData.geometry.coordinates.length} · ${fps} fps\n${routeInfo}${homeStatus ? "\n" + homeStatus : ""}`
   : info();
+
+// ---------- run 2: voice mission control (Phase 2b; clips + rate limits in audio.js) ----------
+const audio = createAudio();
+const CAPTION = { steep: "Steep ground ahead", hazard: "AI hazard ahead", stop: "Stop reached", margin: "Margin under one hour",
+  home: "Return route ready", "home-offline": "Planner offline: walked path reversed", waking: "Waking the planner", walk: "Walk started" };
+let calloutPrev = null, caption = null;
+audio.on((e) => {
+  if (e.type === "line") { caption = { text: CAPTION[e.name] || e.name, until: performance.now() + 4000 }; lastVisorKey = ""; emit("callout", { text: caption.text }); }
+  if (e.type === "mute") emit("mute", { muted: e.muted });
+});
+function walkCallouts(st) {
+  if (calloutPrev && calloutPrev.i === st.i) return;
+  const lines = calloutsFor(routeData, st.i, calloutPrev, stopIdx);
+  calloutPrev = { i: st.i, margin: st.margin_min };
+  for (const l of lines) if (audio.say(l)) break;     // say() is rate-limited: first allowed line only
+}
 
 // ---------- run 2: "Get me home" (Phase 2a) ----------
 // One action (controller A held 1 s · key H · walk-panel "Home") asks the live planner for a route from the walker's
@@ -556,7 +576,7 @@ async function goHome() {
   setHome(["Return route", "planning…"]); emit("home", { state: "planning" });
   const out = await planHome(c, st.i, pos, {
     onStatus: (s) => {
-      if (s === "waking") { setHome(["Return route", "waking planner… (up to 1 min)"]); emit("home", { state: "waking" }); }
+      if (s === "waking") { setHome(["Return route", "waking planner… (up to 1 min)"]); emit("home", { state: "waking" }); audio.play("waking", { force: true }); }
       if (s === "snapping") setHome(["Return route", "steep ground here: trying the route behind you"]);
     },
   });
@@ -567,13 +587,13 @@ async function goHome() {
     drawHome(out.route.geometry.coordinates);
     const snap = out.req.snapped_m >= 1 ? ` (start snapped ${Math.round(out.req.snapped_m)} m back to the planned route)` : "";
     setHome(["Return route", `${Math.round(sm.length_m)} m · ~${Math.round(sm.time_min)} min · margin ${Math.floor(sm.margin_min)} min`]);
-    homeStatus = sm.text + snap; setStatus(walkInfo());
+    homeStatus = sm.text + snap; setStatus(walkInfo()); audio.play("home", { force: true });
     emit("home", { state: "ready", text: sm.text + snap, length_m: sm.length_m, time_min: sm.time_min, margin_min: sm.margin_min });
   } else {
     const fb = reversedWalkedPath(routeData, st.i, pos);
     drawHome(fb.coords);
     setHome([out.reason === "at-start" ? "Walked path reversed" : "Offline: walked path reversed", `${Math.round(fb.length_m)} m · ~${Math.round(fb.time_min)} min`]);
-    homeStatus = fb.text; setStatus(walkInfo());
+    homeStatus = fb.text; setStatus(walkInfo()); audio.play("home-offline", { force: true });
     emit("home", { state: "fallback", reason: out.reason, text: fb.text });
   }
 }
@@ -693,14 +713,36 @@ function zoomView(f) {
 }
 function togglePause() { if (!walking) return; playing = !playing; bPlay.userData.setText(playing ? "Pause" : "Play"); }
 function toggleGhost() { emit("ghost", {}); }          // replaced in Phase 2d
-function toggleMute() { emit("mute", {}); }            // replaced in Phase 2b
-function repeatCallout() { emit("repeat", {}); }       // replaced in Phase 2b
+function toggleMute() { audio.toggleMute(); }
+function repeatCallout() { audio.repeat(); }
 initKeys({
   forward: () => (walking ? scrub(0.5) : zoomView(0.9)), back: () => (walking ? scrub(-0.5) : zoomView(1.1)),
   left: () => turnView(15), right: () => turnView(-15), pause: togglePause,
   home: () => goHome(), ghost: () => toggleGhost(), mute: () => toggleMute(), repeat: () => repeatCallout(),
 });
 
-window.__marswalk = { goHome, startWalk, stopWalk, isWalking: () => walking };
+// Spoken commands: only where the browser has speech recognition (desktop Chrome; NOT Quest Browser 157).
+// No mic button is shown where it cannot work.
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (SR) {
+  const b = document.createElement("button");
+  b.id = "btn-voice"; b.className = "tool"; b.textContent = "Voice"; b.title = "Say: home, ghost, mute, pause, help";
+  document.getElementById("btn-help").before(b);
+  b.onclick = () => {
+    const rec = new SR(); rec.lang = "en-US"; rec.maxAlternatives = 3;
+    b.textContent = "Listening…"; b.setAttribute("aria-pressed", "true");
+    rec.onresult = (e) => {
+      const said = Array.from(e.results[0]).map((a) => a.transcript.toLowerCase()).join(" ");
+      if (/home/.test(said)) goHome(); else if (/ghost|rover/.test(said)) toggleGhost();
+      else if (/mute|quiet|sound/.test(said)) toggleMute(); else if (/pause|stop|play/.test(said)) togglePause();
+      else if (/help/.test(said)) document.dispatchEvent(new KeyboardEvent("keydown", { key: "?", bubbles: true }));
+      emit("heard", { said });
+    };
+    rec.onend = rec.onerror = () => { b.textContent = "Voice"; b.setAttribute("aria-pressed", "false"); };
+    rec.start();
+  };
+}
+
+window.__marswalk = { goHome, startWalk, stopWalk, isWalking: () => walking, audio };
 
 init().catch((e) => { console.error(e); setStatus("Load failed: " + e.message); });

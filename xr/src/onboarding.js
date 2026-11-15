@@ -57,6 +57,8 @@ window.addEventListener("phobos:walk", (e) => {
   if (e.detail.on) toast("Walking the planned route", "Full size, at 30× speed. Drag to look around. Press Step in / out to return to the desk view.", 6500);
 });
 
+window.addEventListener("phobos:mute", (e) => toast(e.detail.muted ? "Sound off" : "Sound on", e.detail.muted ? "Press M (or X on the controller) to turn it back on." : "Voice callouts and sounds are on.", 2600));
+window.addEventListener("phobos:heard", (e) => toast("Heard", `“${e.detail.said.replace(/[<>&]/g, "")}”`, 2600));
 window.addEventListener("phobos:home", (e) => {   // run 2: Get me home
   const d = e.detail;
   if (d.state === "not-walking") toast("Get me home", "Step in first: it plans from your spot on the walk back to its start.");

@@ -82,6 +82,13 @@ export function drawVisor(g, f) {
     g.fillText(t, x, y + 86);
     g.textAlign = "left";
   }
+  // run 2: caption of the last voice callout (so the callouts can also be read), clear centre below the reticle
+  if (f.caption) {
+    g.font = `700 28px ${FONT}`; const cw = Math.min(380, g.measureText(f.caption).width + 40), x = 905;
+    roundRect(g, x - cw / 2, 520, cw, 52, 26); g.fillStyle = C.panel; g.fill(); g.lineWidth = 2; g.strokeStyle = C.badge; g.stroke();
+    g.fillStyle = C.value; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(f.caption, x, 547, 340);
+    g.textBaseline = "alphabetic"; g.textAlign = "left";
+  }
   g.strokeStyle = "rgba(255,255,255,0.45)"; g.lineWidth = 2; g.beginPath(); g.arc(800, 450, 12, 0, Math.PI * 2); g.stroke();
   g.textAlign = "left";
 }

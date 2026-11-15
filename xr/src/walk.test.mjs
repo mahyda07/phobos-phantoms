@@ -115,3 +115,25 @@ test("help overlay lists keyboard AND controller bindings, escaped", () => {
   assert.ok(html.includes("Hold A for 1 s") && html.includes("<kbd>H</kbd>") && html.includes("Quest controller"));
   assert.ok(!helpHtml([{ keys: ["<x>"], pad: "", what: "y" }]).includes("<x>"));
 });
+
+// ---------- run 2: voice callouts (src/audio.js) ----------
+import { calloutsFor, Limiter } from "./audio.js";
+test("calloutsFor: stop reached, margin crossing 60, hazard/steep within 30 m ahead", () => {
+  const r = {
+    geometry: { coordinates: [[0, 0], [10, 0], [20, 0], [30, 0], [40, 0], [80, 0]] },
+    properties: { per_vertex: { margin_min: [70, 65, 61, 59, 50, 40], slope_deg: [1, 1, 1, 22, 1, 1], hazard: [0, 0, 0, 0, 0.6, 0] } },
+  };
+  assert.deepEqual(calloutsFor(r, 0, null, [2]), ["steep"]);              // 22 deg at 30 m ahead; hazard at 40 m is too far
+  assert.deepEqual(calloutsFor(r, 1, { i: 0, margin: 70 }, [2]), ["hazard", "steep"]);
+  assert.deepEqual(calloutsFor(r, 3, { i: 2, margin: 61 }, [2]), ["margin", "hazard"]);   // crossed 60; stop 2 was already passed
+  assert.deepEqual(calloutsFor(r, 2, { i: 1, margin: 65 }, [2]), ["stop", "hazard", "steep"]);
+  assert.deepEqual(calloutsFor(r, 5, { i: 4, margin: 50 }, [2]), []);
+});
+test("Limiter: >= 8 s between lines, >= 30 s before the same line", () => {
+  const L = new Limiter();
+  assert.equal(L.allow("steep", 0), true);
+  assert.equal(L.allow("hazard", 7999), false);
+  assert.equal(L.allow("hazard", 8000), true);
+  assert.equal(L.allow("steep", 20000), false);   // same line within 30 s
+  assert.equal(L.allow("steep", 30000), true);
+});

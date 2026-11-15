@@ -1,0 +1,14 @@
+{
+    "voice":  "Microsoft Zira Desktop (Windows SAPI)",
+    "made_utc":  "2026-11-15T06:11:24Z",
+    "lines":  {
+                  "steep":  "Steep ground ahead.",
+                  "hazard":  "A I hazard ahead.",
+                  "stop":  "Stop reached.",
+                  "margin":  "Margin under one hour.",
+                  "home":  "Return route ready.",
+                  "home-offline":  "Planner offline. Showing the walked path, reversed.",
+                  "waking":  "Waking the planner.",
+                  "walk":  "Walk started."
+              }
+}
