@@ -83,7 +83,7 @@ export function initLocator(map, { L, grid, isSample } = {}) {
                loading="lazy" decoding="async" referrerpolicy="no-referrer" width="1024" height="512">
           <span class="locator-dot" style="left:${p.x.toFixed(3)}%;top:${p.y.toFixed(3)}%" aria-hidden="true"></span>
         </div>
-        <div class="locator-credit"><a href="${esc(MARS_GLOBAL.source)}" target="_blank" rel="noopener">${esc(MARS_GLOBAL.credit)}</a> · public domain</div>`;
+        <div class="locator-credit"><a href="${esc(MARS_GLOBAL.source)}" target="_blank" rel="noopener">${esc(MARS_GLOBAL.credit)}</a></div>`;
       L.DomEvent.disableClickPropagation(div);
       L.DomEvent.disableScrollPropagation(div);
       const frame = div.querySelector(".locator-frame");
