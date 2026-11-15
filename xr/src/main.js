@@ -8,6 +8,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { XRHandModelFactory } from "three/addons/webxr/XRHandModelFactory.js";
+import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFactory.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { makeFrame } from "./frame.js";
 import { heightSampler, marginColour, holoScale, rampRGB } from "./terrain.js";
@@ -50,7 +51,9 @@ camera.position.set(0, 0.55, 0.75);
 const orbit = new OrbitControls(camera, renderer.domElement);
 orbit.target.set(0, 0, 0);
 orbit.update();
-scene.add(new THREE.HemisphereLight(0xffffff, 0x404040, 2.0));
+const hemi = new THREE.HemisphereLight(0xfff1e0, 0x3a2a20, 0.9);   // run 2: lit terrain (was unlit MeshBasic)
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff0dc, 2.4);            // direction set from window.json in init()
 
 // anchor = where the hologram sits (moved by hands / placement); model = rotation + scale; holo = terrain metres
 const anchor = new THREE.Group();
@@ -110,7 +113,7 @@ async function init() {
   geo.computeVertexNormals();
   textures.photo = await loadTex(DATA + "photo_2k.jpg") || await loadTex(DATA + "photo.png");
   textures.slope = await loadTex(DATA + "slope.png");
-  terrainMat = new THREE.MeshBasicMaterial({ map: textures.photo, side: THREE.DoubleSide });
+  terrainMat = new THREE.MeshLambertMaterial({ map: textures.photo, side: THREE.DoubleSide });
   const mesh = new THREE.Mesh(geo, terrainMat);
   mesh.position.set(extentM / 2, 0, extentM / 2);   // holo space: x 0..extent, z 0..extent (= -y)
   holo.add(mesh);
@@ -123,7 +126,10 @@ async function init() {
 
   await addRoute();
   await buildGhost();
+  ghost.root.visible = true; renderer.compile(scene, camera); ghost.root.visible = false;   // run 2 perf: no shader compile mid-session
+  syncToggles();
   winData = await loadJSON(DATA + "window.json");
+  placeSun(winData);
   applyScale(1);
   setStatus(info());
   enableButtons();
@@ -131,6 +137,18 @@ async function init() {
   emit("ready", { routeInfo, standin: String(pr?.plan_id || "").startsWith("standin-"),
     length_km: pr ? pr.length_m / 1000 : null, margin_min: pr?.margin_min ?? null, stops: pr?.stops?.length ?? 0,
     eva: winData?.eva_window ?? null });
+}
+
+// Sun direction at the EVA window start (window.json: sun_elev_deg / sun_az_deg per LTST hour; az from north, clockwise).
+// The light lives in the model group so it turns with the terrain. Fallback: 45 deg from the south-east.
+function placeSun(win) {
+  let el = 45, az = 135;
+  const k = win?.ltst_hours?.indexOf(Math.floor(win?.eva_window?.start_ltst ?? -1));
+  if (k >= 0 && Number.isFinite(win.sun_elev_deg?.[k])) { el = win.sun_elev_deg[k]; az = win.sun_az_deg?.[k] ?? az; }
+  const e = THREE.MathUtils.degToRad(el), a = THREE.MathUtils.degToRad(az);
+  sun.position.set(Math.cos(e) * Math.sin(a), Math.sin(e), -Math.cos(e) * Math.cos(a)).multiplyScalar(1000);
+  sun.target.position.set(0, 0, 0);
+  model.add(sun, sun.target);
 }
 
 // ---------- route ribbon ----------
@@ -207,10 +225,10 @@ const panel = new THREE.Group();
 anchor.add(panel);
 const buttons = [];
 // run 2 MR UI overhaul: buttons from xrui.js (hover / press states, glass plate), laid out in two rows.
-const BW = 0.13, BH = 0.05, GAP = 0.012;
+const BW = 0.12, BH = 0.05, GAP = 0.012, NCOLS = 4;
 function addButton(id, text, col, row, onPress, opts = {}, parent = deskRows) {
   const b = makeButton({ label: text, w: BW, h: BH, onPress, ...opts });
-  b.position.set((col - 1) * (BW + GAP), -row * (BH + GAP), 0.002);
+  b.position.set((col - (NCOLS - 1) / 2) * (BW + GAP), -row * (BH + GAP), 0.002);
   b.userData.id = id;
   parent.add(b); buttons.push(b);
   return b;
@@ -218,7 +236,7 @@ function addButton(id, text, col, row, onPress, opts = {}, parent = deskRows) {
 const deskRows = new THREE.Group();          // tilted toward the user, sits in front of the hologram
 deskRows.rotation.x = -0.6;
 panel.add(deskRows);
-const deskPlate = makePlate({ w: 3 * BW + 4 * GAP, h: 2 * BH + 3 * GAP + 0.012 });
+const deskPlate = makePlate({ w: NCOLS * BW + (NCOLS + 1) * GAP, h: 2 * BH + 3 * GAP + 0.012 });
 deskPlate.position.set(0, -(BH + GAP) / 2, 0);
 deskRows.add(deskPlate);
 const act = {
@@ -239,18 +257,24 @@ const bExag = addButton("exag", "Height ×2", 2, 0, act.exag);
 const bLayer = addButton("layer", "Layer: photo", 0, 1, act.layer);
 addButton("replace", "Re-place", 1, 1, act.replace);
 addButton("stepin", "Step in", 2, 1, () => startWalk(), { kind: "primary", sub: "walk it at full size" });
+// visible state toggles (test 1: a stored mute silenced everything without anyone seeing it)
+const soundToggles = [], ghostToggles = [];
+soundToggles.push(addButton("sound", "Sound", 3, 0, () => toggleMute(), { toggle: true, sub: "voice + sfx" }));
+ghostToggles.push(addButton("ghost", "Rover path", 3, 1, () => toggleGhost(), { toggle: false, sub: "Perseverance" }));
 const infoMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.05), new THREE.MeshBasicMaterial({ transparent: true }));
 infoMesh.position.set(0, 0.085, -0.045); infoMesh.rotation.x = -0.6;
 panel.add(infoMesh);
 let lastInfo = "";
-function drawInfo(text) {
+const infoCanvas = document.createElement("canvas"); infoCanvas.width = 1024; infoCanvas.height = 128;
+const infoTex = new THREE.CanvasTexture(infoCanvas); infoTex.colorSpace = THREE.SRGBColorSpace;
+infoMesh.material.map = infoTex;
+function drawInfo(text) {   // run 2 perf: one reused texture, redrawn only when the text changes (no fps in it)
   if (text === lastInfo) return; lastInfo = text;
-  const c = document.createElement("canvas"); c.width = 1024; c.height = 128;
+  const c = infoCanvas; c.getContext("2d").clearRect(0, 0, 1024, 128);
   const g = c.getContext("2d"); g.fillStyle = UI.panel; g.beginPath(); g.roundRect(2, 2, 1020, 124, 24); g.fill();
   g.fillStyle = UI.text; g.font = `500 28px ${UI.font}`; g.textBaseline = "middle";
   text.split("\n").slice(0, 2).forEach((line, i) => g.fillText(line, 16, 36 + i * 52));
-  if (infoMesh.material.map) infoMesh.material.map.dispose();
-  infoMesh.material.map = new THREE.CanvasTexture(c); infoMesh.material.map.colorSpace = THREE.SRGBColorSpace; infoMesh.material.needsUpdate = true;
+  infoTex.needsUpdate = true;
 }
 const info = () => `Jezero western delta · 1.5 km · 1:${Math.round(1 / (S * (model.userData.mult ?? 1)))} · height ×${EXAGS[exagIdx]} · ${fps} fps\n${routeInfo}`;
 
@@ -326,6 +350,10 @@ function placeInFront() {
 
 // controllers: trigger = place / press button
 const tmpM = new THREE.Matrix4();
+// High-fidelity input models: WebXR Input Profiles assets (immersive-web/webxr-input-profiles, MIT, (c) 2019 Amazon),
+// loaded from cdn.jsdelivr.net/npm/@webxr-input-profiles/assets@1.0 by the three.js factories. If the download fails,
+// controllers show only the ray and hands fall back to joint spheres.
+const ctrlModels = new XRControllerModelFactory();
 const ctrls = [];
 for (let i = 0; i < 2; i++) {
   const ctrl = renderer.xr.getController(i);
@@ -334,6 +362,9 @@ for (let i = 0; i < 2; i++) {
   const c = { ctrl, line, cursor, hover: null, src: null };
   ctrl.addEventListener("connected", (e) => { c.src = e.data; line.visible = !e.data.hand; });
   ctrl.addEventListener("disconnected", () => { c.src = null; line.visible = false; cursor.visible = false; });
+  const grip = renderer.xr.getControllerGrip(i);       // run 2: real controller model (Quest Touch Plus profile)
+  grip.add(ctrlModels.createControllerModel(grip));
+  scene.add(grip);
   ctrl.addEventListener("select", () => {
     if (!placed) { if (reticle.visible) placeAt(new THREE.Vector3().setFromMatrixPosition(reticle.matrix)); else placeInFront(); return; }
     const hit = rayHit(ctrl);
@@ -377,7 +408,9 @@ function updatePointers() {                         // hover state + ray length 
 const handFactory = new XRHandModelFactory();
 const hands = [0, 1].map((i) => {
   const h = renderer.xr.getHand(i);
-  h.add(handFactory.createHandModel(h, "spheres"));
+  let handModel = null;
+  try { handModel = handFactory.createHandModel(h, "mesh"); } catch { handModel = handFactory.createHandModel(h, "spheres"); }
+  h.add(handModel);
   scene.add(h);
   return { h, pinching: false, grabbing: false, pos: new THREE.Vector3(), last: new THREE.Vector3() };
 });
@@ -428,7 +461,7 @@ function shown(o) { for (let p = o; p; p = p.parent) if (!p.visible) return fals
 const SPEEDS = [10, 30, 60];      // simulated walking minutes per real minute
 const EYE = 1.7;                  // metres: desktop eye height above the ground
 let walking = false, playing = true, simT = 0, speedIdx = 1, lastNow = 0;
-let walkYaw = 0, walkSaved = null, lastVisorKey = "";
+let walkYaw = 0, walkSaved = null, lastVisorKey = "", lastVisorDraw = 0;
 const walkOrigin = new THREE.Vector3();
 
 // sky dome + haze so the walk reads as Mars (also hides passthrough while stepped in)
@@ -463,8 +496,8 @@ const walkPanel = new THREE.Group();
 walkPanel.visible = false;
 scene.add(walkPanel);
 const walkRows = new THREE.Group(); walkRows.rotation.x = -0.5; walkPanel.add(walkRows);
-const walkPlate = makePlate({ w: 3 * BW + 4 * GAP, h: 2 * BH + 3 * GAP + 0.03, title: "Walk" });
-walkPlate.position.set(0, -(BH + GAP) / 2 + 0.012, 0); walkRows.add(walkPlate);
+const walkPlate = makePlate({ w: NCOLS * BW + (NCOLS + 1) * GAP, h: 2 * BH + 3 * GAP + 0.012 });
+walkPlate.position.set(0, -(BH + GAP) / 2, 0); walkRows.add(walkPlate);
 const addWalkButton = (text, col, row, onPress, opts) => addButton("walk-" + text, text, col, row, onPress, opts, walkRows);
 const bPlay = addWalkButton("Pause", 0, 0, () => togglePause());
 const bSpeed = addWalkButton(`Speed ${SPEEDS[1]}×`, 1, 0, () => {
@@ -476,6 +509,8 @@ let buzzOn = hapticsEnabled(), lastBuzz = 0;
 const bBuzz = addWalkButton("Buzz", 0, 1, () => { buzzOn = !buzzOn; setHapticsEnabled(buzzOn); bBuzz.userData.setOn(buzzOn); }, { toggle: buzzOn, sub: "rough ground" });
 addWalkButton("Get me home", 1, 1, () => goHome(), { kind: "home", sub: "or hold A" });
 addWalkButton("Step out", 2, 1, () => stopWalk());
+soundToggles.push(addWalkButton("Sound", 3, 0, () => toggleMute(), { toggle: true, sub: "voice + sfx" }));
+ghostToggles.push(addWalkButton("Rover path", 3, 1, () => toggleGhost(), { toggle: false, sub: "Perseverance" }));
 
 function viewPose() {   // world position + quaternion of the eyes (headset or desktop camera)
   const cam = renderer.xr.isPresenting ? renderer.xr.getCamera() : camera;
@@ -571,7 +606,9 @@ function updateWalk(now) {
   if (playing) walkCallouts(st);
   if (playing && renderer.xr.isPresenting && shouldBuzz(st, now, lastBuzz, buzzOn)) { lastBuzz = now; pulseAll(renderer.xr.getSession()); }
   const key = JSON.stringify(f);
-  if (key !== lastVisorKey) { drawVisor(visorCanvas.getContext("2d"), f); visorTex.needsUpdate = true; lastVisorKey = key; }
+  if (key !== lastVisorKey && (lastVisorKey === "" || now - lastVisorDraw > 250)) {   // run 2 perf: <= 4 uploads/s
+    drawVisor(visorCanvas.getContext("2d"), f); visorTex.needsUpdate = true; lastVisorKey = key; lastVisorDraw = now;
+  }
 }
 const walkInfo = () => walkNow
   ? `Step-in walk · ${SPEEDS[speedIdx]}× · ${playing ? "walking" : "paused"} · t ${walkNow.t_min.toFixed(1)} min · point ${walkNow.i + 1}/${routeData.geometry.coordinates.length} · ${fps} fps\n${routeInfo}${homeStatus ? "\n" + homeStatus : ""}`
@@ -585,7 +622,7 @@ let calloutPrev = null, caption = null;
 audio.on((e) => {
   mwlog("audio", { type: e.type, name: e.name ?? null, muted: e.muted ?? audio.muted, ctx: audio.ctx?.state ?? "none" });
   if (e.type === "line") { caption = { text: CAPTION[e.name] || e.name, until: performance.now() + 4000 }; lastVisorKey = ""; emit("callout", { text: caption.text }); }
-  if (e.type === "mute") emit("mute", { muted: e.muted });
+  if (e.type === "mute") { emit("mute", { muted: e.muted }); syncToggles(); }
 });
 function walkCallouts(st) {
   if (calloutPrev && calloutPrev.i === st.i) return;
@@ -610,7 +647,6 @@ function drawHome(coords) {
   const pts = thin(coords, 2).map(([x, y]) => toHolo(x, y, 0.6));
   if (pts.length < 2) return;
   homeTube = tubeFor(pts, pts.map(() => new THREE.Color(HOME_COLOUR).toArray()), 0.35);
-  homeTube.material.fog = false;
   const total = homeTube.geometry.index.count;
   if (reduceMotion()) homeTube.geometry.setDrawRange(0, total);
   else { homeTube.geometry.setDrawRange(0, 0); homeDraw = { t0: performance.now(), total }; }
@@ -734,7 +770,7 @@ renderer.setAnimationLoop((time, frame) => {
   frames++;
   const now = performance.now();
   const tJs0 = now;
-  if (now - t0 > 1000) { fps = Math.round(frames * 1000 / (now - t0)); frames = 0; t0 = now; drawInfo(info()); setStatus(walking ? walkInfo() : info()); }
+  if (now - t0 > 1000) { fps = Math.round(frames * 1000 / (now - t0)); frames = 0; t0 = now; drawInfo(info().replace(/ · \d+ fps/, "")); setStatus(walking ? walkInfo() : info()); }
   if (frame && renderer.xr.isPresenting) {
     if (!placed && hitSource) {
       const hits = frame.getHitTestResults(hitSource);
@@ -862,8 +898,10 @@ function toggleGhost() {
   { const wp = new THREE.Vector3(); ghost.marker?.getWorldPosition(wp); const { pos } = viewPose();
     mwlog("ghost", { on: ghost.root.visible, walking, dist_m: +wp.distanceTo(pos).toFixed(2), markerWorldScale: +ghost.marker?.getWorldScale(new THREE.Vector3()).x.toFixed(4) }); }
   emit("ghost", { on: ghost.root.visible, title: ghost.text.title, note: ghost.text.note });
+  syncToggles();
 }
 function toggleMute() { audio.toggleMute(); }
+function syncToggles() { soundToggles.forEach((b) => b.userData.setOn(!audio.muted)); ghostToggles.forEach((b) => b.userData.setOn(ghost.root.visible)); }
 function repeatCallout() { audio.repeat(); }
 initKeys({
   forward: () => (walking ? scrub(0.5) : zoomView(0.9)), back: () => (walking ? scrub(-0.5) : zoomView(1.1)),

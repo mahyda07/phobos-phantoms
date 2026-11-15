@@ -44,3 +44,4 @@ Rule: nothing gets used until it has a row here with its licence. Non-NASA sourc
 |---|---|---|---|---|
 | Vercel (Hobby) | Public links for the headset app and the web map | https://vercel.com | Vercel Terms of Service | Ramish |
 | Render (free web service) | Public planner web service | https://render.com | Render Terms of Service | Ramish |
+| WebXR Input Profiles assets (immersive-web/webxr-input-profiles, @webxr-input-profiles/assets 1.0.x) | Headset: high-fidelity controller models (Meta Quest Touch Plus profile) and articulated hand meshes (generic-hand), loaded at runtime by three.js XRControllerModelFactory / XRHandModelFactory | https://github.com/immersive-web/webxr-input-profiles · https://cdn.jsdelivr.net/npm/@webxr-input-profiles/assets@1.0/dist/profiles | MIT License, Copyright (c) 2019 Amazon (packages/assets/LICENSE.md, checked 15 Nov 2026) | Ramish |
