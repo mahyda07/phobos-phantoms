@@ -175,12 +175,12 @@ export async function createView3D(host, { f, data, meta, route, rover, stops = 
     scene.add(sky);
 
     // stars: twinkle slowly (shader), brighter and more numerous than a plain point cloud
-    const N = 2600, sp = new Float32Array(N * 3), sa = new Float32Array(N * 2);
+    const N = 4200, sp = new Float32Array(N * 3), sa = new Float32Array(N * 2);
     let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
     for (let i = 0; i < N; i++) {
-      const th = rnd() * Math.PI * 2, y = 0.06 + Math.pow(rnd(), 0.8) * 0.94, r = Math.sqrt(1 - y * y);
+      const th = rnd() * Math.PI * 2, y = 0.03 + Math.pow(rnd(), 1.4) * 0.97, r = Math.sqrt(1 - y * y);
       sp.set([c + Math.cos(th) * r * R * 0.96, y * R * 0.96, c + Math.sin(th) * r * R * 0.96], i * 3);
-      sa.set([0.25 + Math.pow(rnd(), 3) * 0.75, rnd() * 6.283], i * 2);
+      sa.set([0.5 + Math.pow(rnd(), 2) * 0.5, rnd() * 6.283], i * 2);
     }
     const sg = new THREE.BufferGeometry();
     sg.setAttribute("position", new THREE.BufferAttribute(sp, 3)); sg.setAttribute("aStar", new THREE.BufferAttribute(sa, 2));
@@ -190,10 +190,10 @@ export async function createView3D(host, { f, data, meta, route, rover, stops = 
       vertexShader: `attribute vec2 aStar; uniform float t, px; varying float vB;
         void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv;
           float hgt = clamp(position.y / ${(R * 0.96).toFixed(1)}, 0.0, 1.0);
-          vB = aStar.x * (0.65 + 0.35 * sin(t * (0.6 + aStar.y * 0.3) + aStar.y * 10.0)) * smoothstep(0.06, 0.3, hgt);
-          gl_PointSize = (1.2 + aStar.x * 3.0) * px; }`,
+          vB = aStar.x * (0.65 + 0.35 * sin(t * (0.6 + aStar.y * 0.3) + aStar.y * 10.0)) * smoothstep(0.03, 0.12, hgt);
+          gl_PointSize = (2.0 + aStar.x * 4.0) * px; }`,
       fragmentShader: `varying float vB; void main(){ vec2 q = gl_PointCoord - 0.5; float a = smoothstep(0.5, 0.0, length(q));
-          gl_FragColor = vec4(vec3(0.92, 0.94, 1.0) * vB * a, 1.0); }`,
+          gl_FragColor = vec4(vec3(0.95, 0.96, 1.0) * vB * a * 1.6, 1.0); }`,
     }));
     stars.renderOrder = -9; stars.raycast = () => {};
     scene.add(stars);
