@@ -35,7 +35,7 @@ if (set === "samples") {
 } else {
   const dir = join(repo, "terrain", "out");
   const required = ["grid.json", "terrain.meta.json", "layers.manifest.json", "photo.png", "slope.png", "rough.png", "dem.png", "rover_path.json", "rover_waypoints.csv"];
-  const optional = ["hazard.png", "science.png", "hazard.meta.json", "stops.csv", "window.json"];
+  const optional = ["hazard.png", "science.png", "hazard.meta.json", "stops.csv", "window.json", "dem_lod256.bin", "dem_lod512.bin"];   // run 2: DEM for the 3D view
   for (const f of [...required, ...optional]) {
     const src = join(dir, f);
     if (existsSync(src)) copy(src, f);
