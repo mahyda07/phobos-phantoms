@@ -202,3 +202,18 @@ test("requestPlan: reply that is not a route.json -> bad-reply", async () => {
   assert.equal(seen.init.headers["Content-Type"], "application/json");
   assert.deepEqual(JSON.parse(seen.init.body), BODY);
 });
+
+test("wakePlanner pings /health once and never throws", async () => {
+  const { wakePlanner } = await import("./planner.js");
+  const calls = [];
+  assert.equal(wakePlanner({ url: "https://p.example/", fetchImpl: (u) => { calls.push(u); return Promise.reject(new Error("down")); } }), true);
+  assert.deepEqual(calls, ["https://p.example/health"]);
+  assert.equal(wakePlanner({ url: "", fetchImpl: () => Promise.resolve() }), false);
+  assert.equal(wakePlanner({ url: "https://p.example", fetchImpl: () => { throw new Error("x"); } }), false);
+});
+
+test("timeout fallback message says the planner is waking up", async () => {
+  const { STATUS } = await import("./planner.js");
+  assert.match(STATUS.fallback("timeout"), /waking up/);
+  assert.match(STATUS.fallback("http-500"), /unavailable \(http-500\)/);
+});

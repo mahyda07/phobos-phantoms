@@ -26,6 +26,10 @@ const grad = (...stops) => `linear-gradient(to right, ${stops.join(", ")})`;
 // Colour formulas, g = 0..1 (value stretched between the script's lo and hi). All are piecewise linear in g,
 // so a CSS gradient through these stops reproduces them exactly.
 const GREY = grad("rgb(0,0,0)", "rgb(255,255,255)");                       // rgb = (g, g, g)
+// model/hazard/infer.py:104-105 hazard.png: rgb = (255, 220(1-h), 30), alpha = min(1.6h, 1) x 200/255.
+// Alpha is piecewise linear with a knee at h = 0.625; the stops below reproduce it (same scale as the headset visor).
+export const HAZARD_STOPS = [[0, "rgba(255,220,30,0)"], [0.625, "rgba(255,82,30,0.784)"], [1, "rgba(255,0,30,0.784)"]];
+const HAZARD_REAL = grad(...HAZARD_STOPS.map(([h, c]) => `${c} ${h * 100}%`));
 // build_terrain.py:52-53 "slope": (clip(2g), clip(2-2g), 0) -> green, yellow at g = 0.5, red
 const SLOPE_GYR = grad("rgb(0,255,0)", "rgb(255,255,0)", "rgb(255,0,0)");
 // build_terrain.py:54-55 "mars": (g, 0.55g + 0.1, 0.35g + 0.05)
@@ -54,8 +58,8 @@ function hazardLegend(manifest, hazardMeta) {
     return { title: HAZARD_TITLE, gradientCss: GREY, minLabel: "0", maxLabel: "1",
       note: `SAMPLE data. Darker = lower, brighter = higher.${who}` };
   }
-  return { title: HAZARD_TITLE, gradientCss: null, minLabel: null, maxLabel: null,
-    note: `Colour scale: see source.${who}` };
+  return { title: HAZARD_TITLE, gradientCss: HAZARD_REAL, minLabel: "0 (no colour)", maxLabel: "1",
+    note: `Clear = low, yellow to red = higher AI hazard (0.5 x P(careful) + 1.0 x P(avoid)). Raises route cost, never blocks. Not validated.${who}` };
 }
 
 /**
