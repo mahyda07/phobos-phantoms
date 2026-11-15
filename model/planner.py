@@ -44,7 +44,7 @@ class Planner(pb.Planner):
                 h = np.fromfile(f, "<f4").reshape(self.n, self.n).astype("float64")
                 if not np.isfinite(h).all() or h.min() < 0 or h.max() > 1:
                     raise ValueError(f"{f} must hold values 0..1 without NaN")
-                self.hazard, self.hazard_source = h, str(f.relative_to(ROOT)) if ROOT in f.resolve().parents else str(f)
+                self.hazard, self.hazard_source = h, f.resolve().relative_to(ROOT).as_posix() if ROOT in f.resolve().parents else f.as_posix()
                 break
 
     def cost_grid(self, use_hazard=True):
