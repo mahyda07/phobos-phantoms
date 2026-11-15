@@ -90,7 +90,7 @@ export function homeSummary(route) {
     length_m: p.length_m ?? null,
     time_min: Number.isFinite(t) ? t : null,
     margin_min: p.margin_min ?? null,
-    text: `Return route: ${Math.round(p.length_m)} m, ~${Math.round(t)} min, margin ${Math.floor(p.margin_min)} min`,
+    text: `Return route: ${Number.isFinite(p.length_m) ? Math.round(p.length_m) : "?"} m, ~${Number.isFinite(t) ? Math.round(t) : "?"} min, margin ${Number.isFinite(p.margin_min) ? Math.floor(p.margin_min) : "?"} min`,
   };
 }
 

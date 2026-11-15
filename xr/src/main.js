@@ -399,7 +399,7 @@ function pressButton(b, src) {
   b.userData.onPress();
 }
 const hovered = () => ctrls.find((c) => c.hover)?.hover || null;
-const rayHoverOf = (hand) => ctrls.find((c) => c.src?.hand && c.hover && hands.find((s) => s.h === hand))?.hover || null;
+const rayHoverOf = (hand) => { const i = hands.findIndex((s) => s.h === hand); return (i >= 0 && ctrls[i]?.src?.hand && ctrls[i].hover) || null; };   // same index = same input source
 const tmpQ2 = new THREE.Quaternion();
 function updatePointers() {                         // hover state + ray length + cursor ring, once per frame
   const was = new Set(ctrls.map((c) => c.hover).filter(Boolean));
@@ -895,6 +895,7 @@ function loadRoverModel() {
     const m = g.scene;
     m.traverse((o) => { if (o.isMesh) { o.material.fog = false; o.frustumCulled = true; } });
     const old = ghost.marker; ghost.root.remove(old);
+    old.traverse((o) => { o.geometry?.dispose(); o.material?.dispose?.(); });
     ghost.marker = m; ghost.root.add(m);
     renderer.compile(scene, camera);                  // compile its programs now, not on first sight
     mwlog("rover-model", { ok: true });
