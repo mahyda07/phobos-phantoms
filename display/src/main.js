@@ -35,6 +35,8 @@ import { initShare, readInitialState } from "./share.js";
 import "./share.css";
 import { initLocator, MARS_GLOBAL } from "./locator.js";
 import "./locator.css";
+import { initLiveFeeds, MEDA_URL } from "./live-feeds.js";
+import "./live-feeds.css";
 import { initA11y } from "./a11y.js";
 import "./a11y.css"; // after theme.css: focus rings, contrast fixes
 import "./responsive.css"; // keep last: phone/tablet overrides
@@ -309,7 +311,9 @@ async function main() {
   renderSources(document.getElementById("sources"), isSample ? null : manifest, {
     extra: isSample ? [] : [{ name: "Perseverance raw images (stop photos)", source: "NASA/JPL-Caltech",
       licence: "NASA media guidelines", citation: "https://mars.nasa.gov/mars2020/multimedia/raw-images/" },
-    { name: "Where on Mars? inset (global map)", source: MARS_GLOBAL.credit, licence: MARS_GLOBAL.licence, citation: MARS_GLOBAL.source }],
+    { name: "Where on Mars? inset (global map)", source: MARS_GLOBAL.credit, licence: MARS_GLOBAL.licence, citation: MARS_GLOBAL.source },
+    { name: "Live card: Perseverance MEDA weather feed", source: "NASA/JPL-Caltech public weather feed (last updated sol 1133, 2024-04-27)", licence: "NASA data, public", citation: MEDA_URL },
+    { name: "Live card: space-weather notifications", source: "NASA CCMC DONKI via api.nasa.gov (public DEMO_KEY)", licence: "NASA data, public", citation: "https://api.nasa.gov/" }],
   });
 
   const win = await getJson("window.json");
@@ -330,6 +334,7 @@ async function main() {
     slopeLimit, manifest: isSample ? null : manifest, isSample,
   }));
   addScaleBar(map, f.cell);
+  initLiveFeeds(document.getElementById("live")); // online-only context cards; not awaited, never blocks the map
   initLocator(map, { L, grid: gridRaw, isSample }); // after the scale bar so it stacks above it
 
   // Re-fit once layout has settled (first-load mis-zoom fix).
