@@ -10,8 +10,9 @@ Real NASA terrain of Jezero Crater becomes a walk-planning map: an AI hazard est
 - Web map: https://phobos-display.vercel.app
 - Planner web service: https://phobos-planner.onrender.com (interactive docs at `/docs`; free hosting, the first request after a quiet spell is slow)
 - Code: https://github.com/mahyda07/phobos-phantoms
-- 30-second demo video (English subtitles): `submission/Marswalk-30s.mp4` in the repo (YouTube link on the project page)
-- 7-slide deck: `submission/Marswalk-Presentation-v3.pdf`
+- 30-second demo video (English subtitles, NASA submission): https://youtu.be/AGqZARM6XWY (file: `submission/Marswalk-30s.mp4`)
+- 60-second demo video (English subtitles, Space Apps Islamabad): https://youtu.be/1GlmM78KCdk (file: `submission/Marswalk-60s-local.mp4`)
+- 7-slide deck: https://github.com/mahyda07/phobos-phantoms/blob/main/submission/Marswalk-Presentation-v3.pdf
 
 ## The problem
 Future Mars explorers will need detailed, local information about the ground they cross, not just a planetary map. Elevation, slope, imagery, mineral signals and weather live in separate datasets, which makes it hard to see the trade-off between a safe path and a scientifically valuable one, and how much time is left to get back.
