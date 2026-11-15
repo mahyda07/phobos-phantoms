@@ -71,6 +71,17 @@ export function drawVisor(g, f) {
     roundRect(g, 905 - bw / 2, 26, bw, 46, 10); g.fillStyle = C.badge; g.fill();
     g.fillStyle = "#111"; g.textBaseline = "middle"; g.fillText(f.badge, 905, 50); g.textBaseline = "alphabetic";
   }
+  // run 2: return route ("Get me home") in the clear top-centre band, home colour from docs/DESIGN_DIRECTION.md
+  if (f.home) {
+    const [t1, t2] = f.home, x = 905, w = 376, y = f.badge ? 86 : 28;
+    roundRect(g, x - w / 2, y, w, 112, 16); g.fillStyle = C.panel; g.fill();
+    g.lineWidth = 3; g.strokeStyle = "#7cc4ff"; g.stroke();
+    g.textAlign = "center"; g.fillStyle = "#7cc4ff"; g.font = `700 30px ${FONT}`; g.fillText(t1, x, y + 44);
+    g.fillStyle = C.value; g.font = `600 24px ${FONT}`;
+    let t = t2; while (t.length > 4 && g.measureText(t).width > w - 24) t = t.slice(0, -2) + "…";
+    g.fillText(t, x, y + 86);
+    g.textAlign = "left";
+  }
   g.strokeStyle = "rgba(255,255,255,0.45)"; g.lineWidth = 2; g.beginPath(); g.arc(800, 450, 12, 0, Math.PI * 2); g.stroke();
   g.textAlign = "left";
 }

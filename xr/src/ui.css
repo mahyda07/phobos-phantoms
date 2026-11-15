@@ -93,3 +93,15 @@ h1 span { background: linear-gradient(90deg, var(--mars), var(--mars2)); -webkit
 button:focus-visible, a:focus-visible, [tabindex]:focus-visible { outline:2px solid var(--mars); outline-offset:2px; }
 #welcome { overflow-y:auto; }
 @media (max-height: 760px) { #welcome { place-items:start center; padding: 16px 0; } }
+
+/* run 2: help overlay (keyboard + controller), docs/DESIGN_DIRECTION.md: solid panel, z 6000, focus ring */
+#help { position:fixed; inset:0; z-index:6000; display:grid; place-items:center; background:rgba(6,9,15,.6); padding:16px; }
+#help[hidden] { display:none; }
+#help .help-card { background:#0c111a; border:1px solid var(--line); border-radius:16px; padding:20px 22px; max-width:min(760px, 100%); max-height:90vh; overflow:auto; outline:none; }
+#help h2 { margin:0 0 12px; font-size:20px; font-weight:600; }
+#help table { border-collapse:collapse; width:100%; font-size:14px; }
+#help th { text-align:left; color:var(--mut); font-weight:500; padding:4px 10px 8px 0; }
+#help td { padding:6px 10px 6px 0; border-top:1px solid var(--line); vertical-align:top; }
+#help kbd { display:inline-block; min-width:22px; padding:1px 6px; border:1px solid var(--line); border-radius:6px; font:12px ui-monospace, monospace; text-align:center; }
+#help .help-foot { margin:12px 0 0; color:var(--mut); font-size:13px; }
+@media (max-width:600px) { #help th:nth-child(2), #help td:nth-child(2) { display:none; } }

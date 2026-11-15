@@ -12,6 +12,8 @@ import { makeFrame } from "./frame.js";
 import { heightSampler, marginColour, holoScale } from "./terrain.js";
 import { stopVertexIndices, walkState, ltstAt, sunAt, visorFields } from "./walk.js";
 import { drawVisor, VISOR_W, VISOR_H } from "./visor.js";
+import { planHome, homeSummary, reversedWalkedPath } from "./home.js";
+import { initKeys } from "./keys.js";
 
 const DATA = "./data/";
 const HOLO_SIZE = 0.6;            // metres across on the desk (PLAN: 1:2500 for 1.5 km)
@@ -416,8 +418,9 @@ const bPlay = addWalkButton("Pause", -0.12, () => { playing = !playing; bPlay.us
 const bSpeed = addWalkButton(`Speed ${SPEEDS[speedIdx]}×`, -0.04, () => {
   speedIdx = (speedIdx + 1) % SPEEDS.length; bSpeed.userData.setText(`Speed ${SPEEDS[speedIdx]}×`);
 });
-addWalkButton("Restart", 0.04, () => { simT = 0; playing = true; bPlay.userData.setText("Pause"); });
+addWalkButton("Restart", 0.04, () => { clearHome(); simT = 0; playing = true; bPlay.userData.setText("Pause"); });
 addWalkButton("Step out", 0.12, () => stopWalk());
+addWalkButton("Home", 0.20, () => goHome());
 
 function viewPose() {   // world position + quaternion of the eyes (headset or desktop camera)
   const cam = renderer.xr.isPresenting ? renderer.xr.getCamera() : camera;
@@ -462,6 +465,7 @@ function startWalk() {
 
 function stopWalk() {
   walking = false;
+  clearHome();
   sky.visible = false; scene.fog = null; visor.visible = false; walkPanel.visible = false;
   panel.visible = true; holoTube && (holoTube.visible = true); walkTube && (walkTube.visible = false);
   if (walkSaved) {
@@ -505,12 +509,103 @@ function updateWalk(now) {
   // redraw the visor only when a shown value changes
   const sun = sunAt(winData, ltstAt(winData, st.t_min));
   const f = visorFields(st, sun, String(routeData.properties.plan_id || "").startsWith("standin-"));
+  f.home = homeLine;
   const key = JSON.stringify(f);
   if (key !== lastVisorKey) { drawVisor(visorCanvas.getContext("2d"), f); visorTex.needsUpdate = true; lastVisorKey = key; }
 }
 const walkInfo = () => walkNow
-  ? `Step-in walk · ${SPEEDS[speedIdx]}× · ${playing ? "walking" : "paused"} · t ${walkNow.t_min.toFixed(1)} min · point ${walkNow.i + 1}/${routeData.geometry.coordinates.length} · ${fps} fps\n${routeInfo}`
+  ? `Step-in walk · ${SPEEDS[speedIdx]}× · ${playing ? "walking" : "paused"} · t ${walkNow.t_min.toFixed(1)} min · point ${walkNow.i + 1}/${routeData.geometry.coordinates.length} · ${fps} fps\n${routeInfo}${homeStatus ? "\n" + homeStatus : ""}`
   : info();
+
+// ---------- run 2: "Get me home" (Phase 2a) ----------
+// One action (controller A held 1 s · key H · walk-panel "Home") asks the live planner for a route from the walker's
+// spot back to the walk's start. Numbers on the visor come from the planner response (home.js homeSummary).
+const HOME_COLOUR = 0x7cc4ff;                       // docs/DESIGN_DIRECTION.md: home route
+const reduceMotion = () => matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+let homeTube = null, homeLine = null, homeBusy = false, homeDraw = null, homeStatus = "";
+function setHome(lines) { homeLine = lines; lastVisorKey = ""; }
+function clearHome() {
+  if (homeTube) { holo.remove(homeTube); homeTube.geometry.dispose(); homeTube.material.dispose(); homeTube = null; }
+  homeLine = null; homeDraw = null; homeStatus = ""; lastVisorKey = "";
+}
+function drawHome(coords) {
+  clearHome();
+  const pts = thin(coords, 2).map(([x, y]) => toHolo(x, y, 0.6));
+  if (pts.length < 2) return;
+  homeTube = tubeFor(pts, pts.map(() => new THREE.Color(HOME_COLOUR).toArray()), 0.35);
+  homeTube.material.fog = false;
+  const total = homeTube.geometry.index.count;
+  if (reduceMotion()) homeTube.geometry.setDrawRange(0, total);
+  else { homeTube.geometry.setDrawRange(0, 0); homeDraw = { t0: performance.now(), total }; }
+  holo.add(homeTube);
+}
+function updateHomeDraw(now) {
+  if (!homeDraw || !homeTube) return;
+  const k = Math.min(1, (now - homeDraw.t0) / 600);   // 0.6 s draw-in
+  const eased = 1 - Math.pow(1 - k, 3);
+  homeTube.geometry.setDrawRange(0, Math.floor(homeDraw.total * eased / 6) * 6);
+  if (k >= 1) homeDraw = null;
+}
+async function goHome() {
+  if (!routeData) return;
+  if (!walking) { emit("home", { state: "not-walking" }); setStatus(info() + "\nStep in first: Get me home plans from your spot on the walk back to its start."); return; }
+  if (homeBusy) return;
+  homeBusy = true;
+  playing = false; bPlay.userData.setText("Play");
+  const c = routeData.geometry.coordinates, st = walkNow, pos = [st.x, st.y];
+  setHome(["Return route", "planning…"]); emit("home", { state: "planning" });
+  const out = await planHome(c, st.i, pos, {
+    onStatus: (s) => {
+      if (s === "waking") { setHome(["Return route", "waking planner… (up to 1 min)"]); emit("home", { state: "waking" }); }
+      if (s === "snapping") setHome(["Return route", "steep ground here: trying the route behind you"]);
+    },
+  });
+  homeBusy = false;
+  if (!walking) return;                              // stepped out while waiting
+  if (out.route) {
+    const sm = homeSummary(out.route);
+    drawHome(out.route.geometry.coordinates);
+    const snap = out.req.snapped_m >= 1 ? ` (start snapped ${Math.round(out.req.snapped_m)} m back to the planned route)` : "";
+    setHome(["Return route", `${Math.round(sm.length_m)} m · ~${Math.round(sm.time_min)} min · margin ${Math.floor(sm.margin_min)} min`]);
+    homeStatus = sm.text + snap; setStatus(walkInfo());
+    emit("home", { state: "ready", text: sm.text + snap, length_m: sm.length_m, time_min: sm.time_min, margin_min: sm.margin_min });
+  } else {
+    const fb = reversedWalkedPath(routeData, st.i, pos);
+    drawHome(fb.coords);
+    setHome([out.reason === "at-start" ? "Walked path reversed" : "Offline: walked path reversed", `${Math.round(fb.length_m)} m · ~${Math.round(fb.time_min)} min`]);
+    homeStatus = fb.text; setStatus(walkInfo());
+    emit("home", { state: "fallback", reason: out.reason, text: fb.text });
+  }
+}
+
+// controller A (right hand, gamepad buttons[4]) held 1 s = Get me home
+let aHeldSince = 0, aFired = false;
+const padPrev = {};
+function pollGamepads(now) {
+  const session = renderer.xr.getSession?.();
+  if (!session) return;
+  let aDown = false;
+  for (const src of session.inputSources) {
+    const gp = src.gamepad;
+    if (!gp) continue;
+    const hand = src.handedness;
+    if (hand === "right" && gp.buttons[4]?.pressed) aDown = true;
+    // edge-triggered buttons (xr-standard mapping: 4 = A/X, 5 = B/Y; axes[3] = thumbstick y)
+    const edge = (idx, fn) => { const k = hand + idx, on = !!gp.buttons[idx]?.pressed; if (on && !padPrev[k]) fn(); padPrev[k] = on; };
+    if (hand === "right") edge(5, () => toggleGhost());
+    if (hand === "left") { edge(4, () => toggleMute()); edge(5, () => repeatCallout()); }
+    if (hand === "right" && walking) {
+      const y = gp.axes[3] ?? 0, k = "stick";
+      const dir = y < -0.7 ? 1 : y > 0.7 ? -1 : 0;
+      if (dir && padPrev[k] !== dir) scrub(dir * 0.5);
+      padPrev[k] = dir;
+    }
+  }
+  if (aDown) {
+    if (!aHeldSince) { aHeldSince = now; aFired = false; }
+    else if (!aFired && now - aHeldSince >= 1000) { aFired = true; goHome(); }
+  } else aHeldSince = 0;
+}
 
 // desktop: HTML Step in / Step out
 document.getElementById("btn-walk").onclick = () => (walking ? stopWalk() : startWalk());
@@ -567,8 +662,10 @@ renderer.setAnimationLoop((time, frame) => {
     } else if (!placed && !hitSource) placeInFront();
     updateHands();
     updateHint(now);
+    pollGamepads(now);
   } else orbit.update();
   if (walking) updateWalk(now);
+  updateHomeDraw(now);
   panel.visible = renderer.xr.isPresenting && !walking;   // in-world panel is for the headset; the page has its own toolbar
   renderer.render(scene, camera);
 });
@@ -577,5 +674,33 @@ addEventListener("resize", () => {
   camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
 });
+
+// ---------- run 2: keyboard map for the desktop preview (Phase 2e; bindings + help overlay in keys.js) ----------
+function scrub(dMin) {                               // move along the walk by simulated minutes
+  if (!walking || !routeData) return;
+  const tEnd = routeData.properties.per_vertex.t_min.at(-1);
+  simT = Math.max(0, Math.min(tEnd, simT + dMin));
+}
+function turnView(deg) {                             // desktop preview only; in the headset you turn your head
+  if (renderer.xr.isPresenting) return;
+  if (!walking) { (deg > 0 ? act.rotL : act.rotR)(); return; }
+  const off = orbit.target.clone().sub(camera.position).applyAxisAngle(new THREE.Vector3(0, 1, 0), THREE.MathUtils.degToRad(deg));
+  orbit.target.copy(camera.position).add(off); orbit.update();
+}
+function zoomView(f) {
+  if (renderer.xr.isPresenting || walking) return;
+  camera.position.sub(orbit.target).multiplyScalar(f).add(orbit.target); orbit.update();
+}
+function togglePause() { if (!walking) return; playing = !playing; bPlay.userData.setText(playing ? "Pause" : "Play"); }
+function toggleGhost() { emit("ghost", {}); }          // replaced in Phase 2d
+function toggleMute() { emit("mute", {}); }            // replaced in Phase 2b
+function repeatCallout() { emit("repeat", {}); }       // replaced in Phase 2b
+initKeys({
+  forward: () => (walking ? scrub(0.5) : zoomView(0.9)), back: () => (walking ? scrub(-0.5) : zoomView(1.1)),
+  left: () => turnView(15), right: () => turnView(-15), pause: togglePause,
+  home: () => goHome(), ghost: () => toggleGhost(), mute: () => toggleMute(), repeat: () => repeatCallout(),
+});
+
+window.__marswalk = { goHome, startWalk, stopWalk, isWalking: () => walking };
 
 init().catch((e) => { console.error(e); setStatus("Load failed: " + e.message); });
