@@ -95,6 +95,8 @@ const loadTex = (url) => new Promise((res) => new THREE.TextureLoader().load(url
 }, undefined, () => res(null)));
 
 async function init() {
+  try { await Promise.race([document.fonts?.load?.('600 40px "Host Grotesk"') && document.fonts.load('700 40px "JetBrains Mono"'), new Promise((r) => setTimeout(r, 1500))]); } catch { /* system font fallback */ }
+  buttons.forEach((b) => b.userData.refresh?.());   // panels were painted before the fonts arrived
   grid = await loadJSON(DATA + "grid.json");
   const meta = await loadJSON(DATA + "terrain.meta.json");
   if (!grid || !meta) throw new Error("grid.json / terrain.meta.json missing — run `npm run copy-data`");

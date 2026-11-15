@@ -105,3 +105,19 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { outline:2px so
 #help kbd { display:inline-block; min-width:22px; padding:1px 6px; border:1px solid var(--line); border-radius:6px; font:12px ui-monospace, monospace; text-align:center; }
 #help .help-foot { margin:12px 0 0; color:var(--mut); font-size:13px; }
 @media (max-width:600px) { #help th:nth-child(2), #help td:nth-child(2) { display:none; } }
+
+/* run 2 Phase 6: docs/DESIGN_DIRECTION.md tokens + type, same as the web map (display/src/ui-tokens.css) */
+@font-face { font-family: "Host Grotesk"; src: url("/fonts/host-grotesk-latin.woff2") format("woff2"); font-weight: 400 700; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url("/fonts/jetbrains-mono-latin.woff2") format("woff2"); font-weight: 400 700; font-display: swap; }
+:root { --on-mars:#06090f; --font-ui:"Host Grotesk", system-ui, "Segoe UI", sans-serif; --font-num:"JetBrains Mono", ui-monospace, monospace; }
+html, body { font-family: var(--font-ui); }
+.eyebrow, #datapanel .ph { text-transform: none; letter-spacing: 0; font-size: 13px; }
+h1 { font-weight: 700; letter-spacing: -.04em; }
+/* primary actions: solid Mars orange + dark text (7.69:1; white on orange was 2.59:1) */
+.btn.primary, .tool.primary { background: var(--mars); color: var(--on-mars); box-shadow: 0 8px 30px rgba(255,122,61,.28); }
+.btn.primary:hover:not(:disabled), .tool.primary:hover:not(:disabled) { background: var(--mars2); }
+.btn.primary .pulse { background: var(--on-mars); }
+.chip b, #status { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.btn:active:not(:disabled), .tool:active:not(:disabled) { transform: scale(.98); }
+:where(button, a, [tabindex]):focus-visible { outline: 2px solid var(--mars); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; } }

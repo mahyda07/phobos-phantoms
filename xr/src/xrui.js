@@ -63,6 +63,7 @@ export function makeButton({ label, sub = "", w = 0.1, h = 0.045, kind = "defaul
     setText(l, s2 = st.sub) { if (l === st.label && s2 === st.sub) return; st.label = l; st.sub = s2; apply(); },
     setOn(v) { if (st.on === v) return; st.on = v; apply(); },
     get state() { return st.state; },
+    refresh() { cache.forEach((t) => t.dispose()); cache.clear(); apply(); },   // repaint after web fonts load
   };
   return mesh;
 }
