@@ -65,7 +65,7 @@ export function donkiHtml(items, days) {
     const when = esc(String(x.messageIssueTime).replace("T", " ").replace("Z", " UTC"));
     return `<li>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${label}</a>` : label} <span class="muted">${when}</span></li>`;
   }).join("");
-  return `<h3>Space weather (last ${esc(days)} days)</h3>
+  return `<h3>Sun activity, measured near Earth/Sun (last ${esc(days)} days)</h3>
     <p class="lf-age">${countText}</p>
     ${rows ? `<ul class="lf-list">${rows}</ul>` : ""}
     <p class="muted">NASA CCMC DONKI notifications. Most concern Earth's surroundings; this is context for radiation risk, not a radiation reading at Jezero.</p>`;
@@ -109,7 +109,7 @@ const isoDay = (d) => d.toISOString().slice(0, 10);
  * Fills `container` (a <section id="live">) with both cards. Each card loads on its own; a failure only affects that card.
  * Returns a promise that settles when both are done.
  */
-export async function initLiveFeeds(container, { fetchImpl = globalThis.fetch, now = new Date(), days = 30 } = {}) {
+export async function initLiveFeeds(container, { fetchImpl = globalThis.fetch, now = new Date(), days = 30, cachedDonki = null } = {}) {
   if (!container) return;
   container.innerHTML = `<h2>Live NASA feeds (online only)</h2>
     <p class="muted">Optional context, fetched when this page opens. On Mars the map works from local files; these cards need a connection.</p>
@@ -123,7 +123,11 @@ export async function initLiveFeeds(container, { fetchImpl = globalThis.fetch, n
   await Promise.all([
     getJsonCached("marswalk-meda", MEDA_URL, fetchImpl, now.getTime()).then(({ data, cachedAt }) => { meda.innerHTML = medaHtml(data, now) + fetchedNote(cachedAt); })
       .catch((e) => { meda.innerHTML = offline("Latest MEDA weather at Jezero", e); }),
-    getJsonCached("marswalk-donki", DONKI_URL(isoDay(start), isoDay(now)), fetchImpl, now.getTime()).then(({ data, cachedAt }) => { donki.innerHTML = donkiHtml(data, days) + fetchedNote(cachedAt); })
+    // run 2: prefer the build-time cache (pipeline/fetch_feeds.py, team key used at build time only) over a DEMO_KEY call
+    (cachedDonki?.data?.notifications
+      ? Promise.resolve({ data: cachedDonki.data.notifications, cachedAt: null, built: cachedDonki.fetched_utc })
+      : getJsonCached("marswalk-donki", DONKI_URL(isoDay(start), isoDay(now)), fetchImpl, now.getTime()))
+      .then(({ data, cachedAt, built }) => { donki.innerHTML = donkiHtml(data, days) + (built ? `<p class="muted">Fetched ${esc(String(built).slice(0, 16).replace("T", " "))} UTC at build time.</p>` : fetchedNote(cachedAt)); })
       .catch((e) => { donki.innerHTML = offline(`Space weather (last ${days} days)`, e); }),
   ]);
 }

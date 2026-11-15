@@ -36,6 +36,7 @@ import "./share.css";
 import { initLocator, MARS_GLOBAL } from "./locator.js";
 import "./locator.css";
 import { initLiveFeeds, MEDA_URL } from "./live-feeds.js";
+import { loadFeeds, feedsCardHtml, lightToday } from "./feeds.js";
 import "./live-feeds.css";
 import { initA11y } from "./a11y.js";
 import "./view3d.css";
@@ -409,7 +410,8 @@ async function main() {
   });
 
   const win = await getJson("window.json");
-  renderWindow(win);
+  const feeds = await loadFeeds(getJson);   // run 2: build-time context feeds (optional)
+  renderWindow(win, { lightToday: lightToday(feeds.horizons) });
   let conditionRows = [];
   // Hourly conditions (Mahida's conditions.csv): temperature, pressure, dust, radiation, exactly as in the file.
   const condText = await getText("conditions.csv");
@@ -426,7 +428,8 @@ async function main() {
     slopeLimit, manifest: isSample ? null : manifest, isSample,
   }));
   addScaleBar(map, f.cell);
-  initLiveFeeds(document.getElementById("live")); // online-only context cards; not awaited, never blocks the map
+  initLiveFeeds(document.getElementById("live"), { cachedDonki: feeds.donki }); // not awaited, never blocks the map
+  { const card = document.createElement("div"); card.className = "feeds-card"; card.innerHTML = feedsCardHtml(feeds); document.getElementById("sources")?.appendChild(card); }
   initLocator(map, { L, grid: gridRaw, isSample }); // after the scale bar so it stacks above it
 
   // Re-fit once layout has settled (first-load mis-zoom fix).

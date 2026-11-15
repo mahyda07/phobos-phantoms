@@ -7,3 +7,11 @@
 #live .lf-list li { margin: 2px 0; }
 #live .lf-list a { color: #8cc8ff; }
 #live .stat .value { font-size: 14px; }
+
+/* run 2: Data feeds card (Sources panel) */
+.feeds-card { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--line, #2a3038); }
+.feeds-card h3 { margin: 0 0 6px; font-size: 13px; }
+.feeds-card .feed-row { padding: 6px 0; border-bottom: 1px dashed rgba(255,255,255,.08); }
+.feeds-card .feed-head { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+.feeds-card .feed-val { font-size: 14px; margin: 2px 0; font-variant-numeric: tabular-nums; }
+.feeds-card p { margin: 2px 0 0; font-size: 11px; }
