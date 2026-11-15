@@ -9,7 +9,7 @@ block wins (higher mean air temperature from science/conditions.csv). Her best_w
 on sol 500 LTST 10-14 and 11-15 tie exactly, and 11-15 is warmer.
 Inputs: sun height per local true solar hour from the NASA GISS Mars24 algorithm (functions reused from
 pipeline/window_basic.py) for Jezero on Perseverance sol 500; dust opacity, air temperature and pressure per hour
-from science/conditions.csv (MEDA; Mahida). Temperature and pressure are shown but are not part of the rule.
+from science/conditions.csv (MEDA; Mahida). Temperature and pressure are shown; temperature is not part of Maryam's rule and is used only as the tie-break.
 Typical sol, not a forecast.  Run from the repo root:  uv run python model/window.py
 """
 import csv, datetime, json, math, pathlib, sys
@@ -78,7 +78,7 @@ def build():
                   f"{', '.join(f'LTST {a}-{b}' for a, b in windows)}. EVA window = the {WALK_HOURS} h block with the highest average sun inside the good hours "
                   f"(average sun {best['avg_sun_deg']} deg). {tie_note}Sun: NASA GISS Mars24 algorithm (Allison & McEwen 2000) for Jezero {wb.LAT} N {wb.LON_E} E on "
                   f"Perseverance sol {wb.SOL} ({utc:%Y-%m-%d}, Ls {ls:.1f} deg). Dust opacity {min(dust):g}-{max(dust):g}, temperature and pressure: "
-                  f"science/conditions.csv (MEDA). Temperature is NOT part of the rule: air is {t_lo:g} to {t_hi:g} C during the window. "
+                  f"science/conditions.csv (MEDA). Temperature is not part of Maryam's rule (only the tie-break): air is {t_lo:g} to {t_hi:g} C during the window. "
                   f"Light time from low-precision orbits (about +/-1 min)."),
     }
     return win, windows, best
