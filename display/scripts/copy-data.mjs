@@ -48,6 +48,12 @@ if (set === "samples") {
     else missing.push(`(optional) ${name} (${candidates.join(", ")})`);
   };
   firstOf("route.json", ["model/out/route.json", "pipeline/fallback/route.json"]);
+  // run 2: build-time context feeds (pipeline/fetch_feeds.py) -> public/data/feeds/ (optional; the map works without them)
+  const feedsDir = join(repo, "pipeline", "feeds");
+  if (existsSync(feedsDir)) {
+    mkdirSync(join(out, "feeds"), { recursive: true });
+    for (const fn of readdirSync(feedsDir).filter((x) => x.endsWith(".json"))) { copyFileSync(join(feedsDir, fn), join(out, "feeds", fn)); copied.push("feeds/" + fn); }
+  }
   if (!copied.includes("window.json")) firstOf("window.json", ["model/out/window.json", "pipeline/fallback/window.json"]);
   firstOf("results.md", ["model/out/results.md", "model/results.md", "results.md"]);
   firstOf("results.json", ["model/out/results.json", "pipeline/fallback/results.json"]); // per-stretch proof numbers

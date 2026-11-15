@@ -97,7 +97,7 @@ export function renderConditions(container, rows) {
     </details>`);
 }
 
-export function renderWindow(win) {
+export function renderWindow(win, { lightToday = null } = {}) {
   const el = $("window");
   if (!win?.eva_window) { el.innerHTML = `<h2>Time window</h2><p class="muted">EVA time window (sun height, start and end time) not available yet: waiting for window.json from the planner team.</p>`; return; }
   const { start_ltst, end_ltst } = win.eva_window;
@@ -109,7 +109,8 @@ export function renderWindow(win) {
     <h2>Time window</h2>
     <div class="stats">
       ${stat("EVA window (LTST)", `${hhmm(start_ltst)}–${hhmm(end_ltst)}`)}
-      ${stat("Signal delay to Earth", num(win.one_way_light_time_min), " min")}
+      ${stat(`Signal delay on plan date${win.sol != null ? ` (sol ${win.sol})` : ""}`, num(win.one_way_light_time_min), " min")}
+      ${lightToday ? stat(`Light delay today (${lightToday.utc.slice(0, 11)}, JPL Horizons)`, num(lightToday.min), " min") : ""}
     </div>
     <table class="hours"><thead><tr><th>LTST</th><th>Sun height</th><th>Temp</th></tr></thead><tbody>${rows}</tbody></table>
     <p class="muted">Typical conditions (climatology), not a forecast. ${esc(win.notes || "")}</p>`;
