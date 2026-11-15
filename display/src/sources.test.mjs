@@ -81,13 +81,13 @@ test("legendFor returns null for an unknown layer", () => {
   assert.equal(legendFor("photo", current, null), null);
 });
 
-test("hazard legend says model, not validated; no gradient on the real set", () => {
+test("hazard legend says model, not validated; gradient = hazard.png formula on the real set", () => {
   const meta = JSON.parse(readFileSync(join(repo, "samples/out/hazard.meta.json"), "utf8"));
   const real = legendFor("hazard", current, meta);
   assert.equal(real.title, HAZARD_TITLE);
   assert.match(real.title, /model, not validated/);
-  assert.equal(real.gradientCss, null);
-  assert.match(real.note, /see source/);
+  assert.match(real.gradientCss, /rgba\(255,220,30,0\) 0%.*62\.5%.*rgba\(255,0,30,0\.784\) 100%/);
+  assert.match(real.note, /never blocks/);
   const sample = legendFor("hazard", null, meta);
   assert.match(sample.title, /model, not validated/);
   assert.match(sample.note, /SAMPLE/);

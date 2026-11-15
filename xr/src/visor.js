@@ -30,6 +30,19 @@ function field(g, { x, y, w, h, label, sub, value, unit, big }) {
   }
 }
 
+// Same colour scale as the web map's hazard layer and legend (model/hazard/infer.py:104-105 hazard.png:
+// rgb = (255, 220(1-h), 30), alpha = min(1.6h, 1) x 200/255). A scale only: the number itself stays white.
+export const HAZARD_STOPS = [[0, "rgba(255,220,30,0)"], [0.625, "rgba(255,82,30,0.784)"], [1, "rgba(255,0,30,0.784)"]];
+function hazardScale(g, x, y, w, h, v) {
+  const gr = g.createLinearGradient(x, 0, x + w, 0);
+  for (const [t, c] of HAZARD_STOPS) gr.addColorStop(t, c);
+  roundRect(g, x, y, w, h, h / 2); g.fillStyle = gr; g.fill();
+  g.lineWidth = 2; g.strokeStyle = C.edge; g.stroke();
+  if (!Number.isFinite(v)) return;
+  const mx = x + Math.min(1, Math.max(0, v)) * w;
+  g.fillStyle = C.value; g.beginPath(); g.moveTo(mx, y - 4); g.lineTo(mx - 9, y - 16); g.lineTo(mx + 9, y - 16); g.closePath(); g.fill();
+}
+
 /** Draw the 6 visor fields (strings from walk.js visorFields) onto ctx. */
 export function drawVisor(g, f) {
   g.clearRect(0, 0, VISOR_W, VISOR_H);
@@ -37,6 +50,7 @@ export function drawVisor(g, f) {
   field(g, { x: 28, y: 330, w: 520, h: 170, label: "Time out", value: f.timeOut, unit: "min" });
   field(g, { x: 1102, y: 28, w: 470, h: 170, label: "Slope here", value: f.slope, unit: "°" });
   field(g, { x: 1102, y: 222, w: 470, h: 200, label: "AI hazard here", sub: "AI hazard estimate (model, not validated)", value: f.hazard, unit: "of 1" });
+  hazardScale(g, 1102 + 270, 222 + 128, 175, 14, parseFloat(f.hazard));
   // next stop (id big, name smaller)
   panel(g, 28, 900 - 66 - 200, 800, 200);
   g.fillStyle = C.label; g.font = `600 30px ${FONT}`; g.fillText("Next stop", 54, 900 - 66 - 200 + 48);

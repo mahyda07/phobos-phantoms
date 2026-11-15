@@ -12,7 +12,7 @@ import { renderStopCards, highlightStopCard, stopsFromCsv, parseCsv } from "./st
 import stopPhotos from "./stop-photos.json";
 import "./stop-cards.css";
 import { renderProofPanel, initProofToggle, parseWaypointsCsv } from "./proof.js";
-import { initPlannerControl, buildPlanRequest, requestPlan } from "./planner.js";
+import { initPlannerControl, buildPlanRequest, requestPlan, wakePlanner } from "./planner.js";
 import { initMovingMap } from "./moving-map.js";
 import "./moving-map.css";
 import { renderSources, initLegendControl } from "./sources.js";
@@ -264,6 +264,7 @@ async function main() {
     }
     routeSource.hidden = false;
   };
+  wakePlanner(); // the free Render server sleeps when idle: start waking it while the visitor reads the welcome
   initPlannerControl(map, f, {
     stops: (csvStops.length ? csvStops : saved?.properties?.stops || []).map((s) => ({ id: s.id, name: s.name })),
     onRoute: onPlannerRoute,

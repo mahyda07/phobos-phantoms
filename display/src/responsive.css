@@ -96,3 +96,15 @@
   #map .planner-control:not(.expanded) { width: auto; padding: 4px; }
   #map .planner-control:not(.expanded) .planner-toggle { width: auto; }
 }
+
+/* Phone portrait (Phase B polish, 15 Nov): the left controls stacked down ~280 px of a ~460 px map.
+   Pinch-zoom replaces the +/- buttons, the header moves to the left edge, and the controls wrap into two short rows. */
+@media (max-width: 640px) {
+  #map .leaflet-control-zoom { display: none; }
+  #header { left: 10px; }
+  #map .leaflet-top.leaflet-left {
+    display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px;
+    top: 58px; left: 10px; right: 64px; box-sizing: border-box;
+  }
+  #map .leaflet-top.leaflet-left > .leaflet-control { margin: 0; float: none; clear: none; }
+}
