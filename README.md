@@ -11,6 +11,9 @@ Real NASA terrain at Jezero Crater becomes a walk-planning map. A least-cost wal
 |---|---|---|
 | Headset app (Meta Quest 3 browser, also runs on a PC) | https://phantom-phobos.vercel.app | Hologram of the walking area on your desk; **Step in** to walk the planned route at full size with the visor. Hold **A** for a live **return route home**; **B** shows Perseverance's real path with the NASA rover model; voice callouts, haptics on rough ground, real Mars wind |
 | Web map | https://phobos-display.vercel.app | Route coloured by walk-back margin, science stops with rover photos, proof view, time window; **2D / 3D terrain view**, data feeds (light delay today, Sun activity, IAU names), optional Mars wind sound |
+| Demo video, 30 s (NASA submission) | https://youtu.be/AGqZARM6XWY | English subtitles; also `submission/Marswalk-30s.mp4` |
+| Demo video, 60 s (Space Apps Islamabad) | https://youtu.be/1GlmM78KCdk | English subtitles; also `submission/Marswalk-60s-local.mp4` |
+| Slide deck (7 slides) | https://github.com/mahyda07/phobos-phantoms/blob/main/submission/Marswalk-Presentation-v3.pdf | Also `.pptx` in `submission/` |
 | Planner web service | https://phobos-planner.onrender.com | `GET /health`, `GET /stops`, `GET /window`, `GET /results`, `POST /plan`; interactive docs at `/docs`. Free hosting: the first request after a quiet spell is slow |
 
 ### Keyboard and controllers
