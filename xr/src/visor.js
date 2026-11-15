@@ -49,7 +49,7 @@ function hazardScale(g, x, y, w, h, v) {
 /** Draw the 6 visor fields (strings from walk.js visorFields) onto ctx. */
 export function drawVisor(g, f) {
   g.clearRect(0, 0, VISOR_W, VISOR_H);
-  field(g, { x: 28, y: 28, w: 680, h: 250, label: "Walk-back margin", sub: "time left to walk back safely", value: f.margin, unit: "min", big: true });
+  field(g, { x: 28, y: 28, w: 680, h: 250, label: "Walk-back margin", sub: "time left to walk back", value: f.margin, unit: "min", big: true });
   field(g, { x: 28, y: 330, w: 520, h: 170, label: "Time out", value: f.timeOut, unit: "min" });
   field(g, { x: 1102, y: 28, w: 470, h: 170, label: "Slope here", value: f.slope, unit: "°" });
   field(g, { x: 1102, y: 222, w: 470, h: 200, label: "AI hazard here", sub: "AI hazard estimate (model, not validated)", value: f.hazard, unit: "of 1" });
