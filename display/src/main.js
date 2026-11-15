@@ -43,6 +43,8 @@ import { initA11y } from "./a11y.js";
 import "./view3d.css";
 import "./a11y.css"; // after theme.css: focus rings, contrast fixes
 import "./ui-tokens.css"; // run 2 Phase 6: tokens, fonts, sentence case, mono numbers
+import "./console.css"; // console skin: left sidebar, monospace mission-console look (after the tokens, before responsive)
+import { initDock } from "./dock.js";
 import "./responsive.css"; // keep last: phone/tablet overrides
 
 const DATA = "data/";
@@ -118,6 +120,7 @@ async function main() {
   const map = L.map("map", { crs: L.CRS.Simple, minZoom: -3, maxZoom: 4, zoomSnap: 0.25, attributionControl: true });
   map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
   if (isSample || !manifest) map.attributionControl.addAttribution("SAMPLE data — synthetic, not NASA data");
+  initDock(map); // console layout: sidebar header height, tool controls docked in the sidebar on desktop
 
   const bounds = f.leafletBounds();
   const fit = () => map.fitBounds(bounds, { paddingTopLeft: [0, 70], paddingBottomRight: [0, 10] }); // keep pins clear of the title box
@@ -199,7 +202,7 @@ async function main() {
   let sound = null;    // run 2 Phase 5: map sound (sound.js), created below
   let lastPlanRequest = null; // set only while the drawn route came from the live planner (for share links)
   let exporter = null; // route downloads (created further down, refreshed whenever the route changes)
-  const compare = initCompare(map, { L, f, container: document.getElementById("compare") }); // previous vs new planner route
+  const compare = initCompare(map, { L, f, container: document.getElementById("compare"), onChange: (prev) => v3d?.setCompare(prev) }); // previous vs new planner route
   let routeLL = [];   // current route in Leaflet coordinates (for the moving-map control)
   let mm = null;      // moving-map control: play along the route, follow, distance rings
   let profile = null; // elevation profile chart in the side panel
@@ -208,6 +211,7 @@ async function main() {
     if (!view) return;
     posIndex = i;
     view.clearGhost();
+    v3d?.clearGhost();
     slider.value = i;
     slider.setAttribute("aria-valuetext", `Point ${i + 1} of ${Number(slider.max) + 1}`);
     view.setPoint(i);
@@ -222,12 +226,14 @@ async function main() {
   const previewPoint = (i) => {
     if (!view) return;
     view.setGhost(i);
+    v3d?.setGhost(i);
     renderReadout(current, i, nextStopAt(i), { preview: true, pos: posIndex });
     renderHud(current, i, nextStopAt(i), { preview: true });
   };
   const endPreview = () => {
     if (!view) return;
     view.clearGhost();
+    v3d?.clearGhost();
     renderReadout(current, posIndex, nextStopAt(posIndex));
     renderHud(current, posIndex, nextStopAt(posIndex));
   };
@@ -254,6 +260,7 @@ async function main() {
     profile = renderProfile(profileEl, route, { stops: view.stops, onPoint: showPoint, onPreview: previewPoint, onPreviewEnd: endPreview });
     profileEl.hidden = false;
     showPoint(0);
+    syncV3d();
     setupProof(route, view.layer);
     exporter?.refresh();
   };
@@ -298,7 +305,7 @@ async function main() {
   });
 
   // Moving map (created after the planner so it sits under it): only useful when a route is drawn.
-  mm = initMovingMap(map, f, { L, getPointLatLng: (i) => routeLL[i], pointCount: routeLL.length, onIndex: showPoint });
+  mm = initMovingMap(map, f, { L, getPointLatLng: (i) => routeLL[i], pointCount: routeLL.length, onIndex: showPoint, onFollow: (on) => v3d?.setFollow(on) });
   if (routeLL.length) mm.setIndex(0);
 
   // Demo mode: one button runs the ~30 s walkthrough for the screen recording (demo.js).
@@ -333,7 +340,10 @@ async function main() {
   v3dHost.id = "view3d"; v3dHost.hidden = true;
   v3dHost.innerHTML = `<div class="v3d-bar glass" role="group" aria-label="3D view controls">
       <label class="v3d-exag"><span id="v3d-exag-label">Vertical exaggeration 1.5×</span>
-        <input id="v3d-exag" type="range" min="1" max="3" step="0.1" value="1.5" aria-describedby="v3d-exag-label"></label>
+        <input id="v3d-exag" type="range" min="1" max="4" step="0.1" value="1.5" aria-describedby="v3d-exag-label"></label>
+      <span class="v3d-surf" role="group" aria-label="Terrain surface">
+        <button type="button" class="chip" id="v3d-relief" aria-pressed="true">Relief</button>
+        <button type="button" class="chip" id="v3d-photo" aria-pressed="false">Photo</button></span>
       <button type="button" class="chip" id="v3d-hazard" aria-pressed="false">AI hazard</button>
       <button type="button" class="chip" id="v3d-rover" aria-pressed="true">Perseverance path</button>
       <button type="button" class="chip" id="v3d-reset">Reset view</button>
@@ -344,10 +354,26 @@ async function main() {
   const toggleEl = document.getElementById("view-toggle");
   const setPressed = (id, on) => document.getElementById(id)?.setAttribute("aria-pressed", String(!!on));
   let switching = false;
-  async function setView(mode) {
+  const store = (v) => { try { localStorage.setItem("mw-view", v); } catch { /* private mode */ } };
+  const stored = () => { try { return localStorage.getItem("mw-view"); } catch { return null; } };
+  const hasWebGL = () => { try { const c = document.createElement("canvas"); return !!(c.getContext("webgl2") || c.getContext("webgl")); } catch { return false; } };
+  // Leaflet layer state -> 3D (single source of truth is the Leaflet layer).
+  // A hoisted function: showRoute() calls it before this line runs (while v3d is still null).
+  function syncV3d() {
+    if (!v3d) return;
+    for (const { id, layer } of Object.values(rasterInfo)) v3d.setLayer(id, map.hasLayer(layer));
+    v3d.setRover(!!roverLayer && map.hasLayer(roverLayer));
+    const routeOn = view ? map.hasLayer(view.layer) : false;
+    v3d.setRouteVisible(view ? routeOn : true);
+    v3d.setStopsVisible(view ? routeOn : (csvStopLayer ? map.hasLayer(csvStopLayer) : true));
+    setPressed("v3d-hazard", v3d.hazard); setPressed("v3d-rover", v3d.rover);
+  }
+  map.on("layeradd layerremove", syncV3d);
+  async function setView(mode, remember = true) {
     if (switching) return null;
     const want3d = mode === "3d";
-    toggleEl.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === mode)));
+    if (remember) store(want3d ? "3d" : "2d");
+    toggleEl.querySelectorAll("button[data-view]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === mode)));
     if (!want3d) { v3d?.hide(); v3dHost.hidden = true; document.body.classList.remove("view-3d"); return "2D map"; }
     document.body.classList.add("view-3d"); v3dHost.hidden = false;
     if (!v3d) {
@@ -356,34 +382,45 @@ async function main() {
         const [{ createView3D }, meta] = await Promise.all([import("./view3d.js"), getJson("terrain.meta.json")]);
         const roverJson = await getJson("rover_path.json");
         const stops3d = (current?.properties?.stops?.length ? current.properties.stops : csvStops).map((st) => ({ id: st.id, name: st.name, x: st.x, y: st.y }));
-        v3d = await createView3D(v3dHost, { f, data: DATA, meta, route: current, rover: roverJson, stops: stops3d, rampColor });
-        v3d.setRover(!!roverLayer && map.hasLayer(roverLayer));
+        v3d = await createView3D(v3dHost, { f, data: DATA, meta, route: current, rover: roverJson, stops: stops3d, rampColor,
+          layers: Object.values(rasterInfo).map((r) => r.id),
+          onPoint: showPoint, onPreview: previewPoint, onPreviewEnd: endPreview,
+          onStop: (id) => { highlightStopCard(stopsEl, id); view?.focusStop(id); } });
         v3d.setPoint(posIndex);
+        syncV3d();
         window.__v3d = v3d;   // read by qa scripts (lod / draw calls)
       } catch (e) {
-        console.error(e); switching = false; setView("2d"); { const er = document.getElementById("error"); er.textContent = `3D view could not load: ${e.message}`; er.hidden = false; } switching = false; v3dHost.classList.remove("loading"); return "3D view could not load";
+        console.error(e); switching = false; v3dHost.classList.remove("loading"); setView("2d", false);
+        const er = document.getElementById("error"); er.textContent = `3D view could not load: ${e.message}`; er.hidden = false;
+        return "3D view could not load";
       }
       switching = false; v3dHost.classList.remove("loading");
     }
     v3d.show();
-    setPressed("v3d-hazard", v3d.hazard); setPressed("v3d-rover", v3d.rover);
+    syncV3d();
     return "3D terrain view";
   }
+  // 2D-only tools switch back to the map when used while 3D shows (buttons live in the sidebar on desktop).
+  document.addEventListener("click", (e) => {
+    if (!document.body.classList.contains("view-3d")) return;
+    if (e.target.closest?.(".planner-toggle, .proof-toggle button, .demo-control button, .mm-rings")) setView("2d", false);
+  }, true);
+  const surfaceBtns = () => { const s = v3d?.surface || "relief"; setPressed("v3d-relief", s === "relief"); setPressed("v3d-photo", s === "photo"); };
+  v3dHost.querySelector("#v3d-relief").addEventListener("click", () => { v3d?.setSurface("relief"); surfaceBtns(); });
+  v3dHost.querySelector("#v3d-photo").addEventListener("click", () => { v3d?.setSurface("photo"); surfaceBtns(); });
   toggleEl.addEventListener("click", (e) => { const b = e.target.closest("button[data-view]"); if (b) setView(b.dataset.view); });
   v3dHost.querySelector("#v3d-exag").addEventListener("input", (e) => { const t = v3d?.setExag(e.target.value); if (t) document.getElementById("v3d-exag-label").textContent = t; });
   const hazardName = Object.keys(rasterInfo).find((k) => rasterInfo[k].id === "hazard");
+  const toggleLayer = (lay) => { if (map.hasLayer(lay)) map.removeLayer(lay); else lay.addTo(map); };
   const toggleHazard = () => {
-    if (v3d?.visible) { const on = v3d.setHazard(!v3d.hazard); setPressed("v3d-hazard", on); return `AI hazard layer ${on ? "on" : "off"}`; }
     const lay = hazardName && overlays[hazardName]; if (!lay) return "No AI hazard layer in this data set";
-    if (map.hasLayer(lay)) map.removeLayer(lay); else lay.addTo(map);
+    toggleLayer(lay);
     return `AI hazard layer ${map.hasLayer(lay) ? "on" : "off"}`;
   };
   const toggleRover = () => {
     if (!roverLayer) return "No Perseverance path in this data set";
-    const on = !map.hasLayer(roverLayer);
-    if (on) roverLayer.addTo(map); else map.removeLayer(roverLayer);
-    v3d?.setRover(on); setPressed("v3d-rover", on);
-    return `Perseverance path ${on ? "on" : "off"}`;
+    toggleLayer(roverLayer);
+    return `Perseverance path ${map.hasLayer(roverLayer) ? "on" : "off"}`;
   };
   v3dHost.querySelector("#v3d-hazard").addEventListener("click", toggleHazard);
   v3dHost.querySelector("#v3d-rover").addEventListener("click", toggleRover);
@@ -394,7 +431,7 @@ async function main() {
     sound: () => `Sound ${sound.toggle() ? "on" : "off"}`,
     view2: () => { setView("2d"); return "2D map"; },
     view3: () => { setView("3d"); return "Loading the 3D terrain view"; },
-    plan: () => { if (v3d?.visible) setView("2d"); document.querySelector(".planner-toggle")?.click(); return "Planner: click a start point, then an end point"; },
+    plan: () => { if (v3d?.visible) setView("2d", false); document.querySelector(".planner-toggle")?.click(); return "Planner: click a start point, then an end point"; },
     hazard: toggleHazard,
     ghost: toggleRover,
     layers: () => { const el = layersEl(); if (!el) return null; el.classList.toggle("is-hidden"); const open = !el.classList.contains("is-hidden"); if (open) el.querySelector("input")?.focus(); return `Layers list ${open ? "shown" : "hidden"}`; },
@@ -500,6 +537,7 @@ async function main() {
     map.invalidateSize(); fit();
     const init = readInitialState(); // after fit(), so a shared view's zoom/centre are not overwritten
     if (init) applyState(init).catch((e) => console.warn("Share link:", e));
+    else if (innerWidth > 900 && stored() !== "2d" && hasWebGL()) setView("3d", false);
   };
   requestAnimationFrame(afterLayout);
   setTimeout(afterLayout, 250);

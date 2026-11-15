@@ -73,7 +73,7 @@ export function compareHtml(prev, next) {
  * map: Leaflet map. L: leaflet. f: frame helper (f.localToLeaflet(x, y) -> [lat, lng]).
  * container: the <section id="compare"> element (hidden until setRoutes).
  */
-export function initCompare(map, { L, f, container }) {
+export function initCompare(map, { L, f, container, onChange = () => {} }) {
   const PANE = "compare-prev";
   // Own pane under the overlay pane (z 400), so the dashed line always sits below the current route.
   if (!map.getPane(PANE)) {
@@ -83,7 +83,7 @@ export function initCompare(map, { L, f, container }) {
   }
   let line = null;
 
-  const removeLine = () => { if (line) { line.remove(); line = null; } };
+  const removeLine = () => { if (line) { line.remove(); line = null; onChange(null); } };
 
   function clear() {
     removeLine();
@@ -98,6 +98,7 @@ export function initCompare(map, { L, f, container }) {
     line = L.polyline(coords.map(([x, y]) => f.localToLeaflet(x, y)), {
       pane: PANE, color: "#9aa3ad", weight: 3, opacity: 0.7, dashArray: "6 6", interactive: false,
     }).addTo(map);
+    onChange(prev);
     if (container) {
       container.innerHTML = html;
       // Button sits outside the <h2> so clicking it does not fold the section (welcome.js folds on h2 clicks).
