@@ -197,8 +197,11 @@ async function main() {
   let routeLL = [];   // current route in Leaflet coordinates (for the moving-map control)
   let mm = null;      // moving-map control: play along the route, follow, distance rings
   let profile = null; // elevation profile chart in the side panel
+  let posIndex = 0; // the position (arrow). Hover only previews; click / slider / Play / keys move the position.
   const showPoint = (i) => {
     if (!view) return;
+    posIndex = i;
+    view.clearGhost();
     slider.value = i;
     slider.setAttribute("aria-valuetext", `Point ${i + 1} of ${Number(slider.max) + 1}`);
     view.setPoint(i);
@@ -208,6 +211,19 @@ async function main() {
     renderReadout(current, i, next);
     renderHud(current, i, next);
   };
+  const nextStopAt = (i) => view?.stops.find((s) => s.vertex >= i) || null;
+  const previewPoint = (i) => {
+    if (!view) return;
+    view.setGhost(i);
+    renderReadout(current, i, nextStopAt(i), { preview: true, pos: posIndex });
+    renderHud(current, i, nextStopAt(i), { preview: true });
+  };
+  const endPreview = () => {
+    if (!view) return;
+    view.clearGhost();
+    renderReadout(current, posIndex, nextStopAt(posIndex));
+    renderHud(current, posIndex, nextStopAt(posIndex));
+  };
   slider.addEventListener("input", () => showPoint(Number(slider.value)));
   const showStops = (stops, onSelect) => renderStopCards(stopsEl, stops, photos, { onSelect });
 
@@ -215,7 +231,7 @@ async function main() {
     if (view) { layersControl.removeLayer(view.layer); view.layer.remove(); view = null; }
     current = route;
     const onStop = (id) => { highlightStopCard(stopsEl, id); view?.focusStop(id); };
-    view = drawRoute(map, f, route, { onPoint: showPoint, onStop });
+    view = drawRoute(map, f, route, { onPoint: showPoint, onPreview: previewPoint, onPreviewEnd: endPreview, onStop });
     routeLL = route.geometry.coordinates.map(([x, y]) => f.localToLeaflet(x, y));
     mm?.setPointCount(routeLL.length);
     layersControl.addOverlay(view.layer, "Planned route");
@@ -226,7 +242,7 @@ async function main() {
     renderRouteSummary(route, kind, view.maxMargin);
     showStops(view.stops.length ? view.stops : csvStops, onStop);
     const profileEl = document.getElementById("profile");
-    profile = renderProfile(profileEl, route, { stops: view.stops, onPoint: showPoint });
+    profile = renderProfile(profileEl, route, { stops: view.stops, onPoint: showPoint, onPreview: previewPoint, onPreviewEnd: endPreview });
     profileEl.hidden = false;
     showPoint(0);
     setupProof(route, view.layer);

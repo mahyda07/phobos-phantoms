@@ -43,7 +43,7 @@ export function profileGeometry(route) {
  * Draws the profile into `container`. stops: [{id, name, vertex}] (vertex = route point index, from drawRoute).
  * onPoint(i) is the page's showPoint. Returns { setPoint(i) } to move the marker when the slider/map moves.
  */
-export function renderProfile(container, route, { stops = [], onPoint = () => {} } = {}) {
+export function renderProfile(container, route, { stops = [], onPoint = () => {}, onPreview = onPoint, onPreviewEnd = () => {} } = {}) {
   const g = profileGeometry(route);
   const n = g.z.length;
   const fmt = (v, d = 1) => Number(v).toFixed(d);
@@ -102,9 +102,10 @@ export function renderProfile(container, route, { stops = [], onPoint = () => {}
     tip.innerHTML = `<b>${fmt(g.z[i], 1)} m</b><span>${fmt(g.t[i])} min from start · point ${i + 1}</span>`;
     tip.style.left = `${(cx / W) * 100}%`;
     tip.hidden = false;
-    onPoint(i);
+    onPreview(i); // hover previews; click (below) moves the position
   });
-  hit.addEventListener("mouseleave", () => { cross.setAttribute("visibility", "hidden"); tip.hidden = true; });
+  hit.addEventListener("click", (ev) => onPoint(toIndex(ev)));
+  hit.addEventListener("mouseleave", () => { cross.setAttribute("visibility", "hidden"); tip.hidden = true; onPreviewEnd(); });
   place(0);
   return { setPoint: place };
 }

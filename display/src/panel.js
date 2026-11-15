@@ -48,10 +48,14 @@ export function renderRouteSummary(route, kind, maxMargin) {
 }
 
 /** The web version of the visor: values at route point i, straight from per_vertex. */
-export function renderReadout(route, i, nextStop) {
+export function renderReadout(route, i, nextStop, { preview = false, pos = null } = {}) {
   const pv = route.properties.per_vertex;
   const n = route.geometry.coordinates.length;
-  $("readout").innerHTML = `
+  const head = preview
+    ? `<p class="preview-note">Preview at point ${i + 1} · move the mouse off to return to the position (point ${pos + 1}); click to move there.</p>`
+    : "";
+  $("readout").classList.toggle("previewing", preview);
+  $("readout").innerHTML = head + `
     <div class="stats">
       ${stat("Walk-back margin here", num(pv.margin_min[i]), " min", "big")}
       ${stat("Time out", num(pv.t_min[i]), " min")}
@@ -63,12 +67,14 @@ export function renderReadout(route, i, nextStop) {
 }
 
 /** Heads-up strip over the map: the same per_vertex values as the readout, big enough to read at a glance. */
-export function renderHud(route, i, nextStop) {
+export function renderHud(route, i, nextStop, { preview = false } = {}) {
   const el = $("hud");
   if (!route) { el.hidden = true; return; }
+  el.classList.toggle("previewing", preview);
   const pv = route.properties.per_vertex;
   const h = (k, v, unit = "", cls = "") => `<div class="h ${cls}"><span class="k">${esc(k)}</span><span class="v">${v}<small>${esc(unit)}</small></span></div>`;
   el.innerHTML =
+    (preview ? `<div class="h tag"><span class="k">Preview</span><span class="v">pt ${i + 1}</span></div>` : "") +
     h("Walk-back margin", num(pv.margin_min[i]), " min", "main") +
     h("Time out", num(pv.t_min[i]), " min") +
     h("Slope", num(pv.slope_deg[i]), slopeLimit ? `° / ${slopeLimit.value}°` : "°") +

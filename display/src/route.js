@@ -46,10 +46,11 @@ function nearestVertex(coords, x, y) {
 const argmax = (arr) => arr.reduce((best, v, i) => (v > arr[best] ? i : best), 0);
 
 /**
- * Draws the route and returns helpers. onPoint(i) fires when the user hovers a segment.
+ * Draws the route and returns helpers. Clicking the route calls onPoint(i) (moves the position arrow);
+ * hovering calls onPreview(i) and leaving calls onPreviewEnd() (a ghost dot only; the arrow stays put).
  * stops: [{id, name, x, y, ...}] in local metres.
  */
-export function drawRoute(map, f, route, { onPoint, onStop }) {
+export function drawRoute(map, f, route, { onPoint, onStop, onPreview = onPoint, onPreviewEnd = () => {} }) {
   const coords = route.geometry.coordinates;
   const pv = route.properties.per_vertex;
   const ll = coords.map(([x, y]) => f.localToLeaflet(x, y));
@@ -61,7 +62,9 @@ export function drawRoute(map, f, route, { onPoint, onStop }) {
     const seg = L.polyline([ll[i], ll[i + 1]], {
       color: rampColor(maxMargin > 0 ? pv.margin_min[i] / maxMargin : 0), weight: 5, opacity: 1,
     });
-    seg.on("mouseover click", () => onPoint(i));
+    seg.on("mouseover", () => onPreview(i));
+    seg.on("mouseout", () => onPreviewEnd());
+    seg.on("click", () => onPoint(i));
     seg.addTo(group);
   }
 
@@ -81,7 +84,8 @@ export function drawRoute(map, f, route, { onPoint, onStop }) {
   }
   for (const m of markers) {
     L.marker(ll[m.i], { icon: L.divIcon({ className: "hazard-pin", html: "!", iconSize: [20, 20] }), keyboard: false })
-      .bindTooltip(m.text(m.i)).on("mouseover click", () => onPoint(m.i)).addTo(group);
+      .bindTooltip(m.text(m.i)).on("mouseover", () => onPreview(m.i)).on("mouseout", () => onPreviewEnd())
+      .on("click", () => onPoint(m.i)).addTo(group);
   }
 
   // Stops, each tied to its nearest route point so the panel can say which one is next.
@@ -114,12 +118,17 @@ export function drawRoute(map, f, route, { onPoint, onStop }) {
     if (svg && ll.length > 1) svg.style.transform = `rotate(${headingDeg(i)}deg)`;
   };
 
+  // Ghost dot for hover previews (the arrow = position only moves on click / slider / Play / keys).
+  const ghost = L.circleMarker(ll[0], { radius: 7, color: "#fff", weight: 2, dashArray: "3 3", fillColor: "#fff", fillOpacity: 0.25, interactive: false });
+
   group.addTo(map);
   return {
     layer: group,
     stops,
     maxMargin,
     setPoint(i) { here.setLatLng(ll[i]); turnArrow(i); },
+    setGhost(i) { ghost.setLatLng(ll[i]); if (!group.hasLayer(ghost)) ghost.addTo(group); },
+    clearGhost() { ghost.remove(); },
     focusStop(id) { const m = stopMarkers[id]; if (m) map.panTo(m.getLatLng()); },
   };
 }

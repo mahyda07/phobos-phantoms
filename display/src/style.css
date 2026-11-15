@@ -116,3 +116,10 @@ table.hours th { color: var(--muted); font-weight: 500; }
 /* Conditions table (conditions.csv) */
 details.conditions summary { cursor: pointer; color: var(--muted); font-size: 12px; margin-top: 8px; }
 details.conditions .src { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+/* Hover preview (the arrow stays at the position; the readout shows the hovered point) */
+.preview-note { margin: 0 0 8px; padding: 5px 8px; border-radius: 6px; font-size: 12px; background: #1b2532; border: 1px dashed #5b7da3; color: #cfe3ff; }
+#readout.previewing .stat { border-style: dashed; }
+#hud.previewing .h { border-style: dashed; }
+#hud .h.tag { background: #1b2532; border-color: #5b7da3; }
+#hud .h.tag .v { font-size: 16px; color: #cfe3ff; }
