@@ -76,10 +76,32 @@ async function getJson(url, fetchImpl) {
   const t = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
   try {
     const r = await fetchImpl(url, { signal: ctrl.signal });
+    if (r.status === 429) throw Object.assign(new Error("NASA's public demo key reached its hourly limit; try again later"), { limit: true });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     return await r.json();
   } finally { clearTimeout(t); }
 }
+
+// Per-browser cache (30 min) so reloading the page doesn't spend NASA's DEMO_KEY quota (10 requests/hour per connection).
+export const CACHE_MS = 30 * 60 * 1000;
+function cacheGet(key, now) {
+  try {
+    const v = JSON.parse(localStorage.getItem(key) || "null");
+    return v && now - v.at < CACHE_MS ? v : null;
+  } catch { return null; }
+}
+function cacheSet(key, data, now) {
+  try { localStorage.setItem(key, JSON.stringify({ at: now, data })); } catch { /* storage blocked: just no cache */ }
+}
+async function getJsonCached(key, url, fetchImpl, now) {
+  const hit = cacheGet(key, now);
+  if (hit) return { data: hit.data, cachedAt: hit.at };
+  const data = await getJson(url, fetchImpl);
+  cacheSet(key, data, now);
+  return { data, cachedAt: null };
+}
+const fetchedNote = (cachedAt) =>
+  cachedAt ? `<p class="muted">Fetched ${new Date(cachedAt).toISOString().slice(11, 16)} UTC (kept for 30 min to save NASA's request limit).</p>` : "";
 
 const isoDay = (d) => d.toISOString().slice(0, 10);
 
@@ -94,14 +116,14 @@ export async function initLiveFeeds(container, { fetchImpl = globalThis.fetch, n
     <div class="lf-card" id="lf-meda"><p class="muted">Loading MEDA weather…</p></div>
     <div class="lf-card" id="lf-donki"><p class="muted">Loading space weather…</p></div>`;
   const offline = (what, err) =>
-    `<h3>${what}</h3><p class="muted">Not available right now (${esc(err?.name === "AbortError" ? "timed out" : navigator.onLine === false ? "offline" : err?.message || "error")}). The rest of the map is unaffected.</p>`;
+    `<h3>${what}</h3><p class="muted">Not available right now (${esc(err?.name === "AbortError" ? "timed out" : globalThis.navigator?.onLine === false ? "offline" : err?.message || "error")}). The rest of the map is unaffected.</p>`;
   const meda = container.querySelector("#lf-meda");
   const donki = container.querySelector("#lf-donki");
   const start = new Date(now.getTime() - days * 86400000);
   await Promise.all([
-    getJson(MEDA_URL, fetchImpl).then((d) => { meda.innerHTML = medaHtml(d, now); })
+    getJsonCached("marswalk-meda", MEDA_URL, fetchImpl, now.getTime()).then(({ data, cachedAt }) => { meda.innerHTML = medaHtml(data, now) + fetchedNote(cachedAt); })
       .catch((e) => { meda.innerHTML = offline("Latest MEDA weather at Jezero", e); }),
-    getJson(DONKI_URL(isoDay(start), isoDay(now)), fetchImpl).then((d) => { donki.innerHTML = donkiHtml(d, days); })
+    getJsonCached("marswalk-donki", DONKI_URL(isoDay(start), isoDay(now)), fetchImpl, now.getTime()).then(({ data, cachedAt }) => { donki.innerHTML = donkiHtml(data, days) + fetchedNote(cachedAt); })
       .catch((e) => { donki.innerHTML = offline(`Space weather (last ${days} days)`, e); }),
   ]);
 }

@@ -51,3 +51,22 @@ test("initLiveFeeds: a failing feed only affects its own card", async () => {
   assert.ok(el["#lf-meda"].innerHTML.includes("Sol 1133"));
   assert.ok(el["#lf-donki"].innerHTML.includes("Not available right now"));
 });
+
+test("initLiveFeeds: HTTP 429 shows the NASA limit message; a cached answer is reused without fetching", async () => {
+  const store = {};
+  globalThis.localStorage = { getItem: (k) => store[k] ?? null, setItem: (k, v) => { store[k] = v; } };
+  const mk = () => ({ innerHTML: "", querySelector(sel) { return (this[sel] ||= { innerHTML: "" }); } });
+  let calls = 0;
+  const now = new Date("2026-11-15T10:00:00Z");
+  const items = [{ messageType: "CME", messageIssueTime: "2026-11-14T10:00Z", messageURL: "https://ccmc.gsfc.nasa.gov/x" }];
+  const ok = async (url) => { calls++; return { ok: true, status: 200, json: async () => (url.includes("DONKI") ? items : FEED) }; };
+  const el1 = mk(); await initLiveFeeds(el1, { fetchImpl: ok, now });
+  assert.equal(calls, 2);
+  const el2 = mk(); await initLiveFeeds(el2, { fetchImpl: async () => { calls++; return { ok: false, status: 429 }; }, now: new Date(now.getTime() + 60000) });
+  assert.equal(calls, 2, "served from cache, no new requests");
+  assert.ok(el2["#lf-donki"].innerHTML.includes("Coronal mass ejection") && el2["#lf-donki"].innerHTML.includes("kept for 30 min"));
+  for (const k in store) delete store[k];
+  const el3 = mk(); await initLiveFeeds(el3, { fetchImpl: async () => ({ ok: false, status: 429 }), now });
+  assert.ok(el3["#lf-donki"].innerHTML.includes("hourly limit"));
+  delete globalThis.localStorage;
+});
