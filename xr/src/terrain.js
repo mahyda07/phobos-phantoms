@@ -25,3 +25,12 @@ export function marginColour(m) {
 
 /** Hologram scale: metres of hologram per metre of Mars, for a model `sizeM` wide showing `extentM` of terrain. */
 export const holoScale = (sizeM, extentM) => sizeM / extentM;
+
+/** run 2: the web map's continuous margin ramp (display/src/route.js RAMP), t = margin / largest margin on the route.
+ *  Returns [r,g,b] 0..1 so the headset route matches the map exactly (docs/DESIGN_DIRECTION.md). */
+const RAMP = [[215, 48, 39], [240, 170, 40], [46, 170, 80]];
+export function rampRGB(t) {
+  const u = Math.max(0, Math.min(1, Number.isFinite(t) ? t : 0));
+  const [a, b, k] = u < 0.5 ? [RAMP[0], RAMP[1], u / 0.5] : [RAMP[1], RAMP[2], (u - 0.5) / 0.5];
+  return a.map((v, i) => Math.round(v + (b[i] - v) * k) / 255);
+}

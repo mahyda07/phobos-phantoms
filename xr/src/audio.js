@@ -80,6 +80,7 @@ export function createAudio({ base = "./voice/" } = {}) {
     if (muted || !ensure()) return true;
     if (ctx.state === "suspended") { try { await ctx.resume(); } catch { /* needs a gesture */ } }
     const buf = await load(name);
+    (globalThis.__mwlog ||= []).push({ t: Math.round(performance.now()), ev: "play", name, ctx: ctx.state, buf: !!buf });
     if (!buf) return false;
     const src = ctx.createBufferSource(); src.buffer = buf; src.connect(voiceGain); src.start();
     return true;

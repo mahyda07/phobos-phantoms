@@ -24,3 +24,11 @@ test("margin colours", () => {
 test("0.6 m hologram of 1500 m is 1:2500", () => {
   assert.equal(1 / holoScale(0.6, 1500), 2500);
 });
+
+import { rampRGB } from "./terrain.js";
+test("rampRGB matches the web map ramp (route.js RAMP)", () => {
+  assert.deepEqual(rampRGB(0).map((v) => Math.round(v * 255)), [215, 48, 39]);
+  assert.deepEqual(rampRGB(0.5).map((v) => Math.round(v * 255)), [240, 170, 40]);
+  assert.deepEqual(rampRGB(1).map((v) => Math.round(v * 255)), [46, 170, 80]);
+  assert.deepEqual(rampRGB(NaN), rampRGB(0));
+});

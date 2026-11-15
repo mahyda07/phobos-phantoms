@@ -10,22 +10,27 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { XRHandModelFactory } from "three/addons/webxr/XRHandModelFactory.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { makeFrame } from "./frame.js";
-import { heightSampler, marginColour, holoScale } from "./terrain.js";
+import { heightSampler, marginColour, holoScale, rampRGB } from "./terrain.js";
 import { stopVertexIndices, walkState, ltstAt, sunAt, visorFields } from "./walk.js";
 import { drawVisor, VISOR_W, VISOR_H } from "./visor.js";
 import { planHome, homeSummary, reversedWalkedPath } from "./home.js";
 import { initKeys } from "./keys.js";
 import { createAudio, calloutsFor, VOICE_LINES } from "./audio.js";
 import { shouldBuzz, pulseAll, hapticsEnabled, setHapticsEnabled } from "./haptics.js";
-import { roverTrack, roverAt, ghostLabel, GHOST_SPEED_MPS, GHOST_WALK_MPS } from "./ghost.js";
+import { makeButton, makePlate, makeRay, T as UI } from "./xrui.js";
+import { roverTrack, roverAt, ghostLabel, nearestS, GHOST_SPEED_MPS, GHOST_WALK_MPS } from "./ghost.js";
 
 const DATA = "./data/";
+const SHOW_3D_UI = new URLSearchParams(location.search).has("ui3d");   // desktop preview of the in-headset panels
 const HOLO_SIZE = 0.6;            // metres across on the desk (PLAN: 1:2500 for 1.5 km)
 const EXAGS = [1, 2, 4];          // height exaggeration options; default x2
 const PINCH_ON = 0.02, PINCH_OFF = 0.035;
 const statusEl = document.getElementById("status");
 const setStatus = (t) => { statusEl.textContent = t; };
 const emit = (name, detail = {}) => window.dispatchEvent(new CustomEvent("phobos:" + name, { detail }));
+// run 2 diagnostics (read by qa/scripts over CDP): ring buffer of events + per-second JS frame cost
+const mwlog = (ev, d = {}) => { const L = (window.__mwlog ||= []); L.push({ t: Math.round(performance.now()), ev, ...d }); if (L.length > 300) L.shift(); };
+window.__mwperf = { js: [], render: [] };
 
 
 // ---------- renderer / scene ----------
@@ -56,6 +61,7 @@ scene.add(anchor);
 
 let F, grid, sampler, extentM, S, exagIdx = 1, layer = "photo";
 let terrainMat, textures = {}, routeInfo = "", fps = 0;
+let maxMarginRoute = 0;
 let routeData = null, stopIdx = [], winData = null, holoTube = null, walkTube = null;
 
 function applyScale(mult = model.userData.mult ?? 1) {
@@ -160,14 +166,17 @@ async function addRoute() {
   if (route && route.geometry?.coordinates?.length > 1) {
     const pts = route.geometry.coordinates.map(([x, y]) => toHolo(x, y));
     const m = route.properties.per_vertex?.margin_min || [];
-    holoTube = tubeFor(pts, pts.map((_, i) => marginColour(m[i])), 3);
+    const mMax = Math.max(...m.filter(Number.isFinite), 0);
+    const col = (i) => (mMax > 0 ? rampRGB(m[i] / mMax) : marginColour(m[i]));   // same continuous ramp as the map
+    holoTube = tubeFor(pts, pts.map((_, i) => col(i)), 3);
     holo.add(holoTube);
     // thin ribbon just above the ground for the 1:1 step-in walk (hidden on the desk)
     const wpts = route.geometry.coordinates.map(([x, y]) => toHolo(x, y, 0.4));
-    walkTube = tubeFor(wpts, wpts.map((_, i) => marginColour(m[i])), 0.25);
+    walkTube = tubeFor(wpts, wpts.map((_, i) => col(i)), 0.25);
     walkTube.visible = false;
     holo.add(walkTube);
     routeData = route;
+    maxMarginRoute = Math.max(...(route.properties.per_vertex?.margin_min || [0]).filter(Number.isFinite));
     stopIdx = stopVertexIndices(route.geometry.coordinates, route.properties.stops || []);
     for (const s of route.properties.stops || []) {
       const p = toHolo(s.x, s.y, 0);
@@ -197,23 +206,21 @@ async function addRoute() {
 const panel = new THREE.Group();
 anchor.add(panel);
 const buttons = [];
-function labelTex(text, bg = "#1d2733") {
-  const c = document.createElement("canvas"); c.width = 256; c.height = 128;
-  const g = c.getContext("2d");
-  g.fillStyle = bg; g.fillRect(0, 0, 256, 128);
-  g.strokeStyle = "#5b7186"; g.lineWidth = 6; g.strokeRect(3, 3, 250, 122);
-  g.fillStyle = "#fff"; g.font = "bold 44px system-ui, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
-  g.fillText(text, 128, 66);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+// run 2 MR UI overhaul: buttons from xrui.js (hover / press states, glass plate), laid out in two rows.
+const BW = 0.13, BH = 0.05, GAP = 0.012;
+function addButton(id, text, col, row, onPress, opts = {}, parent = deskRows) {
+  const b = makeButton({ label: text, w: BW, h: BH, onPress, ...opts });
+  b.position.set((col - 1) * (BW + GAP), -row * (BH + GAP), 0.002);
+  b.userData.id = id;
+  parent.add(b); buttons.push(b);
+  return b;
 }
-function addButton(id, text, x, onPress) {
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 0.035), new THREE.MeshBasicMaterial({ map: labelTex(text), transparent: true }));
-  mesh.position.set(x, 0, 0);
-  mesh.rotation.x = -0.6;
-  mesh.userData = { id, onPress, setText: (t) => { mesh.material.map.dispose(); mesh.material.map = labelTex(t); } };
-  panel.add(mesh); buttons.push(mesh);
-  return mesh;
-}
+const deskRows = new THREE.Group();          // tilted toward the user, sits in front of the hologram
+deskRows.rotation.x = -0.6;
+panel.add(deskRows);
+const deskPlate = makePlate({ w: 3 * BW + 4 * GAP, h: 2 * BH + 3 * GAP + 0.012 });
+deskPlate.position.set(0, -(BH + GAP) / 2, 0);
+deskRows.add(deskPlate);
 const act = {
   rotL: () => { model.rotation.y += THREE.MathUtils.degToRad(15); },
   rotR: () => { model.rotation.y -= THREE.MathUtils.degToRad(15); },
@@ -221,26 +228,26 @@ const act = {
   layer: () => {
     layer = layer === "photo" ? "slope" : "photo";
     terrainMat.map = textures[layer] || textures.photo; terrainMat.needsUpdate = true;
-    bLayer.userData.setText(layer === "photo" ? "Photo" : "Slope");
+    bLayer.userData.setText(layer === "photo" ? "Layer: photo" : "Layer: slope");
     document.getElementById("btn-layer").textContent = `Layer: ${layer}`;
   },
   replace: () => { placed = false; anchor.visible = false; },
 };
-addButton("rotL", "⟲ 15°", -0.20, act.rotL);
-addButton("rotR", "⟳ 15°", -0.12, act.rotR);
-const bExag = addButton("exag", "Height ×2", -0.04, act.exag);
-const bLayer = addButton("layer", "Photo", 0.04, act.layer);
-addButton("replace", "Re-place", 0.12, act.replace);
-addButton("stepin", "Step in", 0.20, () => startWalk());
+addButton("rotL", "Rotate left", 0, 0, act.rotL);
+addButton("rotR", "Rotate right", 1, 0, act.rotR);
+const bExag = addButton("exag", "Height ×2", 2, 0, act.exag);
+const bLayer = addButton("layer", "Layer: photo", 0, 1, act.layer);
+addButton("replace", "Re-place", 1, 1, act.replace);
+addButton("stepin", "Step in", 2, 1, () => startWalk(), { kind: "primary", sub: "walk it at full size" });
 const infoMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.05), new THREE.MeshBasicMaterial({ transparent: true }));
-infoMesh.position.set(0, 0.045, -0.01); infoMesh.rotation.x = -0.6;
+infoMesh.position.set(0, 0.085, -0.045); infoMesh.rotation.x = -0.6;
 panel.add(infoMesh);
 let lastInfo = "";
 function drawInfo(text) {
   if (text === lastInfo) return; lastInfo = text;
   const c = document.createElement("canvas"); c.width = 1024; c.height = 128;
-  const g = c.getContext("2d"); g.fillStyle = "rgba(10,14,20,0.8)"; g.fillRect(0, 0, 1024, 128);
-  g.fillStyle = "#e8e8e8"; g.font = "30px system-ui, sans-serif"; g.textBaseline = "middle";
+  const g = c.getContext("2d"); g.fillStyle = UI.panel; g.beginPath(); g.roundRect(2, 2, 1020, 124, 24); g.fill();
+  g.fillStyle = UI.text; g.font = `500 28px ${UI.font}`; g.textBaseline = "middle";
   text.split("\n").slice(0, 2).forEach((line, i) => g.fillText(line, 16, 36 + i * 52));
   if (infoMesh.material.map) infoMesh.material.map.dispose();
   infoMesh.material.map = new THREE.CanvasTexture(c); infoMesh.material.map.colorSpace = THREE.SRGBColorSpace; infoMesh.material.needsUpdate = true;
@@ -256,8 +263,16 @@ const ray = new THREE.Raycaster();
 renderer.domElement.addEventListener("click", (e) => {
   const v = new THREE.Vector2((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
   ray.setFromCamera(v, camera);
-  const hit = ray.intersectObjects(buttons.filter(shown))[0];
-  if (hit) hit.object.userData.onPress();
+  const hit = ray.intersectObjects(buttons.filter(shown), false)[0];
+  if (hit) pressButton(hit.object, null);
+});
+let mouseHover = null;
+renderer.domElement.addEventListener("pointermove", (e) => {
+  if (renderer.xr.isPresenting) return;
+  ray.setFromCamera(new THREE.Vector2((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), camera);
+  const b = ray.intersectObjects(buttons.filter(shown), false)[0]?.object || null;
+  if (b !== mouseHover) { if (mouseHover?.userData.state === "hover") mouseHover.userData.setState("normal"); if (b) b.userData.setState("hover"); mouseHover = b; }
+  renderer.domElement.style.cursor = b ? "pointer" : "";
 });
 
 // ---------- XR sessions ----------
@@ -311,17 +326,51 @@ function placeInFront() {
 
 // controllers: trigger = place / press button
 const tmpM = new THREE.Matrix4();
+const ctrls = [];
 for (let i = 0; i < 2; i++) {
   const ctrl = renderer.xr.getController(i);
+  const { ray: line, cursor } = makeRay();
+  ctrl.add(line); scene.add(cursor);
+  const c = { ctrl, line, cursor, hover: null, src: null };
+  ctrl.addEventListener("connected", (e) => { c.src = e.data; line.visible = !e.data.hand; });
+  ctrl.addEventListener("disconnected", () => { c.src = null; line.visible = false; cursor.visible = false; });
   ctrl.addEventListener("select", () => {
     if (!placed) { if (reticle.visible) placeAt(new THREE.Vector3().setFromMatrixPosition(reticle.matrix)); else placeInFront(); return; }
-    tmpM.identity().extractRotation(ctrl.matrixWorld);
-    ray.ray.origin.setFromMatrixPosition(ctrl.matrixWorld);
-    ray.ray.direction.set(0, 0, -1).applyMatrix4(tmpM);
-    const hit = ray.intersectObjects(buttons.filter(shown))[0];
-    if (hit) hit.object.userData.onPress();
+    const hit = rayHit(ctrl);
+    if (hit) pressButton(hit.object, c.src);
   });
   scene.add(ctrl);
+  ctrls.push(c);
+}
+function rayHit(ctrl) {
+  tmpM.identity().extractRotation(ctrl.matrixWorld);
+  ray.ray.origin.setFromMatrixPosition(ctrl.matrixWorld);
+  ray.ray.direction.set(0, 0, -1).applyMatrix4(tmpM);
+  return ray.intersectObjects(buttons.filter(shown), false)[0] || null;
+}
+function pressButton(b, src) {
+  b.userData.setState("press");
+  setTimeout(() => b.userData.setState(b === hovered() ? "hover" : "normal"), 140);
+  const h = src?.gamepad?.hapticActuators?.[0]; h?.pulse?.(0.15, 18)?.catch?.(() => {});   // tiny tick confirms the press
+  b.userData.onPress();
+}
+const hovered = () => ctrls.find((c) => c.hover)?.hover || null;
+const tmpQ2 = new THREE.Quaternion();
+function updatePointers() {                         // hover state + ray length + cursor ring, once per frame
+  const was = new Set(ctrls.map((c) => c.hover).filter(Boolean));
+  for (const c of ctrls) {
+    c.hover = null;
+    if (!c.src || c.src.hand || !c.line.visible) { c.cursor.visible = false; continue; }
+    const hit = rayHit(c.ctrl);
+    if (hit) {
+      c.hover = hit.object; c.line.scale.z = hit.distance;
+      c.cursor.visible = true; c.cursor.position.copy(hit.point);
+      c.cursor.quaternion.copy(hit.object.getWorldQuaternion(tmpQ2));
+    } else { c.line.scale.z = 2; c.cursor.visible = false; }
+  }
+  const now = new Set(ctrls.map((c) => c.hover).filter(Boolean));
+  for (const b of was) if (!now.has(b) && b.userData.state !== "press") b.userData.setState("normal");
+  for (const b of now) if (b.userData.state === "normal") b.userData.setState("hover");
 }
 
 // hands: pinch to place, press buttons, grab-move (one hand) and scale (two hands)
@@ -354,7 +403,7 @@ function updateHands() {
     if (s.pinching && !was) {                       // pinch started
       if (!placed) { if (reticle.visible) placeAt(new THREE.Vector3().setFromMatrixPosition(reticle.matrix)); else placeInFront(); continue; }
       const b = nearButton(s.pos);
-      if (b) { b.userData.onPress(); continue; }
+      if (b) { pressButton(b, null); continue; }
       if (walking) continue;
       box.setFromObject(model).expandByScalar(0.08);
       s.grabbing = box.containsPoint(s.pos);
@@ -413,25 +462,20 @@ scene.add(visor);
 const walkPanel = new THREE.Group();
 walkPanel.visible = false;
 scene.add(walkPanel);
-function addWalkButton(text, x, onPress) {
-  const b = addButton("walk-" + text, text, x, onPress);
-  panel.remove(b); walkPanel.add(b);
-  b.position.set(x, 0, 0);
-  b.material.fog = false;
-  return b;
-}
-const bPlay = addWalkButton("Pause", -0.12, () => { playing = !playing; bPlay.userData.setText(playing ? "Pause" : "Play"); });
-const bSpeed = addWalkButton(`Speed ${SPEEDS[speedIdx]}×`, -0.04, () => {
+const walkRows = new THREE.Group(); walkRows.rotation.x = -0.5; walkPanel.add(walkRows);
+const walkPlate = makePlate({ w: 3 * BW + 4 * GAP, h: 2 * BH + 3 * GAP + 0.03, title: "Walk" });
+walkPlate.position.set(0, -(BH + GAP) / 2 + 0.012, 0); walkRows.add(walkPlate);
+const addWalkButton = (text, col, row, onPress, opts) => addButton("walk-" + text, text, col, row, onPress, opts, walkRows);
+const bPlay = addWalkButton("Pause", 0, 0, () => togglePause());
+const bSpeed = addWalkButton(`Speed ${SPEEDS[1]}×`, 1, 0, () => {
   speedIdx = (speedIdx + 1) % SPEEDS.length; bSpeed.userData.setText(`Speed ${SPEEDS[speedIdx]}×`);
 });
-addWalkButton("Restart", 0.04, () => { clearHome(); simT = 0; playing = true; bPlay.userData.setText("Pause"); });
-addWalkButton("Step out", 0.12, () => stopWalk());
-addWalkButton("Home", 0.20, () => goHome());
+addWalkButton("Restart", 2, 0, () => { clearHome(); simT = 0; playing = true; bPlay.userData.setText("Pause"); });
 // haptic hazard on/off (remembered); only meaningful with controllers
 let buzzOn = hapticsEnabled(), lastBuzz = 0;
-const bBuzz = addWalkButton(buzzOn ? "Buzz on" : "Buzz off", -0.20, () => {
-  buzzOn = !buzzOn; setHapticsEnabled(buzzOn); bBuzz.userData.setText(buzzOn ? "Buzz on" : "Buzz off");
-});
+const bBuzz = addWalkButton("Buzz", 0, 1, () => { buzzOn = !buzzOn; setHapticsEnabled(buzzOn); bBuzz.userData.setOn(buzzOn); }, { toggle: buzzOn, sub: "rough ground" });
+addWalkButton("Get me home", 1, 1, () => goHome(), { kind: "home", sub: "or hold A" });
+addWalkButton("Step out", 2, 1, () => stopWalk());
 
 function viewPose() {   // world position + quaternion of the eyes (headset or desktop camera)
   const cam = renderer.xr.isPresenting ? renderer.xr.getCamera() : camera;
@@ -522,6 +566,7 @@ function updateWalk(now) {
   const sun = sunAt(winData, ltstAt(winData, st.t_min));
   const f = visorFields(st, sun, String(routeData.properties.plan_id || "").startsWith("standin-"));
   f.home = homeLine;
+  f.marginT = maxMarginRoute > 0 && Number.isFinite(st.margin_min) ? st.margin_min / maxMarginRoute : null;   // same scale as the map
   if (caption && performance.now() < caption.until) f.caption = caption.text;
   if (playing) walkCallouts(st);
   if (playing && renderer.xr.isPresenting && shouldBuzz(st, now, lastBuzz, buzzOn)) { lastBuzz = now; pulseAll(renderer.xr.getSession()); }
@@ -538,6 +583,7 @@ const CAPTION = { steep: "Steep ground ahead", hazard: "AI hazard ahead", stop: 
   home: "Return route ready", "home-offline": "Planner offline: walked path reversed", waking: "Waking the planner", walk: "Walk started" };
 let calloutPrev = null, caption = null;
 audio.on((e) => {
+  mwlog("audio", { type: e.type, name: e.name ?? null, muted: e.muted ?? audio.muted, ctx: audio.ctx?.state ?? "none" });
   if (e.type === "line") { caption = { text: CAPTION[e.name] || e.name, until: performance.now() + 4000 }; lastVisorKey = ""; emit("callout", { text: caption.text }); }
   if (e.type === "mute") emit("mute", { muted: e.muted });
 });
@@ -578,6 +624,7 @@ function updateHomeDraw(now) {
   if (k >= 1) homeDraw = null;
 }
 async function goHome() {
+  mwlog("goHome", { walking, busy: homeBusy });
   if (!routeData) return;
   if (!walking) { emit("home", { state: "not-walking" }); setStatus(info() + "\nStep in first: Get me home plans from your spot on the walk back to its start."); return; }
   if (homeBusy) return;
@@ -592,6 +639,7 @@ async function goHome() {
     },
   });
   homeBusy = false;
+  mwlog("home-result", { route: !!out.route, reason: out.reason ?? null, error: out.error ?? null, tries: out.tries ?? null });
   if (!walking) return;                              // stepped out while waiting
   if (out.route) {
     const sm = homeSummary(out.route);
@@ -620,6 +668,7 @@ function pollGamepads(now) {
     const gp = src.gamepad;
     if (!gp) continue;
     const hand = src.handedness;
+    gp.buttons.forEach((bt, idx) => { const k = "raw" + hand + idx; if (bt.pressed !== !!padPrev[k]) { padPrev[k] = bt.pressed; mwlog("btn", { hand, idx, down: bt.pressed }); } });
     if (hand === "right" && gp.buttons[4]?.pressed) aDown = true;
     // edge-triggered buttons (xr-standard mapping: 4 = A/X, 5 = B/Y; axes[3] = thumbstick y)
     const edge = (idx, fn) => { const k = hand + idx, on = !!gp.buttons[idx]?.pressed; if (on && !padPrev[k]) fn(); padPrev[k] = on; };
@@ -634,7 +683,7 @@ function pollGamepads(now) {
   }
   if (aDown) {
     if (!aHeldSince) { aHeldSince = now; aFired = false; }
-    else if (!aFired && now - aHeldSince >= 1000) { aFired = true; goHome(); }
+    else if (!aFired && now - aHeldSince >= 1000) { aFired = true; mwlog("a-hold"); goHome(); }
   } else aHeldSince = 0;
 }
 
@@ -648,18 +697,20 @@ const hint = new THREE.Mesh(new THREE.PlaneGeometry(0.36, 0.09),
   new THREE.MeshBasicMaterial({ map: hintTex, transparent: true, depthTest: false, depthWrite: false, fog: false }));
 hint.renderOrder = 11; hint.visible = false; scene.add(hint);
 const HINTS = {
-  place: ["STEP 1 · PLACE", "Look at a table until a white ring appears, then pinch (or pull the trigger)."],
-  explore: ["STEP 2 · EXPLORE", "Pinch & drag to move · two hands to scale · use the panel to rotate, change height or layer."],
-  walk: ["STEP 3 · WALK", "You are on Mars at full size. The visor shows your margin. Pause, speed or Step out at waist height."],
+  place: ["Step 1 of 3: Place", "Look at a table until a white ring appears, then pull the trigger (or pinch)."],
+  explore: ["Step 2 of 3: Explore", "Pinch and drag to move, two hands to scale. Point at the panel to rotate, change height or layer."],
+  walk: ["Step 3 of 3: Walk", "You are on Mars at full size. The visor shows your margin. Hold A to plan a way home."],
 };
 let hintUntil = 0;
 function showHint(key, ms = 9000) {
   const [title, body] = HINTS[key]; const g = hintCanvas.getContext("2d");
   g.clearRect(0, 0, 1024, 256);
-  g.fillStyle = "rgba(10,16,24,0.82)"; g.strokeStyle = "#ff8a4c"; g.lineWidth = 4;
-  g.beginPath(); g.roundRect(6, 6, 1012, 244, 28); g.fill(); g.stroke();
-  g.fillStyle = "#ff8a4c"; g.font = "700 40px system-ui, sans-serif"; g.fillText(title, 40, 70);
-  g.fillStyle = "#ffffff"; g.font = "36px system-ui, sans-serif";
+  g.fillStyle = UI.panel; g.strokeStyle = UI.line; g.lineWidth = 3;
+  g.beginPath(); g.roundRect(6, 6, 1012, 244, 32); g.fill(); g.stroke();
+  const step = ["place", "explore", "walk"].indexOf(key);           // progress dots
+  for (let k = 0; k < 3; k++) { g.beginPath(); g.arc(944 + k * 26, 58, 8, 0, Math.PI * 2); g.fillStyle = k <= step ? UI.mars : "rgba(255,255,255,0.2)"; g.fill(); }
+  g.fillStyle = UI.mars2; g.font = `700 40px ${UI.font}`; g.fillText(title, 40, 70);
+  g.fillStyle = UI.text; g.font = `400 34px ${UI.font}`;
   const words = body.split(" "); let line = "", y = 135;
   for (const w of words) { if (g.measureText(line + w).width > 940) { g.fillText(line, 40, y); line = ""; y += 48; } line += w + " "; }
   g.fillText(line, 40, y);
@@ -678,9 +729,11 @@ function updateHint(now) {
 
 // ---------- loop ----------
 let frames = 0, t0 = performance.now();
+let perfAcc = { js: 0, jsMax: 0, r: 0, rMax: 0, n: 0, t: performance.now() };
 renderer.setAnimationLoop((time, frame) => {
   frames++;
   const now = performance.now();
+  const tJs0 = now;
   if (now - t0 > 1000) { fps = Math.round(frames * 1000 / (now - t0)); frames = 0; t0 = now; drawInfo(info()); setStatus(walking ? walkInfo() : info()); }
   if (frame && renderer.xr.isPresenting) {
     if (!placed && hitSource) {
@@ -694,12 +747,21 @@ renderer.setAnimationLoop((time, frame) => {
     updateHands();
     updateHint(now);
     pollGamepads(now);
+    updatePointers();
   } else orbit.update();
   if (walking) updateWalk(now);
   updateHomeDraw(now);
   updateGhost(now);
-  panel.visible = renderer.xr.isPresenting && !walking;   // in-world panel is for the headset; the page has its own toolbar
+  panel.visible = (renderer.xr.isPresenting || SHOW_3D_UI) && !walking;   // in-world panel is for the headset (?ui3d shows it on desktop)
+  const tR0 = performance.now();
   renderer.render(scene, camera);
+  const tEnd = performance.now(), js = tR0 - tJs0, r = tEnd - tR0;
+  perfAcc.js += js; perfAcc.r += r; perfAcc.n++; perfAcc.jsMax = Math.max(perfAcc.jsMax, js); perfAcc.rMax = Math.max(perfAcc.rMax, r);
+  if (tEnd - perfAcc.t > 1000) {
+    const P = window.__mwperf; P.js.push([+(perfAcc.js / perfAcc.n).toFixed(2), +perfAcc.jsMax.toFixed(1)]); P.render.push([+(perfAcc.r / perfAcc.n).toFixed(2), +perfAcc.rMax.toFixed(1), renderer.info.render.calls, renderer.info.render.triangles]);
+    if (P.js.length > 120) { P.js.shift(); P.render.shift(); }
+    perfAcc = { js: 0, jsMax: 0, r: 0, rMax: 0, n: 0, t: tEnd };
+  }
 });
 
 addEventListener("resize", () => {
@@ -771,7 +833,7 @@ async function buildGhost() {
   if (!rover?.features?.length) return;
   ghost.track = roverTrack(rover);
   ghost.text = ghostLabel(rover);
-  ghost.trailDesk = mergedTrail(rover.features, 3, 2.0);
+  ghost.trailDesk = mergedTrail(rover.features, 3, 4.0);
   ghost.trailWalk = mergedTrail(rover.features, 0.3, 0.15);
   if (ghost.trailDesk) ghost.root.add(ghost.trailDesk);
   if (ghost.trailWalk) { ghost.trailWalk.visible = false; ghost.root.add(ghost.trailWalk); }
@@ -796,6 +858,9 @@ function updateGhost(now) {
 function toggleGhost() {
   if (!ghost.track) { emit("ghost", { on: false, missing: true }); return; }
   ghost.root.visible = !ghost.root.visible;
+  if (ghost.root.visible && walking && walkNow) ghost.s = nearestS(ghost.track, walkNow.x, walkNow.y).s;   // start near you
+  { const wp = new THREE.Vector3(); ghost.marker?.getWorldPosition(wp); const { pos } = viewPose();
+    mwlog("ghost", { on: ghost.root.visible, walking, dist_m: +wp.distanceTo(pos).toFixed(2), markerWorldScale: +ghost.marker?.getWorldScale(new THREE.Vector3()).x.toFixed(4) }); }
   emit("ghost", { on: ghost.root.visible, title: ghost.text.title, note: ghost.text.note });
 }
 function toggleMute() { audio.toggleMute(); }
@@ -828,6 +893,8 @@ if (SR) {
   };
 }
 
-window.__marswalk = { goHome, startWalk, stopWalk, isWalking: () => walking, audio };
+window.__marswalk = { goHome, startWalk, stopWalk, isWalking: () => walking, audio, toggleGhost, toggleMute, repeatCallout,
+  state: () => ({ presenting: renderer.xr.isPresenting, placed, walking, playing, ghost: ghost.root.visible, home: homeLine,
+    muted: audio.muted, buzz: buzzOn, fps, caption: caption?.text ?? null, t: walkNow ? +walkNow.t_min.toFixed(1) : null }) };
 
 init().catch((e) => { console.error(e); setStatus("Load failed: " + e.message); });

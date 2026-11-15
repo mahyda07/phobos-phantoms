@@ -181,3 +181,9 @@ test("ghostLabel takes sols from the file, says the speed is a display speed", (
   assert.match(ghostLabel(rover).note, /fixed display speed/);
   assert.equal(ghostLabel({ features: [] }).title, "Perseverance's real path");
 });
+import { nearestS } from "./ghost.js";
+test("nearestS: track distance of the closest point (ghost starts near the walker)", () => {
+  const t = roverTrack(rover);
+  assert.deepEqual(nearestS(t, 10, 9), { s: 20, dist_m: 1 });
+  assert.equal(nearestS(t, 104, 1).s, 20);   // first point of the sol-410 segment (jump: no distance added)
+});

@@ -40,3 +40,10 @@ export function ghostLabel(rover) {
   const range = sols.length ? ` (sols ${Math.min(...sols)}–${Math.max(...sols)})` : "";
   return { title: `Perseverance's real path${range}`, note: "moved at a fixed display speed: the data has no times within a sol" };
 }
+
+/** Distance along the track of the track point nearest to (x, y), so the ghost can start close to the walker. Pure. */
+export function nearestS(track, x, y) {
+  let best = 0, bd = Infinity;
+  for (const p of track.pts) { const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = p.d; } }
+  return { s: best, dist_m: bd };
+}
