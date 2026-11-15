@@ -175,7 +175,8 @@ if __name__ == "__main__":
                 print(f"ok   {name:11s} -> {p.relative_to(ROOT)}")
                 break
             except Exception as e:  # noqa: BLE001 - report and continue
-                msg = str(e).replace(os.environ.get("NASA_API_KEY", "\0"), "***")
+                k = os.environ.get("NASA_API_KEY") or ""
+                msg = str(e).replace(k, "***") if k else str(e)
                 if attempt == 2:
                     print(f"FAIL {name:11s} ({msg[:160]})"); failed.append(name)
     sys.exit(1 if len(failed) == len(want) else 0)
