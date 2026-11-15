@@ -1,5 +1,5 @@
-# Original author: Maryam (GitHub: Maryam19122005). Brought in from her repository
-# https://github.com/Maryam19122005/marswalk-safe-path-engine, commit c62a607, file src/planner/route.py.
+# Original author: Maryam (GitHub: Maryam19122005). Brought in from her own earlier code
+# (original file src/planner/route.py).
 # One line changed: the import now reads model.maryam.score (was src.walkability.score). Kept as a credited reference; the team planner is model/planner.py.
 """
 Person 1: safest route planner.

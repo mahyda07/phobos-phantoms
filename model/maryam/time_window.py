@@ -1,5 +1,5 @@
-# Original author: Maryam (GitHub: Maryam19122005). Brought in from her repository
-# https://github.com/Maryam19122005/marswalk-safe-path-engine, commit c62a607, file src/planner/time_window.py.
+# Original author: Maryam (GitHub: Maryam19122005). Brought in from her own earlier code
+# (original file src/planner/time_window.py).
 # Code unchanged; only these three comment lines were added. Track: AI and safety model [P1].
 """
 Person 1: sun and dust time window.
