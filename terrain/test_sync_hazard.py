@@ -30,7 +30,7 @@ def test_sync_copies_and_adds_one_manifest_entry(tmp_path):
     assert [l["id"] for l in man["layers"]] == ["dem", "hazard"]
     schema = json.loads((ROOT / "contracts/layers.manifest.schema.json").read_text())
     assert not list(Draft202012Validator(schema).iter_errors(man))
-    assert "not validated" in man["layers"][1]["name"]
+    assert "validated on held-out terrain" in man["layers"][1]["name"]
 
 
 def test_sync_refuses_wrong_grid_size(tmp_path):
