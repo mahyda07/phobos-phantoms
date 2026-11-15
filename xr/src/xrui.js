@@ -26,11 +26,17 @@ export function paintButton(g, w, h, { label, sub = "", kind = "default", state 
   g.strokeStyle = state === "normal" ? T.line : kind === "home" ? T.home : T.mars2; g.stroke();
   const ink = kind === "primary" ? T.onMars : T.text;
   g.fillStyle = ink; g.textAlign = "center"; g.textBaseline = "middle";
-  const fs = Math.round(h * (sub ? 0.32 : 0.38));
-  g.font = `600 ${fs}px ${T.font}`;
-  const cx = on == null ? w / 2 : w / 2 + h * 0.18;
-  g.fillText(label, cx, sub ? h * 0.40 : h / 2, w - h * 0.9);
-  if (sub) { g.font = `500 ${Math.round(h * 0.25)}px ${T.font}`; g.fillStyle = kind === "primary" ? T.onMars : T.muted; g.fillText(sub, cx, h * 0.72, w - h * 0.9); }
+  // Fit text by shrinking the font, never by squeezing it (fillText maxWidth squashed long labels).
+  const left = on == null ? h * 0.25 : h * 0.66, right = w - h * 0.25;   // leave room for the toggle pip
+  const avail = right - left, cx = (left + right) / 2;
+  const fit = (txt, size, weight) => {
+    let s = size; g.font = `${weight} ${s}px ${T.font}`;
+    while (s > Math.round(h * 0.2) && g.measureText(txt).width > avail) { s -= 2; g.font = `${weight} ${s}px ${T.font}`; }
+    return s;
+  };
+  fit(label, Math.round(h * (sub ? 0.32 : 0.38)), 600);
+  g.fillText(label, cx, sub ? h * 0.40 : h / 2);
+  if (sub) { fit(sub, Math.round(h * 0.25), 500); g.fillStyle = kind === "primary" ? T.onMars : T.muted; g.fillText(sub, cx, h * 0.72); }
   if (on != null) {                                          // toggle pip on the left
     g.beginPath(); g.arc(h * 0.42, h / 2, h * 0.12, 0, Math.PI * 2);
     g.fillStyle = on ? T.ok : "rgba(255,255,255,0.18)"; g.fill();
