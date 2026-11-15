@@ -148,7 +148,7 @@ def test_window_tie_break_prefers_the_warmer_block():
     temp[8:14] = [-50, -45, -40, -35, -30, -25]
     best, tied = warmer_on_tie(fc, temp, 2)
     assert len(tied) == 1 and best["start_hour"] == 10          # 10-12 has the most sun: no tie
-    best, tied = warmer_on_tie(fc, temp, 4)                    # 8-12 and 10-14 tie on average sun (32.5)
+    best, tied = warmer_on_tie(fc, temp, 4)                    # 8-12 and 10-14 both 32.5, but 9-13 = 35.0 is best: no tie
     assert [t["start_hour"] for t in tied] == [9]              # 9-13 = 35.0 is best; no tie
     fc = [m_tw.HourForecast(h, s, 0.5) for h, s in zip(range(8, 14), [20, 30, 40, 30, 40, 30])]
     best, tied = warmer_on_tie(fc, temp, 2)                    # 9-11, 10-12, 11-13, 12-14 all average 35
