@@ -24,7 +24,7 @@
 #view3d .v3d-hint { position: absolute; top: 64px; right: 14px; padding: 6px 10px; border-radius: 8px; background: rgba(8,11,16,.7); color: #b4c0cc; font: 12px var(--font-num, ui-monospace, monospace); pointer-events: none; }
 #view3d .v3d-loading { display: none; position: absolute; inset: 0; place-items: center; color: #b4c0cc; font-size: 14px; }
 #view3d.loading .v3d-loading { display: grid; }
-#view3d .v3d-legend { position: absolute; left: 14px; bottom: 150px; width: 210px; padding: 8px 10px; border-radius: 8px; background: rgba(8,11,16,.86);
+#view3d .v3d-legend { position: absolute; left: 14px; top: 64px; width: 210px; padding: 8px 10px; border-radius: 8px; background: rgba(8,11,16,.86);
   border: 1px solid rgba(255,255,255,.12); color: #eef2f6; font: 11px/1.4 var(--font-num, ui-monospace, monospace); pointer-events: none; }
 #view3d .v3d-legend[hidden] { display: none; }
 #view3d .v3d-legend-title { font-weight: 600; margin-bottom: 4px; }

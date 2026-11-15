@@ -358,7 +358,8 @@ async function main() {
   const stored = () => { try { return localStorage.getItem("mw-view"); } catch { return null; } };
   const hasWebGL = () => { try { const c = document.createElement("canvas"); return !!(c.getContext("webgl2") || c.getContext("webgl")); } catch { return false; } };
   // Leaflet layer state -> 3D (single source of truth is the Leaflet layer).
-  const syncV3d = () => {
+  // A hoisted function: showRoute() calls it before this line runs (while v3d is still null).
+  function syncV3d() {
     if (!v3d) return;
     for (const { id, layer } of Object.values(rasterInfo)) v3d.setLayer(id, map.hasLayer(layer));
     v3d.setRover(!!roverLayer && map.hasLayer(roverLayer));
@@ -366,7 +367,7 @@ async function main() {
     v3d.setRouteVisible(view ? routeOn : true);
     v3d.setStopsVisible(view ? routeOn : (csvStopLayer ? map.hasLayer(csvStopLayer) : true));
     setPressed("v3d-hazard", v3d.hazard); setPressed("v3d-rover", v3d.rover);
-  };
+  }
   map.on("layeradd layerremove", syncV3d);
   async function setView(mode, remember = true) {
     if (switching) return null;
