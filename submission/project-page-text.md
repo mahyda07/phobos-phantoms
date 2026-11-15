@@ -3,13 +3,15 @@
 **Challenge:** Interplanetary Survival Guide: Martian Map — NASA Space Apps Challenge 2026
 
 ## One-line summary
-Real NASA terrain of Jezero Crater becomes a safety map: an AI hazard estimate and a least-cost planner give a walking route through five science stops with the time left to walk back at every step, checked against Perseverance's real path and shown on a web map and as a mixed-reality hologram you can step into.
+Real NASA terrain of Jezero Crater becomes a walk-planning map: an AI hazard estimate and a least-cost planner give a walking route through five science stops with the time left to walk back at every step, checked against Perseverance's real path and shown on a web map and as a mixed-reality hologram you can step into.
 
 ## Try it (no login)
 - Headset app (Meta Quest 3 browser, also runs on a PC): https://phantom-phobos.vercel.app
 - Web map: https://phobos-display.vercel.app
 - Planner web service: https://phobos-planner.onrender.com (interactive docs at `/docs`; free hosting, the first request after a quiet spell is slow)
 - Code: https://github.com/mahyda07/phobos-phantoms
+- 30-second demo video (English subtitles): `submission/Marswalk-30s.mp4` in the repo (YouTube link on the project page)
+- 7-slide deck: `submission/Marswalk-Presentation-v3.pdf`
 
 ## The problem
 Future Mars explorers will need detailed, local information about the ground they cross, not just a planetary map. Elevation, slope, imagery, mineral signals and weather live in separate datasets, which makes it hard to see the trade-off between a safe path and a scientifically valuable one, and how much time is left to get back.
@@ -39,14 +41,23 @@ Perseverance's real track in the walking area (6.69 km, sols 405–717) was cut 
 A rover is not an astronaut, and the rover drivers did not use our hazard layer, so this checks our terrain and hazard model; it is not proof of astronaut safety.
 
 ## Current status and limitations
-- Built during the hackathon, 14–15 Nov 2026. Everything above is implemented and live; the hosted planner service switches to the AI planner once its server setting is changed (until then it plans with the no-AI baseline).
+- Built during the hackathon, 14–15 Nov 2026. Everything above is implemented and live; the hosted planner service runs the AI planner (`/health` reports `ai-hazard-v1`).
 - Slope limit, walking speed, EVA length, hazard weight and cost weights are assumptions, not suit or mission limits. Time spent working at the stops is not counted in the walk-back margin.
-- The AI hazard layer is a model estimate. Validated on the held-out walking area (`model/hazard/validate_walk.py` → `model/out/validation_walk.json`): mIoU 0.369 against Maryam's go/careful/avoid rule recomputed from the 2 m grid (majority baseline 0.232; a slope-threshold baseline scores 0.388 but slope defines those labels); on Perseverance's real drives (3158 cells) the mean AI hazard is 0.044 vs 0.127 for the whole area, 0.0% of rover cells are 'avoid' vs 3.9%, and 94.8% are 'go' vs 83.3%. This validates the map against terrain data and rover experience, not astronaut walking safety. Its its "careful" and "avoid" classes are much harder for it than "go" (per-class IoU in `model/MODEL_CARD.md`). Its classes are mostly slope classes learned from the photo, so lower AI hazard under our route is expected (the planner is penalised by that layer): a sanity check, not proof.
+- The AI hazard layer is a model estimate. Validated on the held-out walking area (`model/hazard/validate_walk.py` → `model/out/validation_walk.json`): mIoU 0.369 against Maryam's go/careful/avoid rule recomputed from the 2 m grid (majority baseline 0.232; a slope-threshold baseline scores 0.388 but slope defines those labels); on Perseverance's real drives (3158 cells) the mean AI hazard is 0.044 vs 0.127 for the whole area, 0.0% of rover cells are 'avoid' vs 3.9%, and 94.8% are 'go' vs 83.3%. This validates the map against terrain data and rover experience, not astronaut walking safety. Its "careful" and "avoid" classes are much harder for it than "go" (per-class IoU in `model/MODEL_CARD.md`). Its classes are mostly slope classes learned from the photo, so lower AI hazard under our route is expected (the planner is penalised by that layer): a sanity check, not proof.
 - The time window is for a typical sol, not a forecast.
 - Marswalk is a planning aid concept, not a certified safety system.
 
 ## Future work
 Validation of the hazard estimate against more rover traverses and field analogues, calibrated uncertainty, real suit and EVA limits from mission planners, live weather instead of a typical sol, and user testing with mission-planning scenarios.
+
+## Use of Super Intelligence (AI)
+- **HazardNet** (our own U-Net, trained during the hackathon) produces the AI hazard estimate; metrics and limits in `model/MODEL_CARD.md`.
+- **Coding assistants:** Claude (Anthropic) helped write code, tests and documentation; every piece is listed in `AI_USAGE.md` and marked in file headers. Team members reviewed, ran and tested everything.
+- **AI-generated audio:** the headset's spoken callouts are synthetic voice clips made offline with the Windows speech synthesizer (`xr/scripts/make_voice.ps1`); every line is also shown as a caption.
+- No AI-generated images or video are used. The demo video contains only screen and headset recordings of our apps and NASA's real Mars wind recording. No NASA logos or mission identifiers are used or modified.
+
+## NASA data used
+USGS/NASA Mars 2020 HiRISE DTM and orthomosaic (terrain), MRO CRISM (minerals → science stops), Perseverance traverse (NASA/JPL-Caltech), Perseverance MEDA (temperature, dust), NASA GISS Mars24 (sun height), Perseverance SuperCam microphone (Mars wind), NASA DONKI (Sun activity), JPL Horizons (Earth–Mars light delay), and the NASA Perseverance 3D model. Other open data: NOAA SWPC Kp index, USGS/IAU Gazetteer of Planetary Nomenclature.
 
 ## Credits and data
 Every dataset, library, model and image is listed in `SOURCES.md` with its source and licence (USGS HiRISE products CC0 1.0; NASA/JPL-Caltech rover path; CRISM via NASA PDS; MEDA via NASA PDS). AI-assisted work is listed in `AI_USAGE.md`.

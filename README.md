@@ -2,7 +2,7 @@
 
 NASA International Space Apps Challenge 2026 · Challenge: **Interplanetary Survival Guide: Martian Map**
 
-Real NASA terrain at Jezero Crater becomes a safety map. A least-cost walking route that uses an AI hazard estimate and reaches the science stops is checked against Perseverance's real path. It's shown on a web screen and as a hologram on a desk in a Meta Quest 3 that you can step into.
+Real NASA terrain at Jezero Crater becomes a walk-planning map. A least-cost walking route that uses an AI hazard estimate and reaches the science stops is checked against Perseverance's real path. It's shown on a web screen and as a hologram on a desk in a Meta Quest 3 that you can step into.
 
 > Status: built during the hackathon, 14–15 Nov 2026. File-format drafts and Maryam's earlier scoring code pre-date kick-off (see `AI_USAGE.md`, `SOURCES.md`).
 

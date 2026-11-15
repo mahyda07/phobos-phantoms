@@ -1,11 +1,11 @@
 1
 00:00:00,000 --> 00:00:03,000
-Marswalk: plan the first human walk
-on Jezero Crater, Mars.
+Phobos Phantoms OG 7.66 presents Marswalk:
+planning the first human walk on Mars.
 
 2
 00:00:03,000 --> 00:00:08,000
-Real NASA terrain in 3D, with an AI hazard map
+Real NASA terrain of Jezero Crater, with an AI hazard map
 checked on held-out ground.
 
 3
@@ -25,10 +25,9 @@ sols 405 to 717.
 
 6
 00:00:22,500 --> 00:00:27,000
-Hold one button: the planner routes you home
+Press "Get me home": the planner routes you back
 around steep and hazardous ground.
 
 7
 00:00:27,000 --> 00:00:29,500
-Phobos Phantoms OG 7.66
-NASA Space Apps 2026
+Next: rehearse real EVAs before astronauts land.

@@ -1,0 +1,68 @@
+1
+00:00:00,000 --> 00:00:02,500
+We are Phobos Phantoms OG 7.66.
+
+2
+00:00:02,500 --> 00:00:05,000
+Our challenge: Interplanetary Survival Guide, Martian Map.
+
+3
+00:00:05,000 --> 00:00:08,500
+This is Marswalk: plan, check and rehearse
+the first human walk on Mars.
+
+4
+00:00:08,500 --> 00:00:13,000
+Real NASA HiRISE terrain of Jezero Crater:
+1.5 by 1.5 km on a 2-metre grid.
+
+5
+00:00:13,000 --> 00:00:17,000
+Our AI model reads the orbital photo and marks hazards,
+checked on held-out ground.
+
+6
+00:00:17,000 --> 00:00:22,000
+A planner links five science stops in 4.4 km,
+always keeping at least 136 minutes to walk back.
+
+7
+00:00:22,000 --> 00:00:26,000
+In a Quest 3, the crater lands on your desk.
+
+8
+00:00:26,000 --> 00:00:30,000
+Step in, and walk it at full size.
+
+9
+00:00:30,000 --> 00:00:34,000
+The visor shows walk-back margin, slope,
+AI hazard and sun height at every step.
+
+10
+00:00:34,000 --> 00:00:38,000
+Voice callouts and a controller buzz
+warn of steep or hazardous ground.
+
+11
+00:00:38,000 --> 00:00:42,500
+Perseverance drives its real path beside you,
+sols 405 to 717.
+
+12
+00:00:42,500 --> 00:00:47,000
+Press "Get me home": the live planner
+routes you back around hazards.
+
+13
+00:00:47,000 --> 00:00:52,000
+Checked against Perseverance's real track:
+closer than a straight line, on gentler ground.
+
+14
+00:00:52,000 --> 00:00:55,000
+Next: rehearse real EVAs before the first crews land.
+
+15
+00:00:55,000 --> 00:00:59,500
+Try it now, no login needed.
