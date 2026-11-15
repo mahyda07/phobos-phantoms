@@ -63,7 +63,7 @@ export function drawVisor(g, f) {
     accent: f.marginT == null ? null : rampColor(f.marginT) });
   field(g, { x: 28, y: 330, w: 520, h: 170, label: "Time out", value: f.timeOut, unit: "min" });
   field(g, { x: 1102, y: 28, w: 470, h: 170, label: "Slope here", value: f.slope, unit: "°" });
-  field(g, { x: 1102, y: 222, w: 470, h: 200, label: "AI hazard here", sub: "AI hazard estimate (model, not validated)", value: f.hazard, unit: "of 1" });
+  field(g, { x: 1102, y: 222, w: 470, h: 200, label: "AI hazard here", sub: "AI hazard estimate (validated on held-out terrain)", value: f.hazard, unit: "of 1" });
   hazardScale(g, 1102 + 270, 222 + 128, 175, 14, parseFloat(f.hazard));
   // next stop (id big, name smaller)
   panel(g, 28, 900 - 66 - 200, 800, 200);

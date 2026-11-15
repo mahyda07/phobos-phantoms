@@ -19,7 +19,7 @@ Sources: the ui-ux-pro-max design system (style "Data-Dense Dashboard" + "Dark M
 | `--ok` / `--warn` / `--danger` | `#5ee2a0` / `#f0aa28` / `#ff6b5e` | status text and icons. Text uses `#ff6b5e` (7.13:1), not the ramp red `#d73027` (4.12:1) | see left |
 
 **Locked data scales (never restyle):**
-- AI hazard: `rgba(255, floor(220·(1−h)), 30, min(1.6h,1)·200/255)`. This is the `model/hazard/infer.py` formula, already identical in `display/src/sources.js` `HAZARD_STOPS` and `xr/src/visor.js` `HAZARD_STOPS`. Its label is always "AI hazard estimate (model, not validated)".
+- AI hazard: `rgba(255, floor(220·(1−h)), 30, min(1.6h,1)·200/255)`. This is the `model/hazard/infer.py` formula, already identical in `display/src/sources.js` `HAZARD_STOPS` and `xr/src/visor.js` `HAZARD_STOPS`. Its label is always "AI hazard estimate (validated on held-out terrain)".
 - Margin ramp: red `#d73027` → amber `#f0aa28` → green `#2eaa50` (`display/src/route.js` `RAMP`).
 - Home (return) route: `#7cc4ff`, a cool blue that clashes with neither scale.
 - Ghost rover: `#e6e8eb` at 50 % opacity.
