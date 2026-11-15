@@ -107,3 +107,13 @@ uv run python model/hazard/write_card.py
 uv run python contracts/validate.py hazard.meta=model/out/hazard.meta.json window=model/out/window.json route=model/out/route.json
 uv run pytest -q
 ```
+
+## Validation on the walking area (run 2, 15 Nov 2026)
+Validated on the held-out walking area (`model/hazard/validate_walk.py` → `model/out/validation_walk.json`): mIoU 0.369 against Maryam's go/careful/avoid rule recomputed from the 2 m grid (majority baseline 0.232; a slope-threshold baseline scores 0.388 but slope defines those labels); on Perseverance's real drives (3158 cells) the mean AI hazard is 0.044 vs 0.127 for the whole area, 0.0% of rover cells are 'avoid' vs 3.9%, and 94.8% are 'go' vs 83.3%. This validates the map against terrain data and rover experience, not astronaut walking safety.
+
+| Check | HazardNet | Comparison |
+|---|---|---|
+| mIoU vs rule labels (2 m grid) | 0.369 (accuracy 73.5%) | majority 0.232 · slope threshold 0.388 |
+| Mean AI hazard on Perseverance's drives | 0.044 | whole area 0.127 |
+| 'avoid' share on rover cells | 0.0% | whole area 3.9% |
+| 'go' share on rover cells | 94.8% | whole area 83.3% |

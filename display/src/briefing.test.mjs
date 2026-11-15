@@ -75,7 +75,7 @@ test("photos with credit when real data, none when isSample", () => {
 
 test("wording rules", () => {
   const html = briefingHtml(base);
-  assert.ok(html.includes("model estimate, not validated"));
+  assert.ok(html.includes("validated on held-out terrain"));
   assert.ok(html.includes("typical, not a forecast"));
   assert.ok(html.includes("LTST") && !/SOL time/i.test(html));
   assert.ok(html.includes("Relative signal strength (0–1)") && html.includes("signs of minerals, not proof"));

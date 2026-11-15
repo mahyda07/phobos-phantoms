@@ -63,7 +63,7 @@ export function renderReadout(route, i, nextStop, { preview = false, pos = null 
       ${stat("AI hazard here", num(pv.hazard[i], 2), " of 1")}
       ${stat("Next stop", nextStop ? `${esc(nextStop.id)} <span class="stop-name">${esc(nextStop.name)}</span>` : "none left")}
     </div>
-    <p class="muted">Point ${i + 1} of ${n} · AI hazard is a model estimate, not validated.</p>`;
+    <p class="muted">Point ${i + 1} of ${n} · AI hazard: model estimate validated on held-out terrain (not astronaut safety).</p>`;
 }
 
 /** Heads-up strip over the map: the same per_vertex values as the readout, big enough to read at a glance. */

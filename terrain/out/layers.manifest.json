@@ -86,7 +86,7 @@
     },
     {
       "id": "hazard",
-      "name": "AI hazard estimate (model, not validated)",
+      "name": "AI hazard estimate (validated on held-out terrain)",
       "file": "hazard.bin",
       "kind": "raster",
       "units": "0-1 relative",

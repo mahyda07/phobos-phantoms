@@ -1,0 +1,96 @@
+{
+ "what": "Validation of the AI hazard layer on the held-out walking area (never used for training or checkpoint choice)",
+ "labels": "Maryam's rule (model/maryam/score.py) on terrain/out slope.bin + rough.bin (2 m); training used 1 m DTM labels",
+ "pred_classes_from_hazard": "hazard < 0.25 go, < 0.75 careful, else avoid (class values 0 / 0.5 / 1)",
+ "hazardnet": {
+  "miou": 0.36865466840618843,
+  "iou": {
+   "go": 0.7890975870275403,
+   "careful": 0.09381832195714847,
+   "avoid": 0.22304809623387647
+  },
+  "accuracy": 0.7345635555555555,
+  "confusion_rows_true_cols_pred": [
+   [
+    378987,
+    11594,
+    121
+   ],
+   [
+    62662,
+    12659,
+    188
+   ],
+   [
+    26915,
+    47828,
+    21546
+   ]
+  ],
+  "cells": 562500
+ },
+ "baseline_majority_go": {
+  "miou": 0.23152711111111113,
+  "iou": {
+   "go": 0.6945813333333334,
+   "careful": 0.0,
+   "avoid": 0.0
+  },
+  "accuracy": 0.6945813333333334,
+  "confusion_rows_true_cols_pred": [
+   [
+    390702,
+    0,
+    0
+   ],
+   [
+    75509,
+    0,
+    0
+   ],
+   [
+    96289,
+    0,
+    0
+   ]
+  ],
+  "cells": 562500
+ },
+ "baseline_slope_threshold_10_25": {
+  "miou": 0.3883081566469239,
+  "iou": {
+   "go": 0.8775521205342102,
+   "careful": 0.1344057592456917,
+   "avoid": 0.1529665901608699
+  },
+  "accuracy": 0.758272,
+  "confusion_rows_true_cols_pred": [
+   [
+    390702,
+    0,
+    0
+   ],
+   [
+    54412,
+    21097,
+    0
+   ],
+   [
+    104,
+    81456,
+    14729
+   ]
+  ],
+  "cells": 562500
+ },
+ "perseverance_check": {
+  "rover_cells": 3158,
+  "mean_hazard_rover": 0.04370157793164253,
+  "mean_hazard_area": 0.12720417976379395,
+  "share_avoid_rover": 0.0,
+  "share_avoid_area": 0.03885333333333333,
+  "share_go_rover": 0.9483850538315389,
+  "share_go_area": 0.8330026666666667
+ },
+ "limits": "Checks the map against terrain-derived labels and rover experience; not a validation of astronaut walking safety."
+}
