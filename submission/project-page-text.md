@@ -1,4 +1,4 @@
-# Marswalk Safe-Path Engine
+# Marswalk
 **Team:** Phobos Phantoms OG 7.66  
 **Challenge:** Interplanetary Survival Guide: Martian Map — NASA Space Apps Challenge 2026
 
